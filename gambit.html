@@ -1,0 +1,108 @@
+<html>
+
+<head>
+	<style>
+	input {
+	    width: 80px;
+	}
+	</style>
+</head>
+
+<body>
+    <h1>Gambit win calculator</h1>
+
+    <label>Infamy multiplier</label>
+    <input id="multiplier" type="number" value="1" min="1" />
+
+    <label>Current infamy</label>
+    <input id="currentInfamy" type="number" value="0" min="0" />
+
+    <label>Current win streak</label>
+    <input id="winStreak" type="number" value="0" min="0" />
+
+	<table id="results"></table>
+	
+    <script type="text/javascript" src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+    <script type="text/javascript">
+        var infamyData = [
+            {
+                name: "Guardian",
+                nextRank: "Brave",
+                pointsPerWin: [100,150,175,190,200],
+                maxPoints: 1000
+            },
+            {
+                name: "Brave",
+                nextRank: "Heroic",
+                pointsPerWin: [110,160,185,200,210],
+                maxPoints: 2500
+            },
+            {
+                name: "Heroic",
+                nextRank: "Fabled",
+                pointsPerWin: [120,170,195,210,220],
+                maxPoints: 4500
+            },
+            {
+                name: "Fabled",
+                nextRank: "Mythic",
+                pointsPerWin: [130,180,205,220,230],
+                maxPoints: 7500
+            },
+            {
+                name: "Mythic",
+                nextRank: "Legend",
+                pointsPerWin: [140,190,215,230,240],
+                maxPoints: 12000
+            },
+            {
+                name: "Legend",
+                nextRank: "Reset",
+                pointsPerWin: [150,200,225,240,250],
+                maxPoints: 15000
+            }
+        ];
+
+        $(document).ready(function() {
+            $('input').change(calculateStuff);
+			calculateStuff();
+        });
+		
+		function calculateStuff() {
+			var multiplier = parseInt($('#multiplier').val());
+			var currentInfamy = parseInt($('#currentInfamy').val());
+			var currentWinStreak = parseInt($('#winStreak').val());
+
+			$('#results').empty();
+			var playerData = {
+				infamy: currentInfamy,
+				winStreak: currentWinStreak,
+				winsRequired: 0
+			};
+			
+			for (var i in infamyData) {
+				playerData = handleRank(infamyData[i], playerData, multiplier); 
+			}
+		};
+		function handleRank(infamyData, playerData, multiplier) {
+			if (playerData.infamy > infamyData.maxPoints)
+				return playerData;
+			
+			var infamyRequired = infamyData.maxPoints - playerData.infamy;
+			
+			while (playerData.infamy < infamyData.maxPoints) {
+				if (playerData.winStreak > 4)
+					playerData.winStreak = 4;
+				
+				playerData.infamy += infamyData.pointsPerWin[playerData.winStreak] * multiplier;
+				playerData.winsRequired++;
+				playerData.winStreak++;
+			}
+			
+			$('#results').append('<tr><td>Wins in a row to reach '+infamyData.nextRank+':</td><td>'+playerData.winsRequired+'</td></tr>');
+			return playerData;
+		}
+    </script>
+
+</body>
+</html>
