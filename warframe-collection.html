@@ -118,6 +118,32 @@
 			updateFunction(c, checked);
 			saveData();
 		}
+		function updateWarframe(item, updateFunction) {
+			var checked = $(item).is(":checked");
+			var component = $(item).closest('tr');
+			
+			var frame = $(item).closest('.warframe');
+			var frameId = frame.data('uniqueName');
+			var componentId = component.data('uniqueName');
+			
+			var model = getWarframeModel(frameId);
+			updateFunction(model, checked);
+			for (var i = 0; i < model.components.length; ++i) {
+				var c = model.components[i];
+				c.crafted = checked;
+				c.owned = checked;
+			}
+			updateWarframeModel(model);
+			saveData();
+		}
+		function updateWarframeModel(model) {
+			for(var i = 0; i < warframeCollection.length; ++i) {
+				if (warframeCollection[i].id == model.id) {
+					warframeCollection[i] = model;
+					return;
+				}
+			}
+		}
 		
         $(document).ready(function() {
 			$.get('https://raw.githubusercontent.com/WFCD/warframe-items/development/data/json/Warframes.json', function(data) {
@@ -170,30 +196,24 @@
 					});
 				});
 				$('.warframe-components .component-crafted').change(function() {
+					$('.component-owned', $(this).closest('tr')).prop('checked', $(this).is(':checked'));
 					updateComponent($(this), function (component, checked) {
-						component.crafted = checked;
 						component.owned = checked;
+						component.crafted = checked;
 					});
 				});
 				$('.warframe-owned').change(function() {
-					var checked = $(this).is(":checked");
-					var frame = $(this).closest('.warframe');
-					$('.warframe-components input', frame).prop('checked', checked);
-
-					var frameId = frame.data('uniqueName');
-					var model = getWarframeModel(frameId);
-					model.owned = checked;
-					saveData();
+					$('.warframe-components input', $(this).closest('.warframe')).prop('checked', $(this).is(':checked'));
+					updateWarframe($(this), function (warframe, checked) {
+						warframe.owned = checked;
+					});
 				});
 				$('.warframe-mastered').change(function() {
-					var checked = $(this).is(":checked");
-					var frame = $(this).closest('.warframe');
-					$('input', frame).prop('checked', checked);
-
-					var frameId = frame.data('uniqueName');
-					var model = getWarframeModel(frameId);
-					model.owned = checked;
-					saveData();
+					$('input', $(this).closest('.warframe')).prop('checked', $(this).is(':checked'));
+					updateWarframe($(this), function (warframe, checked) {
+						warframe.owned = checked;
+						warframe.mastered = checked;
+					});
 				});
 			});
         });
