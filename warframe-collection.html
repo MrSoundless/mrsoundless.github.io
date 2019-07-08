@@ -28,11 +28,11 @@
 		<div class="card-body">
 	  
 			<div class="form-group form-check warframe-checkbox">
-				<input type="checkbox" class="form-check-input warframe-owned" disabled>
+				<input type="checkbox" class="form-check-input warframe-owned">
 				<label class="form-check-label" for="">Owned</label>
 			</div>
 			<div class="form-group form-check warframe-checkbox">
-				<input type="checkbox" class="form-check-input warframe-mastered" disabled>
+				<input type="checkbox" class="form-check-input warframe-mastered">
 				<label class="form-check-label" for="">Mastered</label>
 			</div>
 			<table class="table warframe-components">
@@ -44,7 +44,7 @@
 				<tr style="display:none;" class="component-template">
 					<td class="name component-name">Blueprint</td>
 					<td><input type="checkbox" class="component-owned"></td>
-					<td><input type="checkbox" class="component-crafted" disabled></td>
+					<td><input type="checkbox" class="component-crafted"></td>
 				</tr>
 			</table>
 		</div>
@@ -105,6 +105,19 @@
 		function saveData() {
 			localStorage.setItem("warframeCollection", JSON.stringify(warframeCollection));
 		}
+		function updateComponent(item, updateFunction) {
+			var checked = $(item).is(":checked");
+			var component = $(item).closest('tr');
+			
+			var frame = $(item).closest('.warframe');
+			var frameId = frame.data('uniqueName');
+			var componentId = component.data('uniqueName');
+			
+			var model = getWarframeModel(frameId);
+			var c = model.getComponent(componentId);
+			updateFunction(c, checked);
+			saveData();
+		}
 		
         $(document).ready(function() {
 			$.get('https://raw.githubusercontent.com/WFCD/warframe-items/development/data/json/Warframes.json', function(data) {
@@ -152,24 +165,35 @@
 				});
 				
 				$('.warframe-components .component-owned').change(function() {
+					updateComponent($(this), function (component, checked) {
+						component.owned = checked;
+					});
+				});
+				$('.warframe-components .component-crafted').change(function() {
+					updateComponent($(this), function (component, checked) {
+						component.crafted = checked;
+						component.owned = checked;
+					});
+				});
+				$('.warframe-owned').change(function() {
 					var checked = $(this).is(":checked");
-					var component = $(this).closest('tr');
-					$('.component-crafted', component).prop('disabled', !checked);
-					
 					var frame = $(this).closest('.warframe');
+					$('.warframe-components input', frame).prop('checked', checked);
+
 					var frameId = frame.data('uniqueName');
-					var componentId = component.data('uniqueName');
-					
 					var model = getWarframeModel(frameId);
-					var c = model.getComponent(componentId);
-					c.owned = checked;
+					model.owned = checked;
 					saveData();
 				});
-				$('.warframe-components input[type=checkbox]').change(function() {
+				$('.warframe-mastered').change(function() {
 					var checked = $(this).is(":checked");
 					var frame = $(this).closest('.warframe');
-					var id = frame.data('uniqueName');
-					
+					$('input', frame).prop('checked', checked);
+
+					var frameId = frame.data('uniqueName');
+					var model = getWarframeModel(frameId);
+					model.owned = checked;
+					saveData();
 				});
 			});
         });
