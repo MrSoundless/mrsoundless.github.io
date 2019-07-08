@@ -1,0 +1,179 @@
+<html>
+
+<head>
+	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+	<style>
+	body {
+		padding: 30px;
+	}
+	
+	.warframe {
+		width: 260px;
+		height:380px;
+		float:left;
+	}
+	.warframe-checkbox {
+		display: inline-block;
+		margin-left: 20px;
+	}
+		
+	</style> 
+</head>
+
+<body>
+    <h1>Warframes</h1>
+		
+	<div id="warframe-template" class="card bg-light mb-3 warframe" style="display:none">
+		<div class="card-header warframe-name">My warframe</div>
+		<div class="card-body">
+	  
+			<div class="form-group form-check warframe-checkbox">
+				<input type="checkbox" class="form-check-input warframe-owned" disabled>
+				<label class="form-check-label" for="">Owned</label>
+			</div>
+			<div class="form-group form-check warframe-checkbox">
+				<input type="checkbox" class="form-check-input warframe-mastered" disabled>
+				<label class="form-check-label" for="">Mastered</label>
+			</div>
+			<table class="table warframe-components">
+				<thead>
+					<th>Name</th>
+					<th title="Owned">O</th>
+					<th title="Crafted">C</th>
+				</thead>
+				<tr style="display:none;" class="component-template">
+					<td class="name component-name">Blueprint</td>
+					<td><input type="checkbox" class="component-owned"></td>
+					<td><input type="checkbox" class="component-crafted" disabled></td>
+				</tr>
+			</table>
+		</div>
+	</div>
+	
+	
+	<table id="warframes"></table>
+	<script src="https://code.jquery.com/jquery-3.3.1.js" crossorigin="anonymous"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" crossorigin="anonymous"></script>
+	<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" crossorigin="anonymous"></script>
+    <script type="text/javascript">
+		class Component {
+			constructor(id) {
+				this.id = id;
+				this.owned = false;
+				this.crafted = false;
+			}
+		}
+		class Warframe {
+			constructor(id, obj) {
+				this.id = id;
+				this.owned = false;
+				this.mastered = false;
+				this.components = [];
+				
+				obj && Object.assign(this, obj);
+			}
+			
+			getComponent(id) {
+				for(var i = 0; i < this.components.length; ++i) {
+					if (this.components[i].id == id)
+						return this.components[i];
+				}
+				return null;
+			}
+		}
+	
+		var componentsToSkip = [
+			"/Lotus/Types/Items/MiscItems/Kuva",
+			"/Lotus/Types/Items/MiscItems/OrokinCell",
+			"/Lotus/Types/Items/MiscItems/ArgonCrystal",
+			"/Lotus/Types/Keys/BardQuest/BardQuestSequencerItem",
+			"/Lotus/Types/Items/MiscItems/Gallium",
+			"/Lotus/Types/Items/MiscItems/Alertium"];
+		
+		var rawData = localStorage.getItem('warframeCollection');
+		var warframeCollection = [];
+		if (rawData != null)
+			warframeCollection = JSON.parse(rawData);
+			
+		function getWarframeModel(id) {
+			for(var i = 0; i < warframeCollection.length; ++i) {
+				if (warframeCollection[i].id == id)
+					return new Warframe('', warframeCollection[i]);
+			}
+			return null;
+		}
+		function saveData() {
+			localStorage.setItem("warframeCollection", JSON.stringify(warframeCollection));
+		}
+		
+        $(document).ready(function() {
+			$.get('https://raw.githubusercontent.com/WFCD/warframe-items/development/data/json/Warframes.json', function(data) {
+				JSON.parse(data).forEach(function(item) {
+					var frame = $('#warframe-template').clone().attr('id', '').show();
+					frame.data('uniqueName', item.uniqueName);
+					$('body').append(frame);
+					$('.warframe-name', frame).text(item.name);
+					var warframeModel = getWarframeModel(item.uniqueName);
+					if (warframeModel != null) {
+						$('.warframe-owned', frame).prop('checked', warframeModel.owned);
+						$('.warframe-mastered', frame).prop('checked', warframeModel.mastered);
+					}
+					else {
+						warframeModel = new Warframe(item.uniqueName)
+						warframeCollection.push(warframeModel);
+					}
+					
+					var components = $('.warframe-components', frame);
+					if (item.components != null) {
+						item.components.forEach(function(component) {
+							if (componentsToSkip.indexOf(component.uniqueName) != -1 || component.name == "Volt Neuroptics")
+								return;
+							
+							var comp = $('.component-template', components).clone().data('uniqueName', component.uniqueName).show().removeClass('component-template');
+							$('.component-name', comp).text(component.name);
+							components.append(comp);
+							
+							if (component.name == "Blueprint")
+								$('.component-crafted', comp).hide();
+								
+							var componentModel = warframeModel.getComponent(component.uniqueName);
+							if (componentModel != null) {
+								$('.component-owned', comp).prop('checked', componentModel.owned);
+								$('.component-crafted', comp).prop('checked', componentModel.crafted);
+							}
+							else {
+								warframeModel.components.push(new Component(component.uniqueName));
+							}
+						});
+					}
+					else {
+						$('table', frame).hide();
+					}
+				});
+				
+				$('.warframe-components .component-owned').change(function() {
+					var checked = $(this).is(":checked");
+					var component = $(this).closest('tr');
+					$('.component-crafted', component).prop('disabled', !checked);
+					
+					var frame = $(this).closest('.warframe');
+					var frameId = frame.data('uniqueName');
+					var componentId = component.data('uniqueName');
+					
+					var model = getWarframeModel(frameId);
+					var c = model.getComponent(componentId);
+					c.owned = checked;
+					saveData();
+				});
+				$('.warframe-components input[type=checkbox]').change(function() {
+					var checked = $(this).is(":checked");
+					var frame = $(this).closest('.warframe');
+					var id = frame.data('uniqueName');
+					
+				});
+			});
+        });
+    </script>
+
+</body>
+</html>
