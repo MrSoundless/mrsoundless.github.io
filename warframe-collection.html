@@ -2,6 +2,7 @@
 
 <head>
 	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+	<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.3/css/all.css" />
 	<style>
 	body {
 		padding: 30px;
@@ -16,7 +17,12 @@
 		display: inline-block;
 		margin-left: 20px;
 	}
-		
+	.tooltip-inner {
+		text-align:left;
+	}
+	.tooltip-inner ul {
+		padding: 0 0 0 20px;
+	}
 	</style> 
 </head>
 
@@ -40,11 +46,13 @@
 					<th>Name</th>
 					<th title="Owned">O</th>
 					<th title="Crafted">C</th>
+					<th>&nbsp;</th>
 				</thead>
 				<tr style="display:none;" class="component-template">
 					<td class="name component-name">Blueprint</td>
 					<td><input type="checkbox" class="component-owned"></td>
 					<td><input type="checkbox" class="component-crafted"></td>
+					<td><button class="btn fas fa-info-circle component-info" data-toggle="tooltip" data-placement="right"></button></td>
 				</tr>
 			</table>
 		</div>
@@ -170,6 +178,14 @@
 							
 							var comp = $('.component-template', components).clone().data('uniqueName', component.uniqueName).show().removeClass('component-template');
 							$('.component-name', comp).text(component.name);
+							var dropText = '<ul>';
+							for (var i = 0; component.drops && i < component.drops.length; ++i) {
+								var drop = component.drops[i];
+								dropText += "<li>" + drop.location + " (" + drop.rarity + ")</li>";
+							}
+							dropText += '</ul>';
+							$('.component-info', comp).prop('title', dropText);
+							
 							components.append(comp);
 							
 							if (component.name == "Blueprint")
@@ -215,6 +231,8 @@
 						warframe.mastered = checked;
 					});
 				});
+				
+				$('.component-info').tooltip({ html: true });
 			});
         });
     </script>
