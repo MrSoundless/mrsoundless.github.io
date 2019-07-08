@@ -35,8 +35,10 @@
     <h1>Warframes</h1>
 	<select class="form-control warframe-filter">
 		<option value="all">Show all</option>
-		<option value="mastered">Hide mastered frames</option>
-		<option value="owned">Hide owned frames</option>
+		<option value="notmastered">Hide mastered frames</option>
+		<option value="notowned">Hide owned frames</option>
+		<option value="owned">Owned frames only</option>
+		<option value="mastered">Mastered frames only</option>
 	</select>
 	<br>
 	
@@ -169,11 +171,17 @@
 			$('.warframe-filter').change(function() {
 				var option = $(this).val();
 				switch (option) {
-					case 'mastered':
+					case 'notmastered':
 						$('.warframe-mastered:checked').closest('.warframe').hide();
 						break;
-					case 'owned':
+					case 'notowned':
 						$('.warframe-owned:checked').closest('.warframe').hide();
+						break;
+					case 'mastered':
+						$('.warframe-mastered:not(:checked)').closest('.warframe').hide();
+						break;
+					case 'owned':
+						$('.warframe-owned:not(:checked)').closest('.warframe').hide();
 						break;
 					default:
 						$('.warframe').show();
