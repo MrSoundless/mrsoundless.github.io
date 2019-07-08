@@ -42,7 +42,7 @@
 	</select>
 	<br>
 	
-	<div id="warframe-template" class="card bg-light mb-3 warframe" style="display:none">
+	<div id="warframe-template" class="card bg-light mb-3" style="display:none">
 		<div class="card-header warframe-name">My warframe</div>
 		<div class="card-body">
 	  
@@ -172,16 +172,20 @@
 				var option = $(this).val();
 				switch (option) {
 					case 'notmastered':
+						$('.warframe').show();
 						$('.warframe-mastered:checked').closest('.warframe').hide();
 						break;
 					case 'notowned':
+						$('.warframe').show();
 						$('.warframe-owned:checked').closest('.warframe').hide();
 						break;
 					case 'mastered':
-						$('.warframe-mastered:not(:checked)').closest('.warframe').hide();
+						$('.warframe').hide();
+						$('.warframe-mastered:checked').closest('.warframe').show();
 						break;
 					case 'owned':
-						$('.warframe-owned:not(:checked)').closest('.warframe').hide();
+						$('.warframe').hide();
+						$('.warframe-owned:checked').closest('.warframe').show();
 						break;
 					default:
 						$('.warframe').show();
@@ -191,7 +195,7 @@
 		
 			$.get('https://raw.githubusercontent.com/WFCD/warframe-items/development/data/json/Warframes.json', function(data) {
 				JSON.parse(data).forEach(function(item) {
-					var frame = $('#warframe-template').clone().attr('id', '').show();
+					var frame = $('#warframe-template').clone().attr('id', '').addClass('warframe').show();
 					frame.data('uniqueName', item.uniqueName);
 					$('body').append(frame);
 					$('.warframe-name', frame).text(item.name);
