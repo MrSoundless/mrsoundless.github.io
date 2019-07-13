@@ -216,14 +216,14 @@
 								return;
 							
 							var comp = $('.component-template', components).clone().data('uniqueName', component.uniqueName).show().removeClass('component-template');
-							$('.component-name', comp).text(component.name);
+							var cname = component.name;
+							if (component.itemCount)
+								cname = component.itemCount + "x " + cname;
+							$('.component-name', comp).text(cname);
 							var dropText = '<ul>';
 							for (var i = 0; component.drops && i < component.drops.length; ++i) {
 								var drop = component.drops[i];
-								dropText += "<li>";
-								if (component.itemCount)
-									dropText += component.itemCount + "x ";
-								dropText += drop.location + " (" + drop.rarity + ")</li>";
+								dropText += "<li>" + drop.location + " (" + drop.rarity + ")</li>";
 							}
 							dropText += '</ul>';
 							$('.component-info', comp).prop('title', dropText);
