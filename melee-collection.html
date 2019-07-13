@@ -194,7 +194,7 @@
 			});
 		
 		
-			$.get('https://raw.githubusercontent.com/WFCD/warframe-items/development/data/json/Warframes.json', function(data) {
+			$.get('https://raw.githubusercontent.com/WFCD/warframe-items/development/data/json/Melee.json', function(data) {
 				JSON.parse(data).forEach(function(item) {
 					var frame = $('#warframe-template').clone().attr('id', '').addClass('warframe').show();
 					frame.data('uniqueName', item.uniqueName);
