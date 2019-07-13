@@ -220,7 +220,10 @@
 							var dropText = '<ul>';
 							for (var i = 0; component.drops && i < component.drops.length; ++i) {
 								var drop = component.drops[i];
-								dropText += "<li>" + drop.location + " (" + drop.rarity + ")</li>";
+								dropText += "<li>";
+								if (component.itemCount)
+									dropText += component.itemCount + "x ";
+								dropText += drop.location + " (" + drop.rarity + ")</li>";
 							}
 							dropText += '</ul>';
 							$('.component-info', comp).prop('title', dropText);
@@ -229,6 +232,8 @@
 							
 							if (component.name == "Blueprint")
 								$('.component-crafted', comp).hide();
+							else
+								$('.component-owned', comp).hide();
 								
 							var componentModel = warframeModel.getComponent(component.uniqueName);
 							if (componentModel != null) {
