@@ -210,9 +210,9 @@
 					}
 					
 					var components = $('.warframe-components', frame);
-					if (item.components != null && item.name.indexOf('Prime') > -1) {
+					if (item.components != null) {
 						item.components.forEach(function(component) {
-							if (componentsToSkip.indexOf(component.uniqueName) != -1 || component.name == "Volt Neuroptics")
+							if (component.indexOf("Lotus/Types/Recipes") != -1 || component.indexOf("Lotus/Weapons") != -1)
 								return;
 							
 							var comp = $('.component-template', components).clone().data('uniqueName', component.uniqueName).show().removeClass('component-template');
