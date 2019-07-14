@@ -212,7 +212,7 @@
 					var components = $('.warframe-components', frame);
 					if (item.components != null) {
 						item.components.forEach(function(component) {
-							if (component.uniqueName.indexOf("Lotus/Types/Recipes") == -1 || component.uniqueName.indexOf("Lotus/Weapons") == -1)
+							if (component.uniqueName.indexOf("Lotus/Types/Recipes") == -1 && component.uniqueName.indexOf("Lotus/Weapons") == -1)
 								return;
 							
 							var comp = $('.component-template', components).clone().data('uniqueName', component.uniqueName).show().removeClass('component-template');
