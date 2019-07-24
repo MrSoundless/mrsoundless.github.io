@@ -1,0 +1,79 @@
+<html>
+
+<head>
+	<meta name="viewport" content="width=device-width, initial-scale=0.5, maximum-scale=0.5, user-scalable=no" />
+
+	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+	<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.3/css/all.css" />
+	<style>
+	body {
+		padding: 30px;
+	}
+	
+	.warframe {
+		width: 260px;
+		height:380px;
+		float:left;
+	}
+	.warframe-checkbox {
+		display: inline-block;
+		margin-left: 20px;
+	}
+	.warframe-filter {
+		width: 300px;
+	}
+	.tooltip-inner {
+		text-align:left;
+	}
+	.tooltip-inner ul {
+		padding: 0 0 0 20px;
+	}
+	</style> 
+</head>
+
+<body class="container-fluid">
+
+    <div class="input-group">
+	  <div class="input-group-append"><span class="input-group-text"><i class="fas fa-search"></i></span></div>
+	  <input type="text" id="search" class="form-control" placeholder="Search" aria-label="Username">
+	</div>
+	<div class="row">
+		<div class="col-2">
+		    <ul id="all-items" class="list-group"></ul>
+	    </div>
+	    <div id="main-content" class="col-10 border border">
+
+	    	<h1></h1>
+	    	<p>
+				<input type="checkbox" class="item-mastered"> Mastered <br>
+				<input type="checkbox" class="item-crafted"> Crafted 
+	    	</p>
+	    	<table class="table components">
+				<thead>
+					<tr>
+						<th>Amount</th>
+						<th>Name</th>
+						<th title="Owned">O</th>
+						<th title="Crafted" class="craftable">C</th>
+						<th>&nbsp;</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr style="display:none;" class="component-template">
+						<td class="amount">1</td>
+						<td class="name">Blueprint</td>
+						<td><input type="checkbox" class="component-owned"></td>
+						<td><input type="checkbox" class="component-crafted craftable"></td>
+						<td><button class="btn fas fa-info-circle component-info" data-toggle="tooltip" data-placement="right" data-html="true" data-original-title="" title="text"></button></td>
+					</tr>
+				</tbody>
+			</table>
+	    </div>
+	</div>
+	
+	<script src="https://code.jquery.com/jquery-3.3.1.js" crossorigin="anonymous"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" crossorigin="anonymous"></script>
+	<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" crossorigin="anonymous"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>
