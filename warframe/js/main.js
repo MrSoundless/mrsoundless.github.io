@@ -23,8 +23,6 @@ $(document).ready(function() {
 		var listTag = $('#all-items');
 		for (var i = 0; i < allItems.length; ++i) {
 			var item = allItems[i];
-
-			var searchString = JSON.stringify(createItemSearchText(item)).toLowerCase();
 			var name = item.name;
 			if (item.vaulted)
 				name += " *";
@@ -33,9 +31,16 @@ $(document).ready(function() {
 				.text(name)
 				.click(itemClick)
 				.data('id', item.uniqueName)
-				.data('search', searchString)
 				.tooltip({ html: true });
 
+			var savedItem = getDataById(saveData, item.uniqueName);
+			if (savedItem) {
+				if (savedItem.mastered)
+					itemTag.addClass('list-group-item-success');
+				else if (savedItem.crafted)
+					itemTag.addClass('list-group-item-warning');
+			}
+				
 			if (!firstTag)
 				firstTag = itemTag;
 			listTag.append(itemTag);
@@ -53,41 +58,69 @@ function loadItems(url) {
 }
 
 function search() {
-	var searchStrings = $(this).val().toLowerCase().split(',');
+	var searchStrings = $(this).val().toLowerCase().split('|');
 	$('.list-group-item').each(function() {
-		if (stringContains($(this).data('search'), searchStrings))
+		var item = getItem($(this).data('id'));
+		if (isItemMatch(item, searchStrings))
 			$(this).show();
 		else
 			$(this).hide();
 	});
+	
+	$('.list-group-item:visible:first').trigger('click');
 }
-function stringContains(source, searches) {
+
+function isItemMatch(item, searches) {
 	for (var i = 0; i < searches.length; ++i)
-		if (source.includes(searches[i].trim()))
+		if (andMatch(item, searches[i].split(' ')))
 			return true;
+		//if (source.includes(searches[i].trim()))
+			//return true;
 	return false;
 }
-function createItemSearchText(item) {
-	var results = [item.name, item.category];
-	if (item.components !== undefined) {
-		for(var i = 0; i < item.components.length; ++i) {
-			results = results.concat(createComponentSearchText(item.components[i]));
+function andMatch(item, searches) {
+	for (var i = 0; i < searches.length; ++i)
+		if (!matchKeyword(item, searches[i]))
+			return false;
+	return true;
+}
+function matchKeyword(item, keyword) {
+	var savedItem = getDataById(saveData, item.uniqueName);
+	switch(keyword) {
+		case "is:vaulted":
+			return item.vaulted === true;
+		case "not:vaulted":
+			return item.vaulted !== true;
+		case "is:mastered":
+			return savedItem && savedItem.mastered; 
+		case "not:mastered":
+			return !savedItem || !savedItem.mastered;
+		case "is:crafted":
+			return savedItem && savedItem.crafted; 
+		case "not:crafted":
+			return !savedItem || !savedItem.crafted;
+	}
+	
+	if (item.name.toLowerCase().includes(keyword.trim()))
+		return true;
+		
+	if (item.category.toLowerCase().trim() == keyword.trim())
+		return true;
+	
+	if (item.components) {
+		for (var c = 0; c < item.components.length; ++c) {
+			var component = item.components[c];
+			if (component.drops) {
+				for (var d = 0; d < component.drops[d].length; ++d) {
+					var drop = component.drops[d];
+					if (drop.location.toLowerCase().includes(keyword))
+						return false;
+				}
+			}
 		}
 	}
-	return results;
-}
-function createComponentSearchText(component) {
-	var results = [component.name];
-	if (component.drops !== undefined) {
-		for(var i = 0; i < component.drops.length; ++i) {
-			if (component.name != 'Forma')
-				results = results.concat(createDropSearchText(component.drops[i]));
-		}
-	}
-	return results;
-}
-function createDropSearchText(drop) {
-	return [drop.location, drop.type, drop.rarity];
+	
+	return false;
 }
 
 function itemClick() {
@@ -224,6 +257,22 @@ function saveCurrentItem() {
 
 	saveData.push(item);
 	localStorage.setItem('warframe-collections', JSON.stringify(saveData));
+	
+	var tag = findItemTagById(itemId);
+	tag.removeClass('list-group-item-success');
+	tag.removeClass('list-group-item-warning');
+	if (item.mastered)
+		tag.addClass('list-group-item-success');
+	else if (item.crafted)
+		tag.addClass('list-group-item-warning');
+}
+function findItemTagById(id) {
+	var result = null;
+	$('.list-group-item', '#all-items').each(function() {
+		if ($(this).data('id') == id)
+			return result = $(this);
+	});
+	return result;
 }
 	
 function getDataById(data, id) {
@@ -273,204 +322,3 @@ function handleCheckboxChanged() {
 
 	saveCurrentItem();
 }
-
-/*
-
-class Component {
-	constructor(id) {
-		this.id = id;
-		this.owned = false;
-		this.crafted = false;
-	}
-}
-class Warframe {
-	constructor(id, obj) {
-		this.id = id;
-		this.owned = false;
-		this.mastered = false;
-		this.components = [];
-		
-		obj && Object.assign(this, obj);
-	}
-	
-	getComponent(id) {
-		for(var i = 0; i < this.components.length; ++i) {
-			if (this.components[i].id == id)
-				return this.components[i];
-		}
-		return null;
-	}
-}
-
-var componentsToSkip = [
-	"/Lotus/Types/Items/MiscItems/Kuva",
-	"/Lotus/Types/Items/MiscItems/OrokinCell",
-	"/Lotus/Types/Items/MiscItems/ArgonCrystal",
-	"/Lotus/Types/Keys/BardQuest/BardQuestSequencerItem",
-	"/Lotus/Types/Items/MiscItems/Gallium",
-	"/Lotus/Types/Items/MiscItems/Alertium"];
-
-var rawData = localStorage.getItem('warframeCollection');
-var warframeCollection = [];
-if (rawData != null)
-	warframeCollection = JSON.parse(rawData);
-	
-function getWarframeModel(id) {
-	for(var i = 0; i < warframeCollection.length; ++i) {
-		if (warframeCollection[i].id == id)
-			return new Warframe('', warframeCollection[i]);
-	}
-	return null;
-}
-function saveData() {
-	localStorage.setItem("warframeCollection", JSON.stringify(warframeCollection));
-}
-function updateComponent(item, updateFunction) {
-	var checked = $(item).is(":checked");
-	var component = $(item).closest('tr');
-	
-	var frame = $(item).closest('.warframe');
-	var frameId = frame.data('uniqueName');
-	var componentId = component.data('uniqueName');
-	
-	var model = getWarframeModel(frameId);
-	var c = model.getComponent(componentId);
-	updateFunction(c, checked);
-	saveData();
-}
-function updateWarframe(item, updateFunction) {
-	var checked = $(item).is(":checked");
-	var component = $(item).closest('tr');
-	
-	var frame = $(item).closest('.warframe');
-	var frameId = frame.data('uniqueName');
-	var componentId = component.data('uniqueName');
-	
-	var model = getWarframeModel(frameId);
-	updateFunction(model, checked);
-	for (var i = 0; i < model.components.length; ++i) {
-		var c = model.components[i];
-		c.crafted = checked;
-		c.owned = checked;
-	}
-	updateWarframeModel(model);
-	saveData();
-}
-function updateWarframeModel(model) {
-	for(var i = 0; i < warframeCollection.length; ++i) {
-		if (warframeCollection[i].id == model.id) {
-			warframeCollection[i] = model;
-			return;
-		}
-	}
-}
-
-$(document).ready(function() {
-	
-	$('.warframe-filter').change(function() {
-		var option = $(this).val();
-		switch (option) {
-			case 'notmastered':
-				$('.warframe').show();
-				$('.warframe-mastered:checked').closest('.warframe').hide();
-				break;
-			case 'notowned':
-				$('.warframe').show();
-				$('.warframe-owned:checked').closest('.warframe').hide();
-				break;
-			case 'mastered':
-				$('.warframe').hide();
-				$('.warframe-mastered:checked').closest('.warframe').show();
-				break;
-			case 'owned':
-				$('.warframe').hide();
-				$('.warframe-owned:checked').closest('.warframe').show();
-				$('.warframe-mastered:checked').closest('.warframe').hide();
-				break;
-			default:
-				$('.warframe').show();
-		}
-	});
-
-
-	$.get('https://raw.githubusercontent.com/WFCD/warframe-items/development/data/json/Warframes.json', function(data) {
-		JSON.parse(data).forEach(function(item) {
-			var frame = $('#warframe-template').clone().attr('id', '').addClass('warframe').show();
-			frame.data('uniqueName', item.uniqueName);
-			$('body').append(frame);
-			$('.warframe-name', frame).text(item.name);
-			var warframeModel = getWarframeModel(item.uniqueName);
-			if (warframeModel != null) {
-				$('.warframe-owned', frame).prop('checked', warframeModel.owned);
-				$('.warframe-mastered', frame).prop('checked', warframeModel.mastered);
-			}
-			else {
-				warframeModel = new Warframe(item.uniqueName)
-				warframeCollection.push(warframeModel);
-			}
-			
-			var components = $('.warframe-components', frame);
-			if (item.components != null) {
-				item.components.forEach(function(component) {
-					if (componentsToSkip.indexOf(component.uniqueName) != -1 || component.name == "Volt Neuroptics")
-						return;
-					
-					var comp = $('.component-template', components).clone().data('uniqueName', component.uniqueName).show().removeClass('component-template');
-					$('.component-name', comp).text(component.name);
-					var dropText = '<ul>';
-					for (var i = 0; component.drops && i < component.drops.length; ++i) {
-						var drop = component.drops[i];
-						dropText += "<li>" + drop.location + " (" + drop.rarity + ")</li>";
-					}
-					dropText += '</ul>';
-					$('.component-info', comp).prop('title', dropText);
-					
-					components.append(comp);
-					
-					if (component.name == "Blueprint")
-						$('.component-crafted', comp).hide();
-						
-					var componentModel = warframeModel.getComponent(component.uniqueName);
-					if (componentModel != null) {
-						$('.component-owned', comp).prop('checked', componentModel.owned);
-						$('.component-crafted', comp).prop('checked', componentModel.crafted);
-					}
-					else {
-						warframeModel.components.push(new Component(component.uniqueName));
-					}
-				});
-			}
-			else {
-				$('table', frame).hide();
-			}
-		});
-		
-		$('.warframe-components .component-owned').change(function() {
-			updateComponent($(this), function (component, checked) {
-				component.owned = checked;
-			});
-		});
-		$('.warframe-components .component-crafted').change(function() {
-			$('.component-owned', $(this).closest('tr')).prop('checked', $(this).is(':checked'));
-			updateComponent($(this), function (component, checked) {
-				component.owned = checked;
-				component.crafted = checked;
-			});
-		});
-		$('.warframe-owned').change(function() {
-			$('.warframe-components input', $(this).closest('.warframe')).prop('checked', $(this).is(':checked'));
-			updateWarframe($(this), function (warframe, checked) {
-				warframe.owned = checked;
-			});
-		});
-		$('.warframe-mastered').change(function() {
-			$('input', $(this).closest('.warframe')).prop('checked', $(this).is(':checked'));
-			updateWarframe($(this), function (warframe, checked) {
-				warframe.owned = checked;
-				warframe.mastered = checked;
-			});
-		});
-		
-		$('.component-info').tooltip({ html: true });
-	});
-});*/
