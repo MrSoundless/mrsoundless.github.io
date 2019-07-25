@@ -6,7 +6,12 @@ loadSavedData();
 $(document).ready(function() {
 	$('#search').keydown(search);
 	$(document).on('change', 'input[type=checkbox]', handleCheckboxChanged);
-
+	$('#export-button').click(function() {
+		downloadObjectAsJson(saveData, "warframe-collections");
+	});
+	$('#import-button').click(function() {
+		handleFileSelect();
+	});
 	$.when(
 		loadItems('https://raw.githubusercontent.com/WFCD/warframe-items/development/data/json/Archwing.json'),
 		loadItems('https://raw.githubusercontent.com/WFCD/warframe-items/development/data/json/Melee.json'),
@@ -322,3 +327,44 @@ function handleCheckboxChanged() {
 
 	saveCurrentItem();
 }
+
+function downloadObjectAsJson(exportObj, exportName){
+	var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportObj));
+	var downloadAnchorNode = document.createElement('a');
+	downloadAnchorNode.setAttribute("href",     dataStr);
+	downloadAnchorNode.setAttribute("download", exportName + ".json");
+	document.body.appendChild(downloadAnchorNode); // required for firefox
+	downloadAnchorNode.click();
+	downloadAnchorNode.remove();
+}
+function handleFileSelect()
+{               
+	if (!window.File || !window.FileReader || !window.FileList || !window.Blob) {
+		alert('The File APIs are not fully supported in this browser.');
+		return;
+	}   
+
+	input = document.getElementById('import-field');
+	if (!input) {
+		alert("Um, couldn't find the fileinput element.");
+	}
+	else if (!input.files) {
+		alert("This browser doesn't seem to support the `files` property of file inputs.");
+	}
+	else if (!input.files[0]) {
+		alert("Please select a file before clicking 'Import'");               
+	}
+	else {
+		file = input.files[0];
+		fr = new FileReader();
+		fr.onload = receivedText;
+		//fr.readAsText(file);
+		fr.readAsText(file);
+	}
+}
+
+function receivedText() {
+	localStorage.setItem('warframe-collections', fr.result);
+	location.reload();
+}    
+  

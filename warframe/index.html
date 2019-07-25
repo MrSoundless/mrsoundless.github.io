@@ -32,16 +32,23 @@
 </head>
 
 <body class="container-fluid">
-    <div class="input-group">
-	  <div class="input-group-append"><span class="input-group-text"><i class="fas fa-search"></i></span></div>
-	  <input type="text" id="search" class="form-control" autocomplete="off" placeholder="Search" aria-label="Username">
+	<div class="input-group mb-3 col-2">
+		<div class="custom-file">
+			<input type="file" class="custom-file-input" id="import-field">
+			<label class="custom-file-label" for="inputGroupFile02"> </label>
+		</div>
+		<button class="button" id="import-button">Import</button>
+		<button class="button" id="export-button">Export</button>
+	</div>
+    <div class="input-group col-12">
+		<div class="input-group-append"><span class="input-group-text"><i class="fas fa-search"></i></span></div>
+		<input type="text" id="search" class="form-control" autocomplete="off" placeholder="Search" aria-label="Username">
 	</div>
 	<div class="row">
 		<div class="col-2" style="padding-right: 0; height: 85vh; overflow: scroll">
 		    <ul id="all-items" class="list-group"></ul>
 	    </div>
 	    <div id="main-content" class="col-10 border border">
-
 	    	<h1></h1>
 	    	<p>
 				<input type="checkbox" class="item-mastered"> Mastered <br>
