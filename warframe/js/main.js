@@ -162,6 +162,7 @@ function showItem(id) {
 				.data('id', component.uniqueName)
 				.show()
 				.removeClass('component-template');
+			$('.amount', componentTag).text(component.itemCount);
 			$('.name', componentTag).text(component.name);
 
 			var dropText = createDropInfoText(component.drops);
