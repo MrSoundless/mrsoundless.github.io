@@ -25,9 +25,12 @@ $(document).ready(function() {
 			var item = allItems[i];
 
 			var searchString = JSON.stringify(createItemSearchText(item)).toLowerCase();
+			var name = item.name;
+			if (item.vaulted)
+				name += " *";
 			var itemTag = $('<li>')
 				.addClass('list-group-item')
-				.text(item.name)
+				.text(name)
 				.click(itemClick)
 				.data('id', item.uniqueName)
 				.data('search', searchString)
