@@ -115,13 +115,23 @@ function matchKeyword(item, keyword) {
 	if (item.components) {
 		for (var c = 0; c < item.components.length; ++c) {
 			var component = item.components[c];
+			var savedComponent = savedItem ? getDataById(savedItem.components, component.uniqueName) : null;
 			if (component.name.toLowerCase().includes('forma'))
 				continue;
-			
+
+			var cleanKeyword = keyword;
+			if (keyword.startsWith('notowned:')) {
+				if (savedComponent && savedComponent.owned)
+					continue;
+
+				cleanKeyword = keyword.substring("notowned:".length);
+			}
+
 			if (component.drops) {
 				for (var d = 0; d < component.drops.length; ++d) {
 					var drop = component.drops[d];
-					if (drop.location.toLowerCase().includes(keyword))
+					var loc = drop.location.toLowerCase();
+					if (loc.includes(cleanKeyword))
 						return true;
 				}
 			}
