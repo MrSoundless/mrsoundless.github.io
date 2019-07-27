@@ -116,7 +116,7 @@ function matchKeyword(item, keyword) {
 		for (var c = 0; c < item.components.length; ++c) {
 			var component = item.components[c];
 			if (component.drops) {
-				for (var d = 0; d < component.drops[d].length; ++d) {
+				for (var d = 0; d < component.drops.length; ++d) {
 					var drop = component.drops[d];
 					if (drop.location.toLowerCase().includes(keyword))
 						return false;
