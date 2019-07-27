@@ -119,7 +119,7 @@ function matchKeyword(item, keyword) {
 				for (var d = 0; d < component.drops.length; ++d) {
 					var drop = component.drops[d];
 					if (drop.location.toLowerCase().includes(keyword))
-						return false;
+						return true;
 				}
 			}
 		}
