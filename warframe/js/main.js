@@ -77,7 +77,7 @@ function search() {
 
 function isItemMatch(item, searches) {
 	for (var i = 0; i < searches.length; ++i)
-		if (andMatch(item, searches[i].split(' ')))
+		if (andMatch(item, searches[i].split(',')))
 			return true;
 		//if (source.includes(searches[i].trim()))
 			//return true;
@@ -85,11 +85,14 @@ function isItemMatch(item, searches) {
 }
 function andMatch(item, searches) {
 	for (var i = 0; i < searches.length; ++i)
-		if (!matchKeyword(item, searches[i]))
+		if (!matchKeyword(item, searches[i].trim()))
 			return false;
 	return true;
 }
 function matchKeyword(item, keyword) {
+	if (!keyword)
+		return false;
+
 	var savedItem = getDataById(saveData, item.uniqueName);
 	switch(keyword) {
 		case "is:vaulted":
@@ -106,10 +109,10 @@ function matchKeyword(item, keyword) {
 			return !savedItem || !savedItem.crafted;
 	}
 	
-	if (item.name.toLowerCase().includes(keyword.trim()))
+	if (item.name.toLowerCase().includes(keyword))
 		return true;
 		
-	if (item.category.toLowerCase().trim() == keyword.trim())
+	if (item.category.toLowerCase().trim() == keyword)
 		return true;
 	
 	if (item.components) {
