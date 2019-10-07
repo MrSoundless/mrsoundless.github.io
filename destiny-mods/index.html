@@ -104,7 +104,7 @@
 			$('.mod').click(function(){
 				var alpha = $('.not-owned', this);
 				var id = $(this).data('identifier');
-				if (alpha.is(':visible'))
+				if (!alpha.is(':visible'))
 					addItem(id);
 				else
 					removeItem(id);
