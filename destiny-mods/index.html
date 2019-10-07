@@ -9,6 +9,10 @@
 	body {
 		padding: 30px;
 	}
+	section {
+		clear:both;
+		margin-bottom: 20px;
+	}
 	.mod {
 		float: left;
 		margin: 5px;
@@ -37,6 +41,55 @@
 		<div id="helmet-arc" style="clear:both"><h4>Arc</h4></div>
 		<div id="helmet-solar" style="clear:both"><h4>Solar</h4></div>
 		<div id="helmet-void" style="clear:both"><h4>Void</h4></div>
+		<div style="clear:both"></div>
+	</div>
+	</section>
+	
+	<section>
+	<h2>Gauntlet</h2>
+	<div style="margin-left:40px;">
+		<div id="gauntlet-season8" style="clear:both"><h4>Seasonal</h4></div>
+		<div id="gauntlet-general" style="clear:both"><h4>General</h4></div>
+		<div id="gauntlet-arc" style="clear:both"><h4>Arc</h4></div>
+		<div id="gauntlet-solar" style="clear:both"><h4>Solar</h4></div>
+		<div id="gauntlet-void" style="clear:both"><h4>Void</h4></div>
+		<div style="clear:both"></div>
+	</div>
+	</section>
+	
+	<section>
+	<h2>Chest</h2>
+	<div style="margin-left:40px;">
+		<div id="chest-season8" style="clear:both"><h4>Seasonal</h4></div>
+		<div id="chest-general" style="clear:both"><h4>General</h4></div>
+		<div id="chest-arc" style="clear:both"><h4>Arc</h4></div>
+		<div id="chest-solar" style="clear:both"><h4>Solar</h4></div>
+		<div id="chest-void" style="clear:both"><h4>Void</h4></div>
+		<div style="clear:both"></div>
+	</div>
+	</section>
+	
+	<section>
+	<h2>Legs</h2>
+	<div style="margin-left:40px;">
+		<div id="legs-season8" style="clear:both"><h4>Seasonal</h4></div>
+		<div id="legs-general" style="clear:both"><h4>General</h4></div>
+		<div id="legs-arc" style="clear:both"><h4>Arc</h4></div>
+		<div id="legs-solar" style="clear:both"><h4>Solar</h4></div>
+		<div id="legs-void" style="clear:both"><h4>Void</h4></div>
+		<div style="clear:both"></div>
+	</div>
+	</section>
+	
+	<section>
+	<h2>Class item</h2>
+	<div style="margin-left:40px;">
+		<div id="classitem-season8" style="clear:both"><h4>Seasonal</h4></div>
+		<div id="classitem-general" style="clear:both"><h4>General</h4></div>
+		<div id="classitem-arc" style="clear:both"><h4>Arc</h4></div>
+		<div id="classitem-solar" style="clear:both"><h4>Solar</h4></div>
+		<div id="classitem-void" style="clear:both"><h4>Void</h4></div>
+		<div style="clear:both"></div>
 	</div>
 	</section>
 	
@@ -76,11 +129,40 @@
 				saveData = [];
 		}
 		function loadUI() {
+			// Helmets
 			load('helmet-season8', 'images/helmet/season8.png', 5);
 			load('helmet-general', 'images/helmet/general.png', 12);
 			load('helmet-arc', 'images/helmet/arc.png', 11);
 			load('helmet-solar', 'images/helmet/solar.png', 11);
 			load('helmet-void', 'images/helmet/void.png', 12);
+			
+			// Gauntlets
+			load('gauntlet-season8', 'images/gauntlet/season8.png', 10);
+			load('gauntlet-general', 'images/gauntlet/general.png', 14);
+			load('gauntlet-arc', 'images/gauntlet/arc.png', 9);
+			load('gauntlet-solar', 'images/gauntlet/solar.png', 9);
+			load('gauntlet-void', 'images/gauntlet/void.png', 8);
+			
+			// Chest
+			load('chest-season8', 'images/chest/season8.png', 10);
+			load('chest-general', 'images/chest/general.png', 13);
+			load('chest-arc', 'images/chest/arc.png', 11);
+			load('chest-solar', 'images/chest/solar.png', 11);
+			load('chest-void', 'images/chest/void.png', 13);
+			
+			// Legs
+			load('legs-season8', 'images/legs/season8.png', 5);
+			load('legs-general', 'images/legs/general.png', 14);
+			load('legs-arc', 'images/legs/arc.png', 11);
+			load('legs-solar', 'images/legs/solar.png', 12);
+			load('legs-void', 'images/legs/void.png', 13);
+			
+			// Class item
+			load('classitem-season8', 'images/classitem/season8.png', 10);
+			load('classitem-general', 'images/classitem/general.png', 14);
+			load('classitem-arc', 'images/classitem/arc.png', 7);
+			load('classitem-solar', 'images/classitem/solar.png', 8);
+			load('classitem-void', 'images/classitem/void.png', 8);
 			
 			for (var i=0; i<saveData.length; ++i) {
 				var itemData = saveData[i].split('_');
