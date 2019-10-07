@@ -24,6 +24,7 @@
 		width: 54px;
 		height: 54px;
 		background-color: #FFFA;
+		display:none;
 	}
 	.helmet-arc {
 		background-image: url('images/helmet/arc.png');
@@ -169,7 +170,7 @@
 				var id = itemData[0];
 				var index = 2 + parseInt(itemData[1]);
 				
-				$('.not-owned', '#'+id+' .mod:nth-child('+(index)+')').hide();
+				$('.not-owned', '#'+id+' .mod:nth-child('+(index)+')').show();
 			}
 		}
 		function saveChanges() {
