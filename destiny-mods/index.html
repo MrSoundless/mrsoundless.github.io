@@ -1,0 +1,113 @@
+<html>
+
+<head>
+	<meta name="viewport" content="width=device-width, initial-scale=0.5, maximum-scale=0.5, user-scalable=no" />
+
+	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+	<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.3/css/all.css" />
+	<style>
+	body {
+		padding: 30px;
+	}
+	.mod {
+		float: left;
+		margin: 5px;
+		width: 54px;
+		height: 54px;
+		cursor: pointer;
+	}
+	.not-owned {
+		width: 54px;
+		height: 54px;
+		background-color: #DDDD;
+	}
+	.helmet-arc {
+		background-image: url('images/helmet/arc.png');
+	}
+	</style> 
+</head>
+
+<body class="container-fluid">
+	
+	<section>
+	<h2>Helmet</h2>
+	<div style="margin-left:40px;">
+		<div id="helmet-season8" style="clear:both"><h4>Seasonal</h4></div>
+		<div id="helmet-general" style="clear:both"><h4>General</h4></div>
+		<div id="helmet-arc" style="clear:both"><h4>Arc</h4></div>
+		<div id="helmet-solar" style="clear:both"><h4>Solar</h4></div>
+		<div id="helmet-void" style="clear:both"><h4>Void</h4></div>
+	</div>
+	</section>
+	
+	<script src="https://code.jquery.com/jquery-3.3.1.js" crossorigin="anonymous"></script>
+	<script type="text/javascript">
+		var saveData = [];
+		loadSavedData();
+		loadUI();
+	
+		$(document).ready(function() {
+			$('.mod').click(function(){
+				var alpha = $('.not-owned', this);
+				var id = $(this).data('identifier');
+				if (alpha.is(':visible'))
+					addItem(id);
+				else
+					removeItem(id);
+				alpha.toggle();
+			});
+		});
+		
+		function load(wrapperId, background, count) {
+			var wrapper = $('#'+wrapperId);
+			for (var i=0; i < count; ++i) {
+				var item = $('<div class="mod helmet-arc"><div class="not-owned"></div></div>');
+				item.css('background-image', 'url('+background+')');
+				item.css('background-position-x', i * 54);
+				item.data('identifier', wrapperId+"_"+i);
+				wrapper.append(item);
+			}
+		}
+		
+		function loadSavedData() {
+			var rawData = localStorage.getItem('destiny2-mods');
+			saveData = JSON.parse(rawData);
+			if (saveData == null)
+				saveData = [];
+		}
+		function loadUI() {
+			load('helmet-season8', 'images/helmet/season8.png', 5);
+			load('helmet-general', 'images/helmet/general.png', 12);
+			load('helmet-arc', 'images/helmet/arc.png', 11);
+			load('helmet-solar', 'images/helmet/solar.png', 11);
+			load('helmet-void', 'images/helmet/void.png', 12);
+			
+			for (var i=0; i<saveData.length; ++i) {
+				var itemData = saveData[i].split('_');
+				var id = itemData[0];
+				var index = 2 + parseInt(itemData[1]);
+				
+				$('.not-owned', '#'+id+' .mod:nth-child('+(index)+')').hide();
+			}
+		}
+		function saveChanges() {
+			localStorage.setItem('destiny2-mods', JSON.stringify(saveData));
+		}
+		
+		function addItem(identifier) {
+			var index = saveData.indexOf(identifier);
+			if (index > -1)
+				return;
+			saveData.push(identifier);
+			saveChanges();
+		}
+		function removeItem(identifier) {
+			var index = saveData.indexOf(identifier);
+			if (index > -1)
+				saveData.splice(index, 1);
+			saveChanges();
+		}
+		
+	</script>
+</body>
+</html>
