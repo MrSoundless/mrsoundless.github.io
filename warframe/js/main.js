@@ -4,7 +4,7 @@ var saveData = [];
 loadSavedData();
 
 $(document).ready(function() {
-	$('#search').on('keydown', search);
+	$('#search').on('keypress', search);
 	$(document).on('change', 'input[type=checkbox]', handleCheckboxChanged);
 	$('#export-button').click(function() {
 		downloadObjectAsJson(saveData, "warframe-collections");
@@ -63,10 +63,11 @@ function loadItems(url) {
 }
 
 function search() {
-	var searchStrings = $(this).val().toLowerCase().split('|');
+	var val = $(this).val().toLowerCase();
+	var searchStrings = val.split('|');
 	$('.list-group-item').each(function() {
 		var item = getItem($(this).data('id'));
-		if (isItemMatch(item, searchStrings))
+		if (val == "" || isItemMatch(item, searchStrings))
 			$(this).show();
 		else
 			$(this).hide();
