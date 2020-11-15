@@ -4,8 +4,8 @@ var saveData = [];
 loadSavedData();
 
 $(document).ready(function() {
-	$('#search').keydown(search);
-	$(document).on('keydown', 'input[type=checkbox]', handleCheckboxChanged);
+	$('#search').on('keydown', search);
+	$(document).on('change', 'input[type=checkbox]', handleCheckboxChanged);
 	$('#export-button').click(function() {
 		downloadObjectAsJson(saveData, "warframe-collections");
 	});
