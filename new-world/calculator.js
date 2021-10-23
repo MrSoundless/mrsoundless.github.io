@@ -413,7 +413,7 @@ $('document').ready(function() {
         }
         else {
             var total = currentLevelXp;
-            for (var i=currentLevel+1; i<=targetLevel; ++i) {
+            for (var i=currentLevel; i<=targetLevel-1; ++i) {
                 total += xpTable[i];
             }
             
