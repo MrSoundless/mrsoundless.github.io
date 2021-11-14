@@ -13,6 +13,8 @@ $(document).ready(function() {
 		handleFileSelect();
 	});
 	$.when(
+		loadItems('https://raw.githubusercontent.com/WFCD/warframe-items/development/data/json/Arch-Gun.json'),
+		loadItems('https://raw.githubusercontent.com/WFCD/warframe-items/development/data/json/Arch-Melee.json'),
 		loadItems('https://raw.githubusercontent.com/WFCD/warframe-items/development/data/json/Archwing.json'),
 		loadItems('https://raw.githubusercontent.com/WFCD/warframe-items/development/data/json/Melee.json'),
 		loadItems('https://raw.githubusercontent.com/WFCD/warframe-items/development/data/json/Primary.json'),
