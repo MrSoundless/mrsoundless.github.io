@@ -13,14 +13,14 @@ $(document).ready(function() {
 		handleFileSelect();
 	});
 	$.when(
-		loadItems('https://raw.githubusercontent.com/WFCD/warframe-items/development/data/json/Arch-Gun.json'),
-		loadItems('https://raw.githubusercontent.com/WFCD/warframe-items/development/data/json/Arch-Melee.json'),
-		loadItems('https://raw.githubusercontent.com/WFCD/warframe-items/development/data/json/Archwing.json'),
-		loadItems('https://raw.githubusercontent.com/WFCD/warframe-items/development/data/json/Melee.json'),
-		loadItems('https://raw.githubusercontent.com/WFCD/warframe-items/development/data/json/Primary.json'),
-		loadItems('https://raw.githubusercontent.com/WFCD/warframe-items/development/data/json/Secondary.json'),
-		loadItems('https://raw.githubusercontent.com/WFCD/warframe-items/development/data/json/Sentinels.json'),
-		loadItems('https://raw.githubusercontent.com/WFCD/warframe-items/development/data/json/Warframes.json')
+		loadItems('https://raw.githubusercontent.com/WFCD/warframe-items/master/data/json/Arch-Gun.json'),
+		loadItems('https://raw.githubusercontent.com/WFCD/warframe-items/master/data/json/Arch-Melee.json'),
+		loadItems('https://raw.githubusercontent.com/WFCD/warframe-items/master/data/json/Archwing.json'),
+		loadItems('https://raw.githubusercontent.com/WFCD/warframe-items/master/data/json/Melee.json'),
+		loadItems('https://raw.githubusercontent.com/WFCD/warframe-items/master/data/json/Primary.json'),
+		loadItems('https://raw.githubusercontent.com/WFCD/warframe-items/master/data/json/Secondary.json'),
+		loadItems('https://raw.githubusercontent.com/WFCD/warframe-items/master/data/json/Sentinels.json'),
+		loadItems('https://raw.githubusercontent.com/WFCD/warframe-items/master/data/json/Warframes.json')
 	).then(function() {
 		allItems = allItems.sort(function(x,y) {
 			return x.name < y.name ? -1 : 1;
