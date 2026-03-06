@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Endfield Tracker • Teams</title>
+  <link rel="stylesheet" href="assets/css/teams.css" />
+</head>
+<body>
+  <div class="wrap">
+    <div class="hud">
+      <div class="left"><span class="dot"></span><span>Team Builder</span></div>
+      <div class="right">Teams are 4 operators</div>
+    </div>
+
+    <div class="topbar">
+      <div class="brand">
+        <div class="logo"></div>
+        <div>
+          <h1>Endfield Tracker</h1>
+          <span>Teams • Drag reorder • Add from roster</span>
+        </div>
+      </div>
+
+      <div class="nav">
+        <a href="index.html">Roster</a>
+        <a class="active" href="teams.html">Teams</a>
+        <a href="weapons.html">Weapons</a>
+      </div>
+
+      <div class="search">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M21 21l-4.3-4.3m1.8-5.2a7 7 0 11-14 0 7 7 0 0114 0z" stroke="white" stroke-opacity=".7" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        <input id="searchInput" placeholder="Search roster…" />
+      </div>
+
+      <button class="btn primary" id="newTeamBtn">New Team</button>
+    </div>
+
+    <div class="layout">
+      <!-- LEFT -->
+      <section class="panel">
+        <h2>Teams</h2>
+        <div class="teamList" id="teamList"></div>
+      </section>
+
+      <!-- RIGHT -->
+      <section class="panel">
+        <div class="builderHeader">
+          <div class="left">
+            <p class="builderTitle" id="builderTitle">Select a team</p>
+            <div class="builderHint">Add up to 4 members. Drag to reorder.</div>
+          </div>
+          <div class="right">
+            <button class="btn" id="clearTeamBtn">Clear</button>
+            <button class="btn" id="deleteTeamBtn" style="border-color: rgba(255,92,122,.26); background: rgba(255,92,122,.10);">Delete</button>
+          </div>
+        </div>
+
+        <div class="nameEdit">
+          <input id="teamNameInput" placeholder="Team name…" disabled />
+          <button class="btn" id="saveNameBtn" disabled>Save</button>
+        </div>
+
+        <div style="margin-top:12px; color:var(--muted); font-size:12px; letter-spacing:.14em; text-transform:uppercase;">
+          Members (4)
+        </div>
+        <div class="members" id="members"></div>
+
+        <div style="margin-top:16px; border-top:1px solid var(--stroke2); padding-top:14px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+            <div style="color:var(--muted); font-size:12px; letter-spacing:.14em; text-transform:uppercase;">Roster</div>
+            <div style="color:var(--muted); font-size:12px;" id="rosterCount"></div>
+          </div>
+          <div class="rosterGrid" id="roster"></div>
+        </div>
+      </section>
+    </div>
+
+    <div class="footer">Tip: drag a member onto another member to swap order.</div>
+  </div>
+
+<script src="assets/js/teams.js"></script>
+</body>
+</html>
+
