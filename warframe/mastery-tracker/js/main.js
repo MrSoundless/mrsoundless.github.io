@@ -6,6 +6,7 @@ loadSavedData();
 $(document).ready(function() {
 	$('#search').on('input', search);
 	$(document).on('change', 'input[type=checkbox]', handleCheckboxChanged);
+	$('#import-field').on('change', updateImportLabel);
 	$('#export-button').click(function() {
 		downloadObjectAsJson(saveData, "warframe-collections");
 	});
@@ -22,7 +23,7 @@ $(document).ready(function() {
 		loadItems('https://raw.githubusercontent.com/WFCD/warframe-items/master/data/json/Sentinels.json'),
 		loadItems('https://raw.githubusercontent.com/WFCD/warframe-items/master/data/json/Warframes.json')
 	).then(function() {
-		allItems = allItems.sort(function(x,y) {
+		allItems = allItems.sort(function(x, y) {
 			return x.name < y.name ? -1 : 1;
 		});
 
@@ -47,16 +48,16 @@ $(document).ready(function() {
 				else if (savedItem.crafted)
 					itemTag.addClass('list-group-item-warning');
 			}
-				
+
 			if (!firstTag)
 				firstTag = itemTag;
 			listTag.append(itemTag);
 		}
 
+		updateSummary();
 		firstTag.trigger('click');
 	});
 });
-
 
 function loadItems(url) {
 	return $.getJSON(url, function(data) {
@@ -74,7 +75,8 @@ function search() {
 		else
 			$(this).hide();
 	});
-	
+
+	updateVisibleCount();
 	$('.list-group-item:visible:first').trigger('click');
 }
 
@@ -82,8 +84,6 @@ function isItemMatch(item, searches) {
 	for (var i = 0; i < searches.length; ++i)
 		if (andMatch(item, searches[i].split(',')))
 			return true;
-		//if (source.includes(searches[i].trim()))
-			//return true;
 	return false;
 }
 function andMatch(item, searches) {
@@ -97,27 +97,27 @@ function matchKeyword(item, keyword) {
 		return false;
 
 	var savedItem = getDataById(saveData, item.uniqueName);
-	switch(keyword) {
+	switch (keyword) {
 		case "is:vaulted":
 			return item.vaulted === true;
 		case "not:vaulted":
 			return item.vaulted !== true;
 		case "is:mastered":
-			return savedItem && savedItem.mastered; 
+			return savedItem && savedItem.mastered;
 		case "not:mastered":
 			return !savedItem || !savedItem.mastered;
 		case "is:crafted":
-			return savedItem && savedItem.crafted; 
+			return savedItem && savedItem.crafted;
 		case "not:crafted":
 			return !savedItem || !savedItem.crafted;
 	}
-	
+
 	if (item.name.toLowerCase().includes(keyword))
 		return true;
-		
+
 	if (item.category.toLowerCase().trim() == keyword)
 		return true;
-	
+
 	if (item.components) {
 		for (var c = 0; c < item.components.length; ++c) {
 			var component = item.components[c];
@@ -143,7 +143,7 @@ function matchKeyword(item, keyword) {
 			}
 		}
 	}
-	
+
 	return false;
 }
 
@@ -168,6 +168,9 @@ function showItem(id) {
 	var mainTag = $('#main-content');
 	mainTag.data('id', item.uniqueName);
 	$('h1', '#main-content').text(item.name);
+	$('.category-chip', mainTag).text(item.category);
+	$('.vaulted-chip', mainTag).toggle(!!item.vaulted).toggleClass('is-vaulted', !!item.vaulted);
+	$('.empty-copy', mainTag).hide();
 	var componentsTag = $('table.components');
 	$('input[type=checkbox]').prop('checked', false);
 	$('table.components tbody tr:not(.component-template)').remove();
@@ -181,8 +184,8 @@ function showItem(id) {
 				.data('id', component.uniqueName)
 				.show()
 				.removeClass('component-template');
-			$('.amount', componentTag).text(component.itemCount);
-			$('.name', componentTag).text(component.name);
+			$('.amount .amount-badge', componentTag).text(component.itemCount);
+			$('.name .component-name', componentTag).text(component.name);
 
 			var dropText = createDropInfoText(component.drops);
 			if (dropText) {
@@ -192,9 +195,9 @@ function showItem(id) {
 			} else {
 				$('.component-info', componentTag).hide();
 			}
-			
+
 			componentsTag.append(componentTag);
-			
+
 			if (component.name == "Blueprint")
 				$('.component-crafted', componentTag).hide();
 		}
@@ -235,8 +238,7 @@ function createDropInfoText(drops) {
 		if (location.toLowerCase().startsWith('lith') ||
 			location.toLowerCase().startsWith('meso') ||
 			location.toLowerCase().startsWith('neo') ||
-			location.toLowerCase().startsWith('axi'))
-		{
+			location.toLowerCase().startsWith('axi')) {
 			var bla = location.split(' ');
 			bla.pop();
 			location = bla.join(' ');
@@ -282,7 +284,7 @@ function saveCurrentItem() {
 
 	saveData.push(item);
 	localStorage.setItem('warframe-collections', JSON.stringify(saveData));
-	
+
 	var tag = findItemTagById(itemId);
 	tag.removeClass('list-group-item-success');
 	tag.removeClass('list-group-item-warning');
@@ -290,6 +292,8 @@ function saveCurrentItem() {
 		tag.addClass('list-group-item-success');
 	else if (item.crafted)
 		tag.addClass('list-group-item-warning');
+
+	updateSummary();
 }
 function findItemTagById(id) {
 	var result = null;
@@ -299,9 +303,9 @@ function findItemTagById(id) {
 	});
 	return result;
 }
-	
+
 function getDataById(data, id) {
-	for(var i = 0; i < data.length; ++i) {
+	for (var i = 0; i < data.length; ++i) {
 		if (data[i].id == id)
 			return data[i];
 	}
@@ -313,7 +317,7 @@ function removeDataById(data, id) {
 		return;
 
 	var index = data.indexOf(item);
-	if (index > -1) 
+	if (index > -1)
 		data.splice(index, 1);
 }
 
@@ -348,21 +352,20 @@ function handleCheckboxChanged() {
 	saveCurrentItem();
 }
 
-function downloadObjectAsJson(exportObj, exportName){
+function downloadObjectAsJson(exportObj, exportName) {
 	var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportObj));
 	var downloadAnchorNode = document.createElement('a');
-	downloadAnchorNode.setAttribute("href",     dataStr);
+	downloadAnchorNode.setAttribute("href", dataStr);
 	downloadAnchorNode.setAttribute("download", exportName + ".json");
-	document.body.appendChild(downloadAnchorNode); // required for firefox
+	document.body.appendChild(downloadAnchorNode);
 	downloadAnchorNode.click();
 	downloadAnchorNode.remove();
 }
-function handleFileSelect()
-{               
+function handleFileSelect() {
 	if (!window.File || !window.FileReader || !window.FileList || !window.Blob) {
 		alert('The File APIs are not fully supported in this browser.');
 		return;
-	}   
+	}
 
 	input = document.getElementById('import-field');
 	if (!input) {
@@ -372,13 +375,12 @@ function handleFileSelect()
 		alert("This browser doesn't seem to support the `files` property of file inputs.");
 	}
 	else if (!input.files[0]) {
-		alert("Please select a file before clicking 'Import'");               
+		alert("Please select a file before clicking 'Import'");
 	}
 	else {
 		file = input.files[0];
 		fr = new FileReader();
 		fr.onload = receivedText;
-		//fr.readAsText(file);
 		fr.readAsText(file);
 	}
 }
@@ -386,5 +388,33 @@ function handleFileSelect()
 function receivedText() {
 	localStorage.setItem('warframe-collections', fr.result);
 	location.reload();
-}    
-  
+}
+
+function updateSummary() {
+	var tracked = 0;
+	var mastered = 0;
+	for (var i = 0; i < saveData.length; ++i) {
+		var item = saveData[i];
+		if (item.crafted || item.mastered)
+			tracked++;
+		if (item.mastered)
+			mastered++;
+	}
+
+	$('#tracked-count').text(tracked);
+	$('#mastered-count').text(mastered);
+	updateVisibleCount();
+}
+
+function updateVisibleCount() {
+	$('#visible-count').text($('.list-group-item:visible').length);
+}
+
+function updateImportLabel() {
+	var input = $('#import-field')[0];
+	var label = 'Choose a saved collection JSON';
+	if (input && input.files && input.files[0])
+		label = input.files[0].name;
+
+	$('.custom-file-label').text(label);
+}

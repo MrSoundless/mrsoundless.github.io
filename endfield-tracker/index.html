@@ -1,58 +1,12 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Endfield Tracker • Roster</title>
-  <link rel="stylesheet" href="assets/css/index.css" />
-</head>
-<body>
-  <div class="wrap">
-    <div class="hud">
-      <div class="left"><span class="dot"></span><span>Roster</span></div>
-      <div class="right">Owned + Team usage</div>
-    </div>
-
-    <div class="topbar">
-      <div class="brand">
-        <div class="logo"></div>
-        <div>
-          <h1>Endfield Tracker</h1>
-          <span>Collection • Owned • Rarity</span>
-        </div>
-      </div>
-
-      <div class="nav">
-        <a class="active" href="index.html">Roster</a>
-        <a href="teams.html">Teams</a>
-        <a href="weapons.html">Weapons</a>
-      </div>
-
-      <div class="search">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-          <path d="M21 21l-4.3-4.3m1.8-5.2a7 7 0 11-14 0 7 7 0 0114 0z" stroke="white" stroke-opacity=".7" stroke-width="2" stroke-linecap="round"/>
-        </svg>
-        <input id="searchInput" placeholder="Search characters…" />
-      </div>
-
-      <div class="pillset" aria-label="Owned filter">
-        <button class="pill active" data-owned="all">All</button>
-        <button class="pill" data-owned="owned">Owned</button>
-        <button class="pill" data-owned="unowned">Unowned</button>
-      </div>
-    </div>
-
-    <div class="controls">
-      <div>Owned: <strong id="ownedCount">0</strong> / <strong id="totalCount">0</strong></div>
-      <div>Showing: <strong id="shownCount">0</strong></div>
-    </div>
-
-    <div class="grid" id="grid"></div>
-
-    <div class="footer">Click “In Team” to open the Teams page.</div>
-  </div>
-
-<script src="assets/js/index.js"></script>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Endfield Tracker</title>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
 </html>
-
