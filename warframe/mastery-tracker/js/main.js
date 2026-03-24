@@ -1,5 +1,16 @@
 var allItems = [];
 var saveData = [];
+var googleTokenClient = null;
+var googleAccessToken = null;
+var googleTokenExpiresAt = 0;
+var googleSyncTimer = null;
+
+var STORAGE_KEY = 'warframe-collections';
+var GOOGLE_CLIENT_ID_KEY = 'warframe-google-client-id';
+var GOOGLE_AUTO_SYNC_KEY = 'warframe-google-auto-sync';
+var GOOGLE_LAST_SYNC_KEY = 'warframe-google-last-sync';
+var GOOGLE_DATA_FILE = 'warframe-collections.json';
+var GOOGLE_SCOPE = 'https://www.googleapis.com/auth/drive.appdata';
 
 loadSavedData();
 
@@ -8,11 +19,15 @@ $(document).ready(function() {
 	$(document).on('change', 'input[type=checkbox]', handleCheckboxChanged);
 	$('#import-field').on('change', updateImportLabel);
 	$('#export-button').click(function() {
-		downloadObjectAsJson(saveData, "warframe-collections");
+		downloadObjectAsJson(saveData, 'warframe-collections');
 	});
 	$('#import-button').click(function() {
 		handleFileSelect();
 	});
+
+	initializeSaveMenuUi();
+	initializeGoogleSyncUi();
+
 	$.when(
 		loadItems('https://raw.githubusercontent.com/WFCD/warframe-items/master/data/json/Arch-Gun.json'),
 		loadItems('https://raw.githubusercontent.com/WFCD/warframe-items/master/data/json/Arch-Melee.json'),
@@ -33,7 +48,7 @@ $(document).ready(function() {
 			var item = allItems[i];
 			var name = item.name;
 			if (item.vaulted)
-				name += " *";
+				name += ' *';
 			var itemTag = $('<li>')
 				.addClass('list-group-item')
 				.text(name)
@@ -55,9 +70,72 @@ $(document).ready(function() {
 		}
 
 		updateSummary();
-		firstTag.trigger('click');
+		if (firstTag)
+			firstTag.trigger('click');
 	});
 });
+
+function initializeSaveMenuUi() {
+	$('#save-menu-toggle').on('click', function(e) {
+		e.preventDefault();
+		e.stopPropagation();
+		toggleSaveMenu();
+	});
+
+	$('#save-menu-close').on('click', function() {
+		closeSaveMenu();
+	});
+
+	$('#save-menu-popover').on('click', function(e) {
+		e.stopPropagation();
+	});
+
+	$('.auth-tabs .nav-link').on('click', function(e) {
+		e.preventDefault();
+		e.stopPropagation();
+		activateSaveTab($(this));
+	});
+
+	$(document).on('click', function() {
+		closeSaveMenu();
+	});
+
+	$(document).on('keydown', function(e) {
+		if (e.key === 'Escape')
+			closeSaveMenu();
+	});
+
+	activateSaveTab($('#local-tab-link'));
+}
+
+function toggleSaveMenu() {
+	if ($('#save-menu-popover').prop('hidden'))
+		openSaveMenu();
+	else
+		closeSaveMenu();
+}
+
+function openSaveMenu() {
+	$('#save-menu-popover').prop('hidden', false);
+	$('#save-menu-toggle').attr('aria-expanded', 'true');
+}
+
+function closeSaveMenu() {
+	$('#save-menu-popover').prop('hidden', true);
+	$('#save-menu-toggle').attr('aria-expanded', 'false');
+}
+
+function activateSaveTab(tab) {
+	if (!tab || !tab.length)
+		return;
+
+	var targetSelector = tab.attr('href');
+	$('.auth-tabs .nav-link').removeClass('active').attr('aria-selected', 'false');
+	tab.addClass('active').attr('aria-selected', 'true');
+
+	$('.auth-pane').removeClass('show active');
+	$(targetSelector).addClass('show active');
+}
 
 function loadItems(url) {
 	return $.getJSON(url, function(data) {
@@ -70,7 +148,7 @@ function search() {
 	var searchStrings = val.split('|');
 	$('.list-group-item').each(function() {
 		var item = getItem($(this).data('id'));
-		if (val == "" || isItemMatch(item, searchStrings))
+		if (val == '' || isItemMatch(item, searchStrings))
 			$(this).show();
 		else
 			$(this).hide();
@@ -86,29 +164,31 @@ function isItemMatch(item, searches) {
 			return true;
 	return false;
 }
+
 function andMatch(item, searches) {
 	for (var i = 0; i < searches.length; ++i)
 		if (!matchKeyword(item, searches[i].trim()))
 			return false;
 	return true;
 }
+
 function matchKeyword(item, keyword) {
 	if (!keyword)
 		return false;
 
 	var savedItem = getDataById(saveData, item.uniqueName);
 	switch (keyword) {
-		case "is:vaulted":
+		case 'is:vaulted':
 			return item.vaulted === true;
-		case "not:vaulted":
+		case 'not:vaulted':
 			return item.vaulted !== true;
-		case "is:mastered":
+		case 'is:mastered':
 			return savedItem && savedItem.mastered;
-		case "not:mastered":
+		case 'not:mastered':
 			return !savedItem || !savedItem.mastered;
-		case "is:crafted":
+		case 'is:crafted':
 			return savedItem && savedItem.crafted;
-		case "not:crafted":
+		case 'not:crafted':
 			return !savedItem || !savedItem.crafted;
 	}
 
@@ -130,7 +210,7 @@ function matchKeyword(item, keyword) {
 				if (savedComponent && savedComponent.owned)
 					continue;
 
-				cleanKeyword = keyword.substring("notowned:".length);
+				cleanKeyword = keyword.substring('notowned:'.length);
 			}
 
 			if (component.drops) {
@@ -153,6 +233,7 @@ function itemClick() {
 	tag.addClass('active');
 	showItem(tag.data('id'));
 }
+
 function getItem(id) {
 	for (var i = 0; i < allItems.length; ++i) {
 		if (allItems[i].uniqueName == id)
@@ -160,6 +241,7 @@ function getItem(id) {
 	}
 	return null;
 }
+
 function showItem(id) {
 	var item = getItem(id);
 	if (item == null)
@@ -198,13 +280,14 @@ function showItem(id) {
 
 			componentsTag.append(componentTag);
 
-			if (component.name == "Blueprint")
+			if (component.name == 'Blueprint')
 				$('.component-crafted', componentTag).hide();
 		}
 	}
 	$('[data-toggle="tooltip"]').tooltip();
 	loadCheckboxStates(id);
 }
+
 function loadCheckboxStates(id) {
 	var item = getDataById(saveData, id);
 	if (item == null)
@@ -239,9 +322,9 @@ function createDropInfoText(drops) {
 			location.toLowerCase().startsWith('meso') ||
 			location.toLowerCase().startsWith('neo') ||
 			location.toLowerCase().startsWith('axi')) {
-			var bla = location.split(' ');
-			bla.pop();
-			location = bla.join(' ');
+			var relicParts = location.split(' ');
+			relicParts.pop();
+			location = relicParts.join(' ');
 		}
 
 		if (dropNames.includes(location.toLowerCase()))
@@ -250,7 +333,7 @@ function createDropInfoText(drops) {
 		dropNames.push(location.toLowerCase());
 
 		if (drops[i].rarity)
-			location += " (" + drops[i].rarity + ")";
+			location += ' (' + drops[i].rarity + ')';
 
 		list.append($('<li>').text(location));
 	}
@@ -258,11 +341,12 @@ function createDropInfoText(drops) {
 }
 
 function loadSavedData() {
-	var rawData = localStorage.getItem('warframe-collections');
+	var rawData = localStorage.getItem(STORAGE_KEY);
 	saveData = JSON.parse(rawData);
 	if (saveData == null)
 		saveData = [];
 }
+
 function saveCurrentItem() {
 	var itemId = $('#main-content').data('id');
 	removeDataById(saveData, itemId);
@@ -283,18 +367,26 @@ function saveCurrentItem() {
 	});
 
 	saveData.push(item);
-	localStorage.setItem('warframe-collections', JSON.stringify(saveData));
+	persistSaveData();
 
 	var tag = findItemTagById(itemId);
-	tag.removeClass('list-group-item-success');
-	tag.removeClass('list-group-item-warning');
-	if (item.mastered)
-		tag.addClass('list-group-item-success');
-	else if (item.crafted)
-		tag.addClass('list-group-item-warning');
+	if (tag) {
+		tag.removeClass('list-group-item-success');
+		tag.removeClass('list-group-item-warning');
+		if (item.mastered)
+			tag.addClass('list-group-item-success');
+		else if (item.crafted)
+			tag.addClass('list-group-item-warning');
+	}
 
 	updateSummary();
+	scheduleGoogleAutoSync();
 }
+
+function persistSaveData() {
+	localStorage.setItem(STORAGE_KEY, JSON.stringify(saveData));
+}
+
 function findItemTagById(id) {
 	var result = null;
 	$('.list-group-item', '#all-items').each(function() {
@@ -311,6 +403,7 @@ function getDataById(data, id) {
 	}
 	return null;
 }
+
 function removeDataById(data, id) {
 	var item = getDataById(data, id);
 	if (item == null)
@@ -353,21 +446,22 @@ function handleCheckboxChanged() {
 }
 
 function downloadObjectAsJson(exportObj, exportName) {
-	var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportObj));
+	var dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(exportObj));
 	var downloadAnchorNode = document.createElement('a');
-	downloadAnchorNode.setAttribute("href", dataStr);
-	downloadAnchorNode.setAttribute("download", exportName + ".json");
+	downloadAnchorNode.setAttribute('href', dataStr);
+	downloadAnchorNode.setAttribute('download', exportName + '.json');
 	document.body.appendChild(downloadAnchorNode);
 	downloadAnchorNode.click();
 	downloadAnchorNode.remove();
 }
+
 function handleFileSelect() {
 	if (!window.File || !window.FileReader || !window.FileList || !window.Blob) {
 		alert('The File APIs are not fully supported in this browser.');
 		return;
 	}
 
-	input = document.getElementById('import-field');
+	var input = document.getElementById('import-field');
 	if (!input) {
 		alert("Um, couldn't find the fileinput element.");
 	}
@@ -378,15 +472,28 @@ function handleFileSelect() {
 		alert("Please select a file before clicking 'Import'");
 	}
 	else {
-		file = input.files[0];
-		fr = new FileReader();
-		fr.onload = receivedText;
+		var file = input.files[0];
+		var fr = new FileReader();
+		fr.onload = function() {
+			receiveImportedText(fr.result);
+		};
 		fr.readAsText(file);
 	}
 }
 
-function receivedText() {
-	localStorage.setItem('warframe-collections', fr.result);
+function receiveImportedText(text) {
+	try {
+		saveData = JSON.parse(text);
+		if (!Array.isArray(saveData))
+			throw new Error('Imported data must be an array.');
+	}
+	catch (err) {
+		alert('That file is not a valid Warframe collection export.');
+		return;
+	}
+
+	persistSaveData();
+	scheduleGoogleAutoSync();
 	location.reload();
 }
 
@@ -418,3 +525,319 @@ function updateImportLabel() {
 
 	$('.custom-file-label').text(label);
 }
+
+function initializeGoogleSyncUi() {
+	$('#google-client-id').val(getGoogleClientId());
+	$('#google-auto-sync').prop('checked', localStorage.getItem(GOOGLE_AUTO_SYNC_KEY) === 'true');
+	$('#google-last-sync').text(localStorage.getItem(GOOGLE_LAST_SYNC_KEY) || 'Never');
+
+	$('#save-google-client-id').on('click', saveGoogleClientId);
+	$('#google-connect-button').on('click', connectGoogleAccount);
+	$('#google-disconnect-button').on('click', disconnectGoogleAccount);
+	$('#google-upload-button').on('click', function() {
+		pushSaveDataToGoogle(true, true);
+	});
+	$('#google-download-button').on('click', function() {
+		pullSaveDataFromGoogle(true);
+	});
+	$('#google-auto-sync').on('change', function() {
+		localStorage.setItem(GOOGLE_AUTO_SYNC_KEY, $(this).is(':checked') ? 'true' : 'false');
+		if ($(this).is(':checked'))
+			scheduleGoogleAutoSync();
+	});
+
+	updateGoogleStatus('Not connected', 'Store a client ID, then connect a Google account to sync with Drive app data.', 'warning');
+	waitForGoogleIdentityLibrary();
+}
+
+function waitForGoogleIdentityLibrary() {
+	if (window.google && google.accounts && google.accounts.oauth2) {
+		initializeGoogleTokenClient();
+		return;
+	}
+
+	window.setTimeout(waitForGoogleIdentityLibrary, 250);
+}
+
+function getGoogleClientId() {
+	return (localStorage.getItem(GOOGLE_CLIENT_ID_KEY) || '').trim();
+}
+
+function saveGoogleClientId() {
+	var clientId = ($('#google-client-id').val() || '').trim();
+	if (!clientId) {
+		localStorage.removeItem(GOOGLE_CLIENT_ID_KEY);
+		googleTokenClient = null;
+		googleAccessToken = null;
+		googleTokenExpiresAt = 0;
+		updateGoogleStatus('Client ID missing', 'Paste a Google OAuth Web Client ID to enable Drive sync.', 'warning');
+		return;
+	}
+
+	localStorage.setItem(GOOGLE_CLIENT_ID_KEY, clientId);
+	googleTokenClient = null;
+	googleAccessToken = null;
+	googleTokenExpiresAt = 0;
+	initializeGoogleTokenClient();
+	updateGoogleStatus('Client ID saved', 'You can connect your Google account now.', 'warning');
+}
+
+function initializeGoogleTokenClient() {
+	if (!(window.google && google.accounts && google.accounts.oauth2))
+		return false;
+
+	var clientId = getGoogleClientId();
+	if (!clientId) {
+		updateGoogleStatus('Client ID missing', 'Paste a Google OAuth Web Client ID to enable Drive sync.', 'warning');
+		return false;
+	}
+
+	googleTokenClient = google.accounts.oauth2.initTokenClient({
+		client_id: clientId,
+		scope: GOOGLE_SCOPE,
+		callback: function() {},
+		error_callback: function(err) {
+			console.error(err);
+			updateGoogleStatus('Google auth failed', 'The Google sign-in request failed. Check your OAuth client and page origin.', 'error');
+		}
+	});
+
+	return true;
+}
+
+function connectGoogleAccount() {
+	requestGoogleAccessToken(true)
+		.then(function() {
+			updateGoogleStatus('Connected', 'Google Drive app-data sync is ready for this browser session.', 'connected');
+		})
+		.catch(function(err) {
+			console.error(err);
+			updateGoogleStatus('Connect failed', err.message || 'Unable to start Google sign-in. Check the saved client ID and authorized origin.', 'error');
+		});
+}
+
+function disconnectGoogleAccount() {
+	if (window.google && google.accounts && google.accounts.oauth2 && googleAccessToken)
+		google.accounts.oauth2.revoke(googleAccessToken, function() {});
+
+	googleAccessToken = null;
+	googleTokenExpiresAt = 0;
+	updateGoogleStatus('Disconnected', 'Local storage is still active. Reconnect Google whenever you want to sync.', 'warning');
+}
+
+function requestGoogleAccessToken(forceConsent) {
+	return new Promise(function(resolve, reject) {
+		if (googleAccessToken && Date.now() < googleTokenExpiresAt - 60000) {
+			resolve(googleAccessToken);
+			return;
+		}
+
+		if (!initializeGoogleTokenClient()) {
+			reject(new Error('Google OAuth client is not configured.'));
+			return;
+		}
+
+		googleTokenClient.callback = function(response) {
+			if (response && response.access_token) {
+				googleAccessToken = response.access_token;
+				googleTokenExpiresAt = Date.now() + ((response.expires_in || 3600) * 1000);
+				updateGoogleStatus('Connected', 'Google Drive app-data sync is ready for this browser session.', 'connected');
+				resolve(googleAccessToken);
+				return;
+			}
+
+			reject(new Error('No access token returned by Google.'));
+		};
+
+		try {
+			googleTokenClient.requestAccessToken({ prompt: forceConsent ? 'consent' : '' });
+		}
+		catch (err) {
+			reject(err);
+		}
+	});
+}
+
+function scheduleGoogleAutoSync() {
+	if (localStorage.getItem(GOOGLE_AUTO_SYNC_KEY) !== 'true')
+		return;
+
+	if (!googleAccessToken)
+		return;
+
+	if (googleSyncTimer)
+		window.clearTimeout(googleSyncTimer);
+
+	googleSyncTimer = window.setTimeout(function() {
+		pushSaveDataToGoogle(false, false);
+	}, 1200);
+}
+
+function pushSaveDataToGoogle(showAlerts, forceConsent) {
+	requestGoogleAccessToken(!!forceConsent)
+		.then(function(token) {
+			return upsertGoogleSaveFile(token, JSON.stringify(saveData));
+		})
+		.then(function(fileInfo) {
+			recordGoogleSyncTimestamp(fileInfo && fileInfo.modifiedTime ? fileInfo.modifiedTime : null);
+			updateGoogleStatus('Cloud save updated', 'Local progress has been uploaded to your Google Drive app data.', 'connected');
+			if (showAlerts)
+				alert('Uploaded your tracker data to Google Drive app data.');
+		})
+		.catch(function(err) {
+			console.error(err);
+			updateGoogleStatus('Upload failed', err.message || 'Google Drive upload failed.', 'error');
+			if (showAlerts)
+				alert('Google upload failed. Check the saved client ID, authorized origin, and sign-in permissions.');
+		});
+}
+
+function pullSaveDataFromGoogle(forceConsent) {
+	requestGoogleAccessToken(!!forceConsent)
+		.then(function(token) {
+			return downloadGoogleSaveFile(token);
+		})
+		.then(function(payload) {
+			if (!payload) {
+				updateGoogleStatus('No cloud save found', 'This Google account does not have a saved tracker file yet.', 'warning');
+				alert('No cloud save was found in Google Drive app data for this account yet.');
+				return;
+			}
+
+			var parsed = JSON.parse(payload.content);
+			if (!Array.isArray(parsed))
+				throw new Error('Cloud save is not in the expected format.');
+
+			saveData = parsed;
+			persistSaveData();
+			recordGoogleSyncTimestamp(payload.modifiedTime || null);
+			updateGoogleStatus('Cloud save loaded', 'Downloaded the latest cloud progress into local storage.', 'connected');
+			alert('Downloaded your cloud save. The page will refresh to apply it.');
+			location.reload();
+		})
+		.catch(function(err) {
+			console.error(err);
+			updateGoogleStatus('Download failed', err.message || 'Google Drive download failed.', 'error');
+			alert('Google download failed. Check the saved client ID, authorized origin, and sign-in permissions.');
+		});
+}
+
+function updateGoogleStatus(pillText, bodyText, tone) {
+	var pill = $('#google-status-pill');
+	pill.text(pillText);
+	pill.removeClass('connected warning error');
+	if (tone)
+		pill.addClass(tone);
+	$('#google-status-text').text(bodyText);
+	updateSaveMenuButtonLabel();
+}
+
+function updateSaveMenuButtonLabel() {
+	var label = 'Save & Auth';
+	if (googleAccessToken)
+		label = 'Save & Auth: Google Connected';
+	$('#save-menu-toggle').html('<i class="fas fa-user-shield"></i>' + label);
+}
+
+function recordGoogleSyncTimestamp(modifiedTime) {
+	var readable = modifiedTime ? new Date(modifiedTime).toLocaleString() : new Date().toLocaleString();
+	localStorage.setItem(GOOGLE_LAST_SYNC_KEY, readable);
+	$('#google-last-sync').text(readable);
+}
+
+function findGoogleSaveFile(token) {
+	return fetch('https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&fields=files(id,name,modifiedTime)', {
+		method: 'GET',
+		headers: {
+			'Authorization': 'Bearer ' + token
+		}
+	})
+		.then(assertGoogleResponse)
+		.then(function(data) {
+			if (!data.files)
+				return null;
+
+			for (var i = 0; i < data.files.length; ++i) {
+				if (data.files[i].name === GOOGLE_DATA_FILE)
+					return data.files[i];
+			}
+			return null;
+		});
+}
+
+function upsertGoogleSaveFile(token, content) {
+	return findGoogleSaveFile(token).then(function(existingFile) {
+		var metadata = existingFile ? { name: GOOGLE_DATA_FILE } : { name: GOOGLE_DATA_FILE, parents: ['appDataFolder'] };
+		var boundary = 'warframe-boundary-' + Date.now();
+		var body =
+			'--' + boundary + '\r\n' +
+			'Content-Type: application/json; charset=UTF-8\r\n\r\n' +
+			JSON.stringify(metadata) + '\r\n' +
+			'--' + boundary + '\r\n' +
+			'Content-Type: application/json; charset=UTF-8\r\n\r\n' +
+			content + '\r\n' +
+			'--' + boundary + '--';
+		var url = existingFile
+			? 'https://www.googleapis.com/upload/drive/v3/files/' + encodeURIComponent(existingFile.id) + '?uploadType=multipart&fields=id,modifiedTime'
+			: 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,modifiedTime';
+		var method = existingFile ? 'PATCH' : 'POST';
+
+		return fetch(url, {
+			method: method,
+			headers: {
+				'Authorization': 'Bearer ' + token,
+				'Content-Type': 'multipart/related; boundary=' + boundary
+			},
+			body: body
+		}).then(assertGoogleResponse);
+	});
+}
+
+function downloadGoogleSaveFile(token) {
+	return findGoogleSaveFile(token).then(function(file) {
+		if (!file)
+			return null;
+
+		return fetch('https://www.googleapis.com/drive/v3/files/' + encodeURIComponent(file.id) + '?alt=media', {
+			method: 'GET',
+			headers: {
+				'Authorization': 'Bearer ' + token
+			}
+		})
+			.then(function(response) {
+				if (!response.ok)
+					return response.json().then(function(data) {
+						throw new Error(getGoogleErrorMessage(data));
+					});
+				return response.text();
+			})
+			.then(function(content) {
+				return {
+					content: content,
+					modifiedTime: file.modifiedTime
+				};
+			});
+	});
+}
+
+function assertGoogleResponse(response) {
+	if (!response.ok) {
+		return response.json().then(function(data) {
+			throw new Error(getGoogleErrorMessage(data));
+		});
+	}
+	return response.json();
+}
+
+function getGoogleErrorMessage(data) {
+	if (data && data.error) {
+		if (typeof data.error === 'string')
+			return data.error;
+		if (data.error.message)
+			return data.error.message;
+	}
+	return 'Google Drive request failed.';
+}
+
+
+

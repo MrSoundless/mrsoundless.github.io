@@ -13,15 +13,10 @@
 	<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
 	<style>
 	:root {
-		--bg: #08111e;
-		--bg-soft: rgba(12, 24, 40, 0.78);
-		--panel: rgba(11, 22, 37, 0.88);
-		--panel-strong: rgba(16, 32, 52, 0.95);
 		--panel-border: rgba(126, 170, 214, 0.18);
 		--text: #eff7ff;
 		--muted: #9ab2cd;
 		--accent: #5ce1e6;
-		--accent-warm: #ffb649;
 		--success: #76e7a1;
 		--warning: #ffd36e;
 		--danger: #ff7f7f;
@@ -63,7 +58,7 @@
 	.app-shell {
 		position: relative;
 		z-index: 1;
-		max-width: 1600px;
+		max-width: 1680px;
 		margin: 0 auto;
 		padding: 28px;
 		border: 1px solid var(--panel-border);
@@ -115,7 +110,22 @@
 		display: flex;
 		flex-wrap: wrap;
 		justify-content: flex-end;
+		align-items: flex-start;
 		gap: 12px;
+	}
+
+	.topbar-actions {
+		display: flex;
+		flex-direction: column;
+		align-items: flex-end;
+		gap: 12px;
+	}
+
+	.save-menu-anchor {
+		position: relative;
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start;
 	}
 
 	.stat-card,
@@ -124,7 +134,7 @@
 	.detail-card {
 		border: 1px solid var(--panel-border);
 		border-radius: 22px;
-		background: var(--panel);
+		background: rgba(11, 22, 37, 0.88);
 	}
 
 	.stat-card {
@@ -151,12 +161,11 @@
 
 	.controls {
 		display: grid;
-		grid-template-columns: minmax(260px, 420px) 1fr;
+		grid-template-columns: minmax(320px, 1fr);
 		gap: 18px;
 		margin-bottom: 18px;
 	}
 
-	.import-card,
 	.search-card {
 		padding: 18px;
 	}
@@ -170,22 +179,18 @@
 		color: var(--muted);
 	}
 
-	.import-actions {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 10px;
-	}
-
 	.custom-file-label,
 	.btn-action,
 	.input-group-text,
-	.form-control {
+	.form-control,
+	.cloud-input {
 		border-radius: 14px !important;
 	}
 
 	.custom-file-label,
 	.input-group-text,
-	.form-control {
+	.form-control,
+	.cloud-input {
 		height: 48px;
 		border: 1px solid rgba(126, 170, 214, 0.18);
 		background: rgba(255, 255, 255, 0.04);
@@ -205,7 +210,8 @@
 		text-overflow: ellipsis;
 	}
 
-	.form-control::placeholder {
+	.form-control::placeholder,
+	.cloud-input::placeholder {
 		color: rgba(239, 247, 255, 0.45);
 	}
 
@@ -222,15 +228,170 @@
 		background: linear-gradient(180deg, rgba(255, 182, 73, 0.18), rgba(255, 182, 73, 0.08));
 	}
 
+	.btn-action.ghost {
+		background: rgba(255, 255, 255, 0.04);
+	}
+
 	.btn-action:hover {
 		border-color: rgba(92, 225, 230, 0.5);
 		color: white;
 	}
 
-	.search-hint {
+	.auth-button {
+		min-width: 196px;
+	}
+
+	.auth-button i {
+		margin-right: 8px;
+	}
+
+	.auth-popover {
+		position: absolute;
+		top: calc(100% + 10px);
+		left: 0;
+		z-index: 30;
+		width: min(420px, calc(100vw - 40px));
+		padding: 16px;
+		border: 1px solid rgba(126, 170, 214, 0.24);
+		border-radius: 22px;
+		background: linear-gradient(180deg, rgba(9, 18, 31, 0.98), rgba(8, 16, 27, 0.98));
+		box-shadow: 0 24px 80px rgba(0, 0, 0, 0.42);
+	}
+
+	.auth-popover[hidden] {
+		display: none !important;
+	}
+
+	.auth-popover-header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 12px;
+		margin-bottom: 14px;
+	}
+
+	.auth-popover-header h3 {
+		margin: 0;
+		font-family: "Rajdhani", sans-serif;
+		font-size: 1.35rem;
+		font-weight: 700;
+		text-transform: uppercase;
+	}
+
+	.auth-popover-header p {
+		margin: 4px 0 0;
+		font-size: 0.88rem;
+		color: var(--muted);
+	}
+
+	.auth-tabs {
+		border-bottom: 0;
+		gap: 8px;
+		margin-bottom: 14px;
+	}
+
+	.auth-tabs .nav-link {
+		border: 1px solid rgba(126, 170, 214, 0.18);
+		border-radius: 999px;
+		background: rgba(255, 255, 255, 0.04);
+		color: var(--muted);
+	}
+
+	.auth-tabs .nav-link.active,
+	.auth-tabs .nav-link:hover {
+		border-color: rgba(92, 225, 230, 0.4);
+		background: rgba(92, 225, 230, 0.12);
+		color: var(--text);
+	}
+
+	.auth-pane {
+		padding-top: 4px;
+	}
+
+	.local-stack,
+	.cloud-stack {
+		display: flex;
+		flex-direction: column;
+		gap: 10px;
+	}
+
+	.local-status,
+	.cloud-status-row {
+		padding: 12px 14px;
+		border: 1px solid rgba(126, 170, 214, 0.14);
+		border-radius: 16px;
+		background: rgba(255, 255, 255, 0.03);
+	}
+
+	.local-actions,
+	.cloud-actions {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 10px;
+	}
+
+	.local-actions .btn-action,
+	.cloud-actions .btn-action {
+		flex: 1 1 0;
+	}
+
+	.search-hint,
+	.control-note,
+	.cloud-meta,
+	.local-meta {
 		margin: 10px 0 0;
 		font-size: 0.9rem;
 		color: var(--muted);
+	}
+
+	.cloud-status-row {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 12px;
+	}
+
+	.status-pill {
+		display: inline-flex;
+		align-items: center;
+		gap: 8px;
+		padding: 6px 10px;
+		border-radius: 999px;
+		font-size: 0.82rem;
+		background: rgba(255, 255, 255, 0.06);
+		color: var(--muted);
+	}
+
+	.status-pill.connected {
+		background: rgba(118, 231, 161, 0.16);
+		color: #baf5d0;
+	}
+
+	.status-pill.warning {
+		background: rgba(255, 211, 110, 0.16);
+		color: #ffe4a6;
+	}
+
+	.status-pill.error {
+		background: rgba(255, 127, 127, 0.16);
+		color: #ffc4c4;
+	}
+
+	.cloud-toggle {
+		display: flex;
+		align-items: center;
+		gap: 10px;
+		padding: 12px 14px;
+		border-radius: 16px;
+		background: rgba(255, 255, 255, 0.03);
+		border: 1px solid rgba(126, 170, 214, 0.14);
+		cursor: pointer;
+	}
+
+	.cloud-toggle input[type=checkbox] {
+		width: 18px;
+		height: 18px;
+		accent-color: var(--accent);
 	}
 
 	.content-grid {
@@ -478,9 +639,16 @@
 			grid-template-columns: 1fr;
 		}
 
-		.toolbar {
+		.toolbar,
+		.topbar-actions {
 			width: 100%;
 			justify-content: stretch;
+			align-items: stretch;
+		}
+
+		.auth-popover {
+			left: 0;
+			width: min(100%, 520px);
 		}
 
 		.stat-card {
@@ -497,13 +665,22 @@
 			grid-template-columns: 1fr;
 		}
 
-		.import-actions {
+		.local-actions,
+		.cloud-actions,
+		.toolbar {
 			flex-direction: column;
 		}
 
 		.btn-action,
-		.custom-file {
+		.auth-button,
+		.custom-file,
+		.cloud-status-row {
 			width: 100%;
+		}
+
+		.cloud-status-row {
+			align-items: flex-start;
+			flex-direction: column;
 		}
 	}
 	</style>
@@ -517,31 +694,87 @@
 				<h1>Warframe Mastery Tracker</h1>
 				<p>Track what you have built, what is fully mastered, and which missing pieces still need farming without digging through spreadsheets.</p>
 			</div>
-			<div class="toolbar">
-				<div class="stat-card">
-					<span class="stat-label">Tracked</span>
-					<span class="stat-value" id="tracked-count">0</span>
-				</div>
-				<div class="stat-card">
-					<span class="stat-label">Mastered</span>
-					<span class="stat-value" id="mastered-count">0</span>
+			<div class="topbar-actions">
+				<div class="toolbar">
+					<div class="save-menu-anchor">
+						<button class="btn-action auth-button" id="save-menu-toggle" type="button" aria-expanded="false" aria-controls="save-menu-popover">
+							<i class="fas fa-user-shield"></i>Save & Auth
+						</button>
+						<div class="auth-popover" id="save-menu-popover" hidden>
+							<div class="auth-popover-header">
+								<div>
+									<h3>Save Options</h3>
+									<p>Choose how this tracker stores and syncs your progress.</p>
+								</div>
+								<button class="btn-action ghost" id="save-menu-close" type="button">Close</button>
+							</div>
+							<ul class="nav nav-tabs auth-tabs" id="save-options-tabs" role="tablist">
+								<li class="nav-item">
+									<a class="nav-link active" id="local-tab-link" data-toggle="tab" href="#local-save-tab" role="tab" aria-controls="local-save-tab" aria-selected="true">Local Storage</a>
+								</li>
+								<li class="nav-item">
+									<a class="nav-link" id="google-tab-link" data-toggle="tab" href="#google-save-tab" role="tab" aria-controls="google-save-tab" aria-selected="false">Google Cloud</a>
+								</li>
+							</ul>
+							<div class="tab-content">
+								<div class="tab-pane fade show active auth-pane" id="local-save-tab" role="tabpanel" aria-labelledby="local-tab-link">
+									<div class="local-stack">
+										<div class="local-status">
+											<div class="status-pill connected">Local storage active</div>
+											<p class="local-meta">Progress is always stored in this browser, even if you never connect cloud sync.</p>
+										</div>
+										<div class="custom-file">
+											<input type="file" class="custom-file-input" id="import-field">
+											<label class="custom-file-label" for="import-field">Choose a saved collection JSON</label>
+										</div>
+										<div class="local-actions">
+											<button class="btn-action secondary" id="import-button" type="button">Import File</button>
+											<button class="btn-action" id="export-button" type="button">Export File</button>
+										</div>
+									</div>
+								</div>
+								<div class="tab-pane fade auth-pane" id="google-save-tab" role="tabpanel" aria-labelledby="google-tab-link">
+									<div class="cloud-stack">
+										<input type="text" id="google-client-id" class="form-control cloud-input" placeholder="Paste your Google OAuth Client ID">
+										<button class="btn-action ghost" id="save-google-client-id" type="button">Save Client ID</button>
+										<div class="cloud-status-row">
+											<div>
+												<div class="status-pill" id="google-status-pill">Not connected</div>
+												<p class="cloud-meta" id="google-status-text">Store a client ID, then connect a Google account to sync with Drive app data.</p>
+											</div>
+											<div class="cloud-meta">Last cloud sync: <span id="google-last-sync">Never</span></div>
+										</div>
+										<label class="cloud-toggle">
+											<input type="checkbox" id="google-auto-sync">
+											<span>Auto-sync local changes to Google Drive when you are connected</span>
+										</label>
+										<div class="cloud-actions">
+											<button class="btn-action secondary" id="google-connect-button" type="button">Connect Google</button>
+											<button class="btn-action ghost" id="google-disconnect-button" type="button">Disconnect</button>
+										</div>
+										<div class="cloud-actions">
+											<button class="btn-action" id="google-upload-button" type="button">Upload Local Save</button>
+											<button class="btn-action ghost" id="google-download-button" type="button">Download Cloud Save</button>
+										</div>
+										<p class="control-note">Use a browser-authorized Google OAuth Web Client with this page's origin added under Authorized JavaScript origins. Saves are stored in Drive's private <code>appDataFolder</code>, not the visible file list.</p>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="stat-card">
+						<span class="stat-label">Tracked</span>
+						<span class="stat-value" id="tracked-count">0</span>
+					</div>
+					<div class="stat-card">
+						<span class="stat-label">Mastered</span>
+						<span class="stat-value" id="mastered-count">0</span>
+					</div>
 				</div>
 			</div>
 		</div>
 
 		<div class="controls">
-			<div class="import-card">
-				<label class="control-label" for="import-field">Collection Data</label>
-				<div class="import-actions">
-					<div class="custom-file">
-						<input type="file" class="custom-file-input" id="import-field">
-						<label class="custom-file-label" for="import-field">Choose a saved collection JSON</label>
-					</div>
-					<button class="btn-action secondary" id="import-button" type="button">Import</button>
-					<button class="btn-action" id="export-button" type="button">Export</button>
-				</div>
-			</div>
-
 			<div class="search-card">
 				<label class="control-label" for="search">Search Arsenal</label>
 				<div class="input-group">
@@ -625,6 +858,7 @@
 	<script src="https://code.jquery.com/jquery-3.3.1.js" crossorigin="anonymous"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" crossorigin="anonymous"></script>
 	<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" crossorigin="anonymous"></script>
+	<script async defer src="https://accounts.google.com/gsi/client"></script>
 	<script src="js/main.js"></script>
 </body>
 </html>
