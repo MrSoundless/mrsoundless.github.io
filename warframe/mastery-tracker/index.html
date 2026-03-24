@@ -735,17 +735,15 @@
 								</div>
 								<div class="tab-pane fade auth-pane" id="google-save-tab" role="tabpanel" aria-labelledby="google-tab-link">
 									<div class="cloud-stack">
-										<input type="text" id="google-client-id" class="form-control cloud-input" placeholder="Paste your Google OAuth Client ID">
-										<button class="btn-action ghost" id="save-google-client-id" type="button">Save Client ID</button>
 										<div class="cloud-status-row">
 											<div>
 												<div class="status-pill" id="google-status-pill">Not connected</div>
-												<p class="cloud-meta" id="google-status-text">Store a client ID, then connect a Google account to sync with Drive app data.</p>
+												<p class="cloud-meta" id="google-status-text">Connect your Google account to sync this tracker with Drive app data.</p>
 											</div>
 											<div class="cloud-meta">Last cloud sync: <span id="google-last-sync">Never</span></div>
 										</div>
 										<label class="cloud-toggle">
-											<input type="checkbox" id="google-auto-sync">
+											<input type="checkbox" id="google-auto-sync" checked>
 											<span>Auto-sync local changes to Google Drive when you are connected</span>
 										</label>
 										<div class="cloud-actions">
@@ -756,7 +754,7 @@
 											<button class="btn-action" id="google-upload-button" type="button">Upload Local Save</button>
 											<button class="btn-action ghost" id="google-download-button" type="button">Download Cloud Save</button>
 										</div>
-										<p class="control-note">Use a browser-authorized Google OAuth Web Client with this page's origin added under Authorized JavaScript origins. Saves are stored in Drive's private <code>appDataFolder</code>, not the visible file list.</p>
+										<p class="control-note">This app uses a built-in Google OAuth web client for browser sign-in. Make sure the deployed site origin is registered under Authorized JavaScript origins. Saves are stored in Drive's private <code>appDataFolder</code>, not the visible file list.</p>
 									</div>
 								</div>
 							</div>
@@ -862,3 +860,5 @@
 	<script src="js/main.js"></script>
 </body>
 </html>
+
+

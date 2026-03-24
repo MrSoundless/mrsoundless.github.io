@@ -1,18 +1,24 @@
 var allItems = [];
 var saveData = [];
-var googleTokenClient = null;
 var googleAccessToken = null;
 var googleTokenExpiresAt = 0;
 var googleSyncTimer = null;
+var googlePendingStatus = null;
 
 var STORAGE_KEY = 'warframe-collections';
-var GOOGLE_CLIENT_ID_KEY = 'warframe-google-client-id';
+var GOOGLE_CLIENT_ID = '150540724213-2m1iccsvmekkv7dj6onvbrb11j33tao1.apps.googleusercontent.com';
 var GOOGLE_AUTO_SYNC_KEY = 'warframe-google-auto-sync';
+var GOOGLE_CONNECTED_KEY = 'warframe-google-connected';
 var GOOGLE_LAST_SYNC_KEY = 'warframe-google-last-sync';
+var GOOGLE_TOKEN_KEY = 'warframe-google-access-token';
+var GOOGLE_TOKEN_EXPIRY_KEY = 'warframe-google-token-expiry';
+var GOOGLE_OAUTH_STATE_KEY = 'warframe-google-oauth-state';
 var GOOGLE_DATA_FILE = 'warframe-collections.json';
 var GOOGLE_SCOPE = 'https://www.googleapis.com/auth/drive.appdata';
 
 loadSavedData();
+parseGoogleAuthRedirect();
+restorePersistedGoogleSession();
 
 $(document).ready(function() {
 	$('#search').on('input', search);
@@ -254,7 +260,7 @@ function showItem(id) {
 	$('.vaulted-chip', mainTag).toggle(!!item.vaulted).toggleClass('is-vaulted', !!item.vaulted);
 	$('.empty-copy', mainTag).hide();
 	var componentsTag = $('table.components');
-	$('input[type=checkbox]').prop('checked', false);
+$('.item-mastered, .item-crafted, .component-owned, .component-crafted', mainTag).prop('checked', false);
 	$('table.components tbody tr:not(.component-template)').remove();
 
 	if (item.components) {
@@ -527,18 +533,17 @@ function updateImportLabel() {
 }
 
 function initializeGoogleSyncUi() {
-	$('#google-client-id').val(getGoogleClientId());
-	$('#google-auto-sync').prop('checked', localStorage.getItem(GOOGLE_AUTO_SYNC_KEY) === 'true');
-	$('#google-last-sync').text(localStorage.getItem(GOOGLE_LAST_SYNC_KEY) || 'Never');
+	var autoSyncEnabled = localStorage.getItem(GOOGLE_AUTO_SYNC_KEY) !== 'false';
+	localStorage.setItem(GOOGLE_AUTO_SYNC_KEY, autoSyncEnabled ? 'true' : 'false');
+	$('#google-auto-sync').prop('checked', autoSyncEnabled);
 
-	$('#save-google-client-id').on('click', saveGoogleClientId);
 	$('#google-connect-button').on('click', connectGoogleAccount);
 	$('#google-disconnect-button').on('click', disconnectGoogleAccount);
 	$('#google-upload-button').on('click', function() {
-		pushSaveDataToGoogle(true, true);
+		pushSaveDataToGoogle(true);
 	});
 	$('#google-download-button').on('click', function() {
-		pullSaveDataFromGoogle(true);
+		pullSaveDataFromGoogle();
 	});
 	$('#google-auto-sync').on('change', function() {
 		localStorage.setItem(GOOGLE_AUTO_SYNC_KEY, $(this).is(':checked') ? 'true' : 'false');
@@ -546,138 +551,231 @@ function initializeGoogleSyncUi() {
 			scheduleGoogleAutoSync();
 	});
 
-	updateGoogleStatus('Not connected', 'Store a client ID, then connect a Google account to sync with Drive app data.', 'warning');
-	waitForGoogleIdentityLibrary();
-}
-
-function waitForGoogleIdentityLibrary() {
-	if (window.google && google.accounts && google.accounts.oauth2) {
-		initializeGoogleTokenClient();
-		return;
-	}
-
-	window.setTimeout(waitForGoogleIdentityLibrary, 250);
-}
-
-function getGoogleClientId() {
-	return (localStorage.getItem(GOOGLE_CLIENT_ID_KEY) || '').trim();
-}
-
-function saveGoogleClientId() {
-	var clientId = ($('#google-client-id').val() || '').trim();
-	if (!clientId) {
-		localStorage.removeItem(GOOGLE_CLIENT_ID_KEY);
-		googleTokenClient = null;
-		googleAccessToken = null;
-		googleTokenExpiresAt = 0;
-		updateGoogleStatus('Client ID missing', 'Paste a Google OAuth Web Client ID to enable Drive sync.', 'warning');
-		return;
-	}
-
-	localStorage.setItem(GOOGLE_CLIENT_ID_KEY, clientId);
-	googleTokenClient = null;
-	googleAccessToken = null;
-	googleTokenExpiresAt = 0;
-	initializeGoogleTokenClient();
-	updateGoogleStatus('Client ID saved', 'You can connect your Google account now.', 'warning');
-}
-
-function initializeGoogleTokenClient() {
-	if (!(window.google && google.accounts && google.accounts.oauth2))
-		return false;
-
-	var clientId = getGoogleClientId();
-	if (!clientId) {
-		updateGoogleStatus('Client ID missing', 'Paste a Google OAuth Web Client ID to enable Drive sync.', 'warning');
-		return false;
-	}
-
-	googleTokenClient = google.accounts.oauth2.initTokenClient({
-		client_id: clientId,
-		scope: GOOGLE_SCOPE,
-		callback: function() {},
-		error_callback: function(err) {
-			console.error(err);
-			updateGoogleStatus('Google auth failed', 'The Google sign-in request failed. Check your OAuth client and page origin.', 'error');
-		}
-	});
-
-	return true;
+	if (googlePendingStatus)
+		updateGoogleStatus(googlePendingStatus.pillText, googlePendingStatus.bodyText, googlePendingStatus.tone);
+	else if (isGoogleSessionActive())
+		updateGoogleStatus('Connected', 'Google Drive app-data sync is ready for this browser session.', 'connected');
+	else if (localStorage.getItem(GOOGLE_CONNECTED_KEY) === 'true')
+		updateGoogleStatus('Reconnect needed', 'Google token expired. Use Connect Google to refresh your Drive session.', 'warning');
+	else
+		updateGoogleStatus('Not connected', 'Connect your Google account to sync this tracker with Drive app data.', 'warning');
 }
 
 function connectGoogleAccount() {
-	requestGoogleAccessToken(true)
-		.then(function() {
-			updateGoogleStatus('Connected', 'Google Drive app-data sync is ready for this browser session.', 'connected');
-		})
-		.catch(function(err) {
-			console.error(err);
-			updateGoogleStatus('Connect failed', err.message || 'Unable to start Google sign-in. Check the saved client ID and authorized origin.', 'error');
-		});
+	if (!GOOGLE_CLIENT_ID || GOOGLE_CLIENT_ID.indexOf('YOUR_GOOGLE_WEB_CLIENT_ID') === 0) {
+		updateGoogleStatus('Google setup needed', 'Add your Google OAuth web client ID in js/main.js before using cloud sync.', 'warning');
+		return;
+	}
+
+	localStorage.setItem(GOOGLE_CONNECTED_KEY, 'true');
+	redirectToGoogleAuth(true);
 }
 
 function disconnectGoogleAccount() {
-	if (window.google && google.accounts && google.accounts.oauth2 && googleAccessToken)
-		google.accounts.oauth2.revoke(googleAccessToken, function() {});
+	if (googleAccessToken)
+		revokeGoogleToken(googleAccessToken);
 
-	googleAccessToken = null;
-	googleTokenExpiresAt = 0;
+	clearGoogleSession(true);
 	updateGoogleStatus('Disconnected', 'Local storage is still active. Reconnect Google whenever you want to sync.', 'warning');
 }
 
-function requestGoogleAccessToken(forceConsent) {
-	return new Promise(function(resolve, reject) {
-		if (googleAccessToken && Date.now() < googleTokenExpiresAt - 60000) {
-			resolve(googleAccessToken);
-			return;
-		}
+function redirectToGoogleAuth(forceConsent) {
+	var state = createGoogleOAuthState();
+	localStorage.setItem(GOOGLE_OAUTH_STATE_KEY, state);
+	window.location.assign(buildGoogleAuthUrl(state, forceConsent));
+}
 
-		if (!initializeGoogleTokenClient()) {
-			reject(new Error('Google OAuth client is not configured.'));
-			return;
-		}
+function buildGoogleAuthUrl(state, forceConsent) {
+	var redirectUri = window.location.origin + window.location.pathname + window.location.search;
+	var params = [
+		'client_id=' + encodeURIComponent(GOOGLE_CLIENT_ID),
+		'redirect_uri=' + encodeURIComponent(redirectUri),
+		'response_type=token',
+		'scope=' + encodeURIComponent(GOOGLE_SCOPE),
+		'include_granted_scopes=true',
+		'state=' + encodeURIComponent(state)
+	];
 
-		googleTokenClient.callback = function(response) {
-			if (response && response.access_token) {
-				googleAccessToken = response.access_token;
-				googleTokenExpiresAt = Date.now() + ((response.expires_in || 3600) * 1000);
-				updateGoogleStatus('Connected', 'Google Drive app-data sync is ready for this browser session.', 'connected');
-				resolve(googleAccessToken);
-				return;
-			}
+	if (forceConsent)
+		params.push('prompt=' + encodeURIComponent('consent select_account'));
 
-			reject(new Error('No access token returned by Google.'));
+	return 'https://accounts.google.com/o/oauth2/v2/auth?' + params.join('&');
+}
+
+function parseGoogleAuthRedirect() {
+	if (!window.location.hash || window.location.hash.length < 2)
+		return;
+
+	var fragment = window.location.hash.substring(1);
+	if (fragment.indexOf('access_token=') === -1 && fragment.indexOf('error=') === -1)
+		return;
+
+	var params = parseQueryString(fragment);
+	var expectedState = localStorage.getItem(GOOGLE_OAUTH_STATE_KEY);
+	localStorage.removeItem(GOOGLE_OAUTH_STATE_KEY);
+
+	if (params.state && expectedState && params.state !== expectedState) {
+		googlePendingStatus = {
+			pillText: 'Google auth failed',
+			bodyText: 'The Google sign-in response did not match this browser session. Please try again.',
+			tone: 'error'
 		};
+		clearGoogleSession(false);
+		clearUrlHash();
+		return;
+	}
 
-		try {
-			googleTokenClient.requestAccessToken({ prompt: forceConsent ? 'consent' : '' });
+	if (params.error) {
+		googlePendingStatus = {
+			pillText: 'Connect failed',
+			bodyText: formatGoogleError(params.error),
+			tone: 'error'
+		};
+		clearGoogleSession(false);
+		clearUrlHash();
+		return;
+	}
+
+	if (params.access_token) {
+		storeGoogleSession(params.access_token, params.expires_in);
+		googlePendingStatus = {
+			pillText: 'Connected',
+			bodyText: 'Google Drive app-data sync is ready for this browser session.',
+			tone: 'connected'
+		};
+		clearUrlHash();
+	}
+}
+
+function restorePersistedGoogleSession() {
+	var storedToken = localStorage.getItem(GOOGLE_TOKEN_KEY);
+	var storedExpiry = parseInt(localStorage.getItem(GOOGLE_TOKEN_EXPIRY_KEY) || '0', 10);
+	if (!storedToken || !storedExpiry)
+		return;
+
+	if (Date.now() >= storedExpiry) {
+		clearGoogleSession(false);
+		return;
+	}
+
+	googleAccessToken = storedToken;
+	googleTokenExpiresAt = storedExpiry;
+	localStorage.setItem(GOOGLE_CONNECTED_KEY, 'true');
+}
+
+function isGoogleSessionActive() {
+	return !!googleAccessToken && Date.now() < googleTokenExpiresAt - 60000;
+}
+
+function storeGoogleSession(token, expiresInSeconds) {
+	var expiry = Date.now() + ((parseInt(expiresInSeconds || '3600', 10)) * 1000);
+	googleAccessToken = token;
+	googleTokenExpiresAt = expiry;
+	localStorage.setItem(GOOGLE_TOKEN_KEY, token);
+	localStorage.setItem(GOOGLE_TOKEN_EXPIRY_KEY, String(expiry));
+	localStorage.setItem(GOOGLE_CONNECTED_KEY, 'true');
+}
+
+function clearGoogleSession(revoke) {
+	var tokenToRevoke = googleAccessToken || localStorage.getItem(GOOGLE_TOKEN_KEY);
+	if (revoke && tokenToRevoke)
+		revokeGoogleToken(tokenToRevoke);
+
+	googleAccessToken = null;
+	googleTokenExpiresAt = 0;
+	localStorage.removeItem(GOOGLE_TOKEN_KEY);
+	localStorage.removeItem(GOOGLE_TOKEN_EXPIRY_KEY);
+	localStorage.removeItem(GOOGLE_CONNECTED_KEY);
+	localStorage.removeItem(GOOGLE_OAUTH_STATE_KEY);
+}
+
+function revokeGoogleToken(token) {
+	fetch('https://oauth2.googleapis.com/revoke?token=' + encodeURIComponent(token), {
+		method: 'POST',
+		headers: {
+			'Content-type': 'application/x-www-form-urlencoded'
 		}
-		catch (err) {
-			reject(err);
-		}
-	});
+		}).catch(function() {
+			return null;
+		});
+}
+
+function createGoogleOAuthState() {
+	if (window.crypto && window.crypto.getRandomValues) {
+		var values = new Uint32Array(2);
+		window.crypto.getRandomValues(values);
+		return values[0].toString(16) + values[1].toString(16);
+	}
+
+	return String(Date.now()) + String(Math.random()).replace('.', '');
+}
+
+function parseQueryString(input) {
+	var params = {};
+	var pairs = input.split('&');
+	for (var i = 0; i < pairs.length; ++i) {
+		var parts = pairs[i].split('=');
+		var key = decodeURIComponent(parts[0] || '');
+		var value = decodeURIComponent((parts.slice(1).join('=') || '').replace(/\+/g, ' '));
+		params[key] = value;
+	}
+	return params;
+}
+
+function clearUrlHash() {
+	if (window.history && window.history.replaceState)
+		window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
+	else
+		window.location.hash = '';
+}
+
+function formatGoogleError(errorCode) {
+	if (errorCode === 'access_denied')
+		return 'Google access was denied. Use Connect Google when you want to grant Drive sync again.';
+	if (errorCode === 'origin_mismatch')
+		return 'This site origin is not allowed for the configured Google OAuth client.';
+	if (errorCode === 'redirect_uri_mismatch')
+		return 'The redirect URI does not match the Google OAuth client settings.';
+	return 'Google sign-in failed: ' + errorCode;
+}
+
+function getValidGoogleAccessToken() {
+	if (!isGoogleSessionActive()) {
+		clearGoogleSession(false);
+		updateGoogleStatus('Reconnect needed', 'Google token expired. Use Connect Google to refresh your Drive session.', 'warning');
+		throw new Error('Google session expired. Use Connect Google to continue.');
+	}
+
+	return googleAccessToken;
 }
 
 function scheduleGoogleAutoSync() {
-	if (localStorage.getItem(GOOGLE_AUTO_SYNC_KEY) !== 'true')
+	if (localStorage.getItem(GOOGLE_AUTO_SYNC_KEY) === 'false')
 		return;
 
-	if (!googleAccessToken)
+	if (!isGoogleSessionActive())
 		return;
 
 	if (googleSyncTimer)
 		window.clearTimeout(googleSyncTimer);
 
 	googleSyncTimer = window.setTimeout(function() {
-		pushSaveDataToGoogle(false, false);
+		pushSaveDataToGoogle(false);
 	}, 1200);
 }
 
-function pushSaveDataToGoogle(showAlerts, forceConsent) {
-	requestGoogleAccessToken(!!forceConsent)
-		.then(function(token) {
-			return upsertGoogleSaveFile(token, JSON.stringify(saveData));
-		})
+function pushSaveDataToGoogle(showAlerts) {
+	var token;
+	try {
+		token = getValidGoogleAccessToken();
+	}
+	catch (err) {
+		if (showAlerts)
+			alert(err.message);
+		return;
+	}
+
+	upsertGoogleSaveFile(token, JSON.stringify(saveData))
 		.then(function(fileInfo) {
 			recordGoogleSyncTimestamp(fileInfo && fileInfo.modifiedTime ? fileInfo.modifiedTime : null);
 			updateGoogleStatus('Cloud save updated', 'Local progress has been uploaded to your Google Drive app data.', 'connected');
@@ -688,15 +786,21 @@ function pushSaveDataToGoogle(showAlerts, forceConsent) {
 			console.error(err);
 			updateGoogleStatus('Upload failed', err.message || 'Google Drive upload failed.', 'error');
 			if (showAlerts)
-				alert('Google upload failed. Check the saved client ID, authorized origin, and sign-in permissions.');
+				alert('Google upload failed. Check the built-in client ID, authorized origin, and sign-in permissions.');
 		});
 }
 
-function pullSaveDataFromGoogle(forceConsent) {
-	requestGoogleAccessToken(!!forceConsent)
-		.then(function(token) {
-			return downloadGoogleSaveFile(token);
-		})
+function pullSaveDataFromGoogle() {
+	var token;
+	try {
+		token = getValidGoogleAccessToken();
+	}
+	catch (err) {
+		alert(err.message);
+		return;
+	}
+
+	downloadGoogleSaveFile(token)
 		.then(function(payload) {
 			if (!payload) {
 				updateGoogleStatus('No cloud save found', 'This Google account does not have a saved tracker file yet.', 'warning');
@@ -718,7 +822,7 @@ function pullSaveDataFromGoogle(forceConsent) {
 		.catch(function(err) {
 			console.error(err);
 			updateGoogleStatus('Download failed', err.message || 'Google Drive download failed.', 'error');
-			alert('Google download failed. Check the saved client ID, authorized origin, and sign-in permissions.');
+			alert('Google download failed. Check the built-in client ID, authorized origin, and sign-in permissions.');
 		});
 }
 
@@ -734,7 +838,7 @@ function updateGoogleStatus(pillText, bodyText, tone) {
 
 function updateSaveMenuButtonLabel() {
 	var label = 'Save & Auth';
-	if (googleAccessToken)
+	if (isGoogleSessionActive())
 		label = 'Save & Auth: Google Connected';
 	$('#save-menu-toggle').html('<i class="fas fa-user-shield"></i>' + label);
 }
@@ -838,6 +942,10 @@ function getGoogleErrorMessage(data) {
 	}
 	return 'Google Drive request failed.';
 }
+
+
+
+
 
 
 
