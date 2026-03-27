@@ -25,6 +25,7 @@ window.GAME_RESET_TRACKER_CONFIG = {
     type: "all",
     state: "all",
     expiringSoon: false,
+    disabledMode: "hide",
     hideCompleted: false,
     hideExpired: false,
     sortBy: "time",

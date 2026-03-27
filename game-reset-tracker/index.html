@@ -56,6 +56,14 @@
             <input type="checkbox" id="filterExpiringSoon">
             <span>Expiring soon</span>
           </label>
+          <label>
+            <span>Disabled</span>
+            <select id="filterDisabledMode">
+              <option value="hide">Hide disabled</option>
+              <option value="show">Show disabled too</option>
+              <option value="only">Disabled only</option>
+            </select>
+          </label>
           <label class="checkbox-row">
             <input type="checkbox" id="hideCompleted">
             <span>Hide completed</span>
@@ -131,6 +139,7 @@
           <div class="data-section danger-zone">
             <p class="data-label">Reset</p>
             <div class="action-grid action-grid-tight">
+              <button class="ghost-button" id="resetProgressButton" type="button">Reset progress</button>
               <button class="ghost-button danger-text" id="resetDemoButton" type="button">Restore demo</button>
             </div>
           </div>

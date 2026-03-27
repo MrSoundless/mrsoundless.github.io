@@ -18,6 +18,7 @@
       type: "all",
       state: "all",
       expiringSoon: false,
+      disabledMode: "hide",
       hideCompleted: false,
       hideExpired: false,
       sortBy: "time",
@@ -62,6 +63,7 @@
     filterType: document.getElementById("filterType"),
     filterState: document.getElementById("filterState"),
     filterExpiringSoon: document.getElementById("filterExpiringSoon"),
+    filterDisabledMode: document.getElementById("filterDisabledMode"),
     hideCompleted: document.getElementById("hideCompleted"),
     hideExpired: document.getElementById("hideExpired"),
     sortBy: document.getElementById("sortBy"),
@@ -76,6 +78,7 @@
     importInput: document.getElementById("importInput"),
     importMode: document.getElementById("importMode"),
     resetDemoButton: document.getElementById("resetDemoButton"),
+    resetProgressButton: document.getElementById("resetProgressButton"),
     heroTitle: document.getElementById("heroTitle"),
     heroSubtitle: document.getElementById("heroSubtitle"),
     heroStats: document.getElementById("heroStats"),
@@ -182,6 +185,7 @@
     elements.googleLoadButton.addEventListener("click", loadBackupFromGoogleDrive);
     elements.googleDisconnectButton.addEventListener("click", disconnectGoogleDrive);
     elements.importInput.addEventListener("change", importJson);
+    elements.resetProgressButton.addEventListener("click", requestResetProgress);
     elements.resetDemoButton.addEventListener("click", requestRestoreDemo);
     bindPanelToggles();
     bindConfirmationModal();
@@ -467,6 +471,7 @@
     state.filters.type = elements.filterType.value;
     state.filters.state = elements.filterState.value;
     state.filters.expiringSoon = elements.filterExpiringSoon.checked;
+    state.filters.disabledMode = elements.filterDisabledMode.value;
     state.filters.hideCompleted = elements.hideCompleted.checked;
     state.filters.hideExpired = elements.hideExpired.checked;
     state.filters.sortBy = elements.sortBy.value;
@@ -477,9 +482,7 @@
     state.view.mode = mode;
     state.view.gameId = gameId || null;
     state.view.groupKey = groupKey || null;
-    if (mode === "focused" && gameId) {
-      state.filters.gameId = gameId;
-    }
+    state.filters.gameId = mode === "focused" && gameId ? gameId : "all";
     render();
   }
 
@@ -508,6 +511,7 @@
     elements.filterType.value = state.filters.type;
     elements.filterState.value = state.filters.state;
     elements.filterExpiringSoon.checked = state.filters.expiringSoon;
+    elements.filterDisabledMode.value = state.filters.disabledMode;
     elements.hideCompleted.checked = state.filters.hideCompleted;
     elements.hideExpired.checked = state.filters.hideExpired;
     elements.sortBy.value = state.filters.sortBy;
@@ -537,6 +541,11 @@
     }
     if (state.filters.expiringSoon) {
       tasks = tasks.filter((task) => task.expiringSoon);
+    }
+    if (state.filters.disabledMode === "hide") {
+      tasks = tasks.filter((task) => !task.isDisabled);
+    } else if (state.filters.disabledMode === "only") {
+      tasks = tasks.filter((task) => task.isDisabled);
     }
     if (state.filters.hideCompleted) {
       tasks = tasks.filter((task) => task.status !== "completed");
@@ -612,6 +621,7 @@
 
     return {
       ...group,
+      isDisabled: Boolean(group.isDisabled),
       groupKey: group.id,
       isVirtual: false,
       effectiveResetSettings: settings,
@@ -641,6 +651,7 @@
       gameName: game.name,
       effectiveResetSettings: parentResetSettings,
       isExpired: isExpiredAt(game.expiresAt, now),
+      isDisabled: false,
       isVirtual: true,
       tasks: directTasks.map((task) => deriveTask(task, null, game, parentResetSettings, now)),
     };
@@ -677,11 +688,15 @@
       status = "expired";
       canComplete = false;
     }
+    if (task.isDisabled || (group && group.isDisabled)) {
+      canComplete = false;
+    }
 
     const timing = deriveTaskTiming(task.type, nextResetAt, expirationDate, now);
 
     return {
       ...task,
+      isDisabled: Boolean(task.isDisabled || (group && group.isDisabled)),
       gameId: game.id,
       gameName: game.name,
       groupId: group ? group.id : null,
@@ -998,6 +1013,12 @@
     elements.taskList.querySelectorAll("[data-edit-group]").forEach((button) => {
       button.addEventListener("click", () => openEditor({ mode: "edit", entityType: "group", id: button.dataset.editGroup }));
     });
+    elements.taskList.querySelectorAll("[data-toggle-task-disabled]").forEach((button) => {
+      button.addEventListener("click", () => toggleEntityDisabled("task", button.dataset.toggleTaskDisabled));
+    });
+    elements.taskList.querySelectorAll("[data-toggle-group-disabled]").forEach((button) => {
+      button.addEventListener("click", () => toggleEntityDisabled("group", button.dataset.toggleGroupDisabled));
+    });
   }
 
   function renderGroupSection(group) {
@@ -1166,7 +1187,7 @@
       : "";
 
     return `
-      <section class="group-section ${group.isExpired ? "expired" : ""} ${eventCount ? "has-events" : ""}">
+      <section class="group-section ${group.isExpired ? "expired" : ""} ${eventCount ? "has-events" : ""} ${group.isDisabled ? "disabled-item" : ""}">
         <div class="group-header">
           <div class="group-title">
             <div class="group-title-row">
@@ -1174,6 +1195,7 @@
               <h3>${escapeHtml(group.name)}</h3>
               <div class="badge-row">
                 ${eventLabel}
+                ${group.isDisabled ? '<span class="badge">Disabled</span>' : ""}
                 <span class="badge">${group.summary.available} open</span>
                 <span class="badge">${group.summary.completed} done</span>
                 ${group.summary.urgent ? `<span class="badge soon">${group.summary.urgent} urgent</span>` : ""}
@@ -1189,6 +1211,7 @@
             ${state.view.groupKey === group.groupKey ? `<button class="task-action" type="button" data-clear-group-focus="true" data-game-id="${escapeHtml(group.gameId)}">Back</button>` : ""}
             <button class="task-action" type="button" data-group-add-task="${escapeHtml(group.groupKey)}" data-game-id="${escapeHtml(group.gameId)}">Add task</button>
             <button class="task-action" type="button" data-group-complete="${escapeHtml(group.groupKey)}">Complete open</button>
+            ${group.isVirtual ? "" : `<button class="task-action" type="button" data-toggle-group-disabled="${escapeHtml(group.id)}">${group.isDisabled ? "Enable" : "Disable"}</button>`}
             <button class="task-action" type="button" data-group-export="${escapeHtml(group.groupKey)}">Export</button>
             ${group.isVirtual ? "" : `<button class="task-action" type="button" data-edit-group="${escapeHtml(group.id)}">Edit group</button>`}
           </div>
@@ -1204,12 +1227,15 @@
       `<span class="badge ${task.type === "event" ? "event-badge" : ""}">${escapeHtml(task.type === "event" ? "Event" : task.type)}</span>`,
       `<span class="badge">P${escapeHtml(String(task.priority || 3))}</span>`,
     ];
+    if (task.isDisabled) {
+      badges.push('<span class="badge">Disabled</span>');
+    }
     if (task.expiringSoon) {
       badges.push('<span class="badge soon">Soon</span>');
     }
 
     return `
-      <article class="task-card ${escapeHtml(task.status)} ${task.type === "event" ? "event-task" : ""}">
+      <article class="task-card ${escapeHtml(task.status)} ${task.type === "event" ? "event-task" : ""} ${task.isDisabled ? "disabled-item" : ""}">
         <div class="task-row">
           <div class="task-main">
             <div class="task-head">
@@ -1230,6 +1256,7 @@
             ${task.status === "completed"
               ? `<button class="task-action" type="button" data-undo-id="${escapeHtml(task.id)}">Undo</button>`
               : `<button class="task-action ${task.canComplete ? "complete" : ""}" type="button" data-complete-id="${escapeHtml(task.id)}" ${task.canComplete ? "" : "disabled"}>Complete</button>`}
+            <button class="task-action" type="button" data-toggle-task-disabled="${escapeHtml(task.id)}">${task.isDisabled ? "Enable" : "Disable"}</button>
             <button class="task-action" type="button" data-edit-task="${escapeHtml(task.id)}">Edit</button>
           </div>
         </div>
@@ -1758,39 +1785,49 @@
   }
 
   function renderGamesList(games) {
+    const sortedGames = [...games].sort((left, right) => left.name.localeCompare(right.name, undefined, { sensitivity: "base" }));
     const globalCard = `
       <article class="game-card global-games-card">
         <div class="entity-row">
-          <div>
+          <div class="game-card-main">
             <h3>All games</h3>
-            <p class="subtle">See the full tracker without focusing a single game.</p>
+            <p class="subtle game-card-summary">Full tracker view</p>
           </div>
-          <div class="badge-row">
+          <div class="badge-row game-card-actions">
             <button class="entity-link ${state.view.mode === "global" ? "active" : ""}" type="button" data-show-global="true">Show all</button>
           </div>
         </div>
       </article>
     `;
 
-    elements.gamesList.innerHTML = globalCard + games.map((game) => `
-      <article class="game-card">
-        <div class="entity-row">
-          <div>
-            <h3>${escapeHtml(game.name)}</h3>
-            <p class="subtle">${game.groups.filter((group) => !group.isVirtual).length} groups · ${game.tasks.length} tasks</p>
+    elements.gamesList.innerHTML = globalCard + sortedGames.map((game) => {
+      const realGroups = game.groups.filter((group) => !group.isVirtual);
+      const visibleGroups = realGroups.slice(0, 4);
+      const extraGroupCount = Math.max(0, realGroups.length - visibleGroups.length);
+      const groupSummary = realGroups.length
+        ? `${visibleGroups.map((group) => group.name).join(", ")}${extraGroupCount > 0 ? ` +${extraGroupCount} more` : ""}`
+        : "No groups yet";
+
+      return `
+        <article class="game-card">
+          <div class="entity-row">
+            <div class="game-card-main">
+              <h3>${escapeHtml(game.name)}</h3>
+              <p class="subtle game-card-summary">${realGroups.length} groups · ${game.tasks.length} direct tasks · Daily ${escapeHtml(game.effectiveResetSettings.dailyTime)} · Weekly ${dayName(game.effectiveResetSettings.weeklyDay)} ${escapeHtml(game.effectiveResetSettings.weeklyTime)}</p>
+              <div class="subtle game-card-groups">${escapeHtml(groupSummary)}</div>
+            </div>
+            <div class="badge-row game-card-actions">
+              <button class="entity-link ${state.view.mode === "focused" && state.view.gameId === game.id ? "active" : ""}" type="button" data-focus-game="${escapeHtml(game.id)}">Focus</button>
+              <button class="entity-link" type="button" data-export-game="${escapeHtml(game.id)}">Export</button>
+              <button class="entity-link" type="button" data-edit-game="${escapeHtml(game.id)}">Edit</button>
+            </div>
           </div>
-          <div class="badge-row">
-            <button class="entity-link ${state.view.mode === "focused" && state.view.gameId === game.id ? "active" : ""}" type="button" data-focus-game="${escapeHtml(game.id)}">Focus</button>
-            <button class="entity-link" type="button" data-export-game="${escapeHtml(game.id)}">Export</button>
-            <button class="entity-link" type="button" data-edit-game="${escapeHtml(game.id)}">Edit</button>
+          <div class="game-links-row">
+            ${visibleGroups.map((group) => `<button class="entity-link ${state.view.groupKey === group.groupKey ? "active" : ""}" type="button" data-focus-group-card="${escapeHtml(group.groupKey)}" data-game-id="${escapeHtml(game.id)}">${escapeHtml(group.name)}</button>`).join("")}
           </div>
-        </div>
-        <div class="subtle">Daily ${escapeHtml(game.effectiveResetSettings.dailyTime)} · Weekly ${dayName(game.effectiveResetSettings.weeklyDay)} ${escapeHtml(game.effectiveResetSettings.weeklyTime)}</div>
-        <div class="badge-row game-group-links">
-          ${game.groups.map((group) => `<button class="entity-link ${state.view.groupKey === group.groupKey ? "active" : ""}" type="button" data-focus-group-card="${escapeHtml(group.groupKey)}" data-game-id="${escapeHtml(game.id)}">${escapeHtml(group.name)}</button>`).join("")}
-        </div>
-      </article>
-    `).join("");
+        </article>
+      `;
+    }).join("");
 
     elements.gamesList.querySelectorAll("[data-show-global]").forEach((button) => {
       button.addEventListener("click", () => setView("global", null, null));
@@ -1808,7 +1845,6 @@
       button.addEventListener("click", () => setView("focused", button.dataset.gameId, button.dataset.focusGroupCard));
     });
   }
-
   function renderEditor() {
     if (!state.editor) {
       elements.editorHost.innerHTML = '<p class="editor-empty muted">Select a game, group, or task to edit it here, or create a new one.</p>';
@@ -1843,9 +1879,8 @@
     targetGameSelect.innerHTML = availableGames.length
       ? availableGames.map((game) => `<option value="${escapeHtml(game.id)}">${escapeHtml(game.name)}</option>`).join("")
       : '<option value="">No games yet</option>';
-    targetGameSelect.value = entity.targetGameId || state.editor.parentId || (availableGames[0] ? availableGames[0].id : "");
-
-    syncGroupOptions(form, entity.targetGroupId || entity.parentId || "", entity.groupKey || state.editor.groupKey || null);
+    targetGameSelect.value = entity.targetGameId || entity.parentId || (availableGames[0] ? availableGames[0].id : "");
+    syncGroupOptions(form, entity.targetGroupId || "", entity.groupKey || null);
 
     parentSection.hidden = !isTask;
     template.querySelector('[data-role="task-fields"]').hidden = !isTask;
@@ -2002,6 +2037,7 @@
         name: payload.name,
         notes: payload.notes,
         priority: payload.priority,
+        isDisabled: false,
         expiresAt: payload.expiresAt,
         resetOverrideEnabled: payload.resetOverrideEnabled,
         resetSettings: payload.resetSettings,
@@ -2016,6 +2052,7 @@
       notes: payload.notes,
       priority: payload.priority,
       type: payload.type,
+      isDisabled: false,
       completedAt: payload.completedAt,
       expiresAt: payload.expiresAt,
       resetOverrideEnabled: payload.resetOverrideEnabled,
@@ -2101,6 +2138,9 @@
     if (!found) {
       return;
     }
+    if (found.entity.isDisabled || (found.parent && found.parent.isDisabled)) {
+      return;
+    }
     if (found.entity.completedAt && (found.entity.type === "one-time" || found.entity.type === "event")) {
       return;
     }
@@ -2147,6 +2187,19 @@
         render();
       },
     });
+  }
+
+  function toggleEntityDisabled(entityType, id) {
+    const found = findEntityById(entityType, id);
+    if (!found) {
+      return;
+    }
+    found.entity.isDisabled = !found.entity.isDisabled;
+    if (entityType === "task" && found.entity.isDisabled) {
+      found.entity.completedAt = null;
+    }
+    saveState();
+    render();
   }
 
   function collapseAllGroups(groupSections) {
@@ -2363,6 +2416,31 @@
       danger: true,
       onConfirm: restoreDemoData,
     });
+  }
+
+  function requestResetProgress() {
+    openConfirmation({
+      title: "Reset progress",
+      message: "Mark every task in the tracker as incomplete? This keeps your games, groups, and settings, but clears all completion progress.",
+      confirmLabel: "Reset progress",
+      danger: true,
+      onConfirm: resetAllProgress,
+    });
+  }
+
+  function resetAllProgress() {
+    state.data.games.forEach((game) => {
+      (game.tasks || []).forEach((task) => {
+        task.completedAt = null;
+      });
+      (game.groups || []).forEach((group) => {
+        (group.tasks || []).forEach((task) => {
+          task.completedAt = null;
+        });
+      });
+    });
+    saveState();
+    render();
   }
 
   function restoreDemoData() {

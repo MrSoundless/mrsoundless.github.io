@@ -1,0 +1,540 @@
+{
+  "id": "preset-ffxiv-xivtodo-checklist",
+  "name": "Final Fantasy XIV",
+  "notes": "Preset based on the XIV ToDo checklist. Reset times follow XIV ToDo's checklist logic: daily reset at 15:00 UTC and weekly reset on Tuesday at 08:00 UTC. If you want browser-local reset times instead, adjust them after import.",
+  "priority": 3,
+  "expiresAt": null,
+  "resetSettings": {
+    "dailyTime": "15:00",
+    "weeklyDay": 2,
+    "weeklyTime": "08:00"
+  },
+  "groups": [
+    {
+      "id": "ffxiv-daily-routine",
+      "name": "Daily Routine",
+      "notes": "Core daily FFXIV checklist items from XIV ToDo.",
+      "priority": 4,
+      "expiresAt": null,
+      "resetOverrideEnabled": false,
+      "resetSettings": {
+        "dailyTime": null,
+        "weeklyDay": 2,
+        "weeklyTime": null
+      },
+      "tasks": [
+        {
+          "id": "ffxiv-daily-repeatable-quests",
+          "name": "Daily repeatable quests",
+          "notes": "General daily quest pickups across Eorzea and expansion hubs. Location: quest hubs and levemetes.",
+          "priority": 2,
+          "type": "daily",
+          "completedAt": null,
+          "expiresAt": null,
+          "resetOverrideEnabled": false,
+          "resetSettings": {
+            "dailyTime": null,
+            "weeklyDay": 2,
+            "weeklyTime": null
+          }
+        },
+        {
+          "id": "ffxiv-daily-hunt-marks",
+          "name": "Daily Hunt marks",
+          "notes": "Pick up and clear daily hunt bills. Location: Hunt Billmasters in city-states and expansion hunt hubs.",
+          "priority": 3,
+          "type": "daily",
+          "completedAt": null,
+          "expiresAt": null,
+          "resetOverrideEnabled": false,
+          "resetSettings": {
+            "dailyTime": null,
+            "weeklyDay": 2,
+            "weeklyTime": null
+          }
+        },
+        {
+          "id": "ffxiv-daily-squadron-missions",
+          "name": "Squadron missions",
+          "notes": "Send Adventurer Squadron members out again. Location: Grand Company Barracks.",
+          "priority": 2,
+          "type": "daily",
+          "completedAt": null,
+          "expiresAt": null,
+          "resetOverrideEnabled": false,
+          "resetSettings": {
+            "dailyTime": null,
+            "weeklyDay": 2,
+            "weeklyTime": null
+          }
+        },
+        {
+          "id": "ffxiv-daily-grand-company-turnins",
+          "name": "Grand Company turn-ins",
+          "notes": "Complete expert delivery and supply/provisioning turn-ins. Location: Grand Company Personnel Officer.",
+          "priority": 3,
+          "type": "daily",
+          "completedAt": null,
+          "expiresAt": null,
+          "resetOverrideEnabled": false,
+          "resetSettings": {
+            "dailyTime": null,
+            "weeklyDay": 2,
+            "weeklyTime": null
+          }
+        },
+        {
+          "id": "ffxiv-daily-free-company-voyages",
+          "name": "Free Company voyages",
+          "notes": "Check submarine and airship deployments. Location: Free Company workshop.",
+          "priority": 2,
+          "type": "daily",
+          "completedAt": null,
+          "expiresAt": null,
+          "resetOverrideEnabled": false,
+          "resetSettings": {
+            "dailyTime": null,
+            "weeklyDay": 2,
+            "weeklyTime": null
+          }
+        },
+        {
+          "id": "ffxiv-daily-retainer-ventures",
+          "name": "Retainer ventures",
+          "notes": "Collect and resend retainers. Location: any Summoning Bell.",
+          "priority": 4,
+          "type": "daily",
+          "completedAt": null,
+          "expiresAt": null,
+          "resetOverrideEnabled": false,
+          "resetSettings": {
+            "dailyTime": null,
+            "weeklyDay": 2,
+            "weeklyTime": null
+          }
+        },
+        {
+          "id": "ffxiv-daily-housing-gardening",
+          "name": "Housing gardening",
+          "notes": "Tend crops and flowerpots. Location: estate garden or indoor planters.",
+          "priority": 1,
+          "type": "daily",
+          "completedAt": null,
+          "expiresAt": null,
+          "resetOverrideEnabled": false,
+          "resetSettings": {
+            "dailyTime": null,
+            "weeklyDay": 2,
+            "weeklyTime": null
+          }
+        },
+        {
+          "id": "ffxiv-daily-tribal-quests",
+          "name": "Tribal quests",
+          "notes": "Use daily Allied Society allowances. Location: Allied Society quest hubs.",
+          "priority": 3,
+          "type": "daily",
+          "completedAt": null,
+          "expiresAt": null,
+          "resetOverrideEnabled": false,
+          "resetSettings": {
+            "dailyTime": null,
+            "weeklyDay": 2,
+            "weeklyTime": null
+          }
+        },
+        {
+          "id": "ffxiv-daily-treasure-map-allowance",
+          "name": "Treasure map allowance",
+          "notes": "Gather or use the daily map allowance. Location: gathering nodes across the world.",
+          "priority": 2,
+          "type": "daily",
+          "completedAt": null,
+          "expiresAt": null,
+          "resetOverrideEnabled": false,
+          "resetSettings": {
+            "dailyTime": null,
+            "weeklyDay": 2,
+            "weeklyTime": null
+          }
+        },
+        {
+          "id": "ffxiv-daily-leve-allowance",
+          "name": "Leve allowance",
+          "notes": "Spend or monitor regenerating leve allowances. Location: levemetes and levequest hubs.",
+          "priority": 1,
+          "type": "daily",
+          "completedAt": null,
+          "expiresAt": null,
+          "resetOverrideEnabled": false,
+          "resetSettings": {
+            "dailyTime": null,
+            "weeklyDay": 2,
+            "weeklyTime": null
+          }
+        },
+        {
+          "id": "ffxiv-daily-duty-roulettes",
+          "name": "Duty roulettes",
+          "notes": "Complete your preferred daily roulettes. Location: Duty Finder.",
+          "priority": 4,
+          "type": "daily",
+          "completedAt": null,
+          "expiresAt": null,
+          "resetOverrideEnabled": false,
+          "resetSettings": {
+            "dailyTime": null,
+            "weeklyDay": 2,
+            "weeklyTime": null
+          }
+        },
+        {
+          "id": "ffxiv-daily-mini-cactpot",
+          "name": "Mini Cactpot",
+          "notes": "Buy and scratch daily tickets. Location: Gold Saucer.",
+          "priority": 2,
+          "type": "daily",
+          "completedAt": null,
+          "expiresAt": null,
+          "resetOverrideEnabled": false,
+          "resetSettings": {
+            "dailyTime": null,
+            "weeklyDay": 2,
+            "weeklyTime": null
+          }
+        },
+        {
+          "id": "ffxiv-daily-island-sanctuary",
+          "name": "Island Sanctuary dailies",
+          "notes": "Handle daily island objectives and maintenance. Location: Island Sanctuary Hideaway.",
+          "priority": 2,
+          "type": "daily",
+          "completedAt": null,
+          "expiresAt": null,
+          "resetOverrideEnabled": false,
+          "resetSettings": {
+            "dailyTime": null,
+            "weeklyDay": 2,
+            "weeklyTime": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "ffxiv-weekly-core",
+      "name": "Weekly Core",
+      "notes": "Recurring weekly FFXIV checklist items from XIV ToDo.",
+      "priority": 5,
+      "expiresAt": null,
+      "resetOverrideEnabled": false,
+      "resetSettings": {
+        "dailyTime": null,
+        "weeklyDay": 2,
+        "weeklyTime": null
+      },
+      "tasks": [
+        {
+          "id": "ffxiv-weekly-repeatable-quests",
+          "name": "Weekly repeatable quests",
+          "notes": "General weekly quest resets across expansion systems. Location: various weekly quest hubs.",
+          "priority": 2,
+          "type": "weekly",
+          "completedAt": null,
+          "expiresAt": null,
+          "resetOverrideEnabled": false,
+          "resetSettings": {
+            "dailyTime": null,
+            "weeklyDay": 2,
+            "weeklyTime": null
+          }
+        },
+        {
+          "id": "ffxiv-weekly-hunt-marks",
+          "name": "Weekly Hunt marks",
+          "notes": "Pick up and clear weekly elite hunt bills. Location: Hunt Billmasters and clan hunt boards.",
+          "priority": 3,
+          "type": "weekly",
+          "completedAt": null,
+          "expiresAt": null,
+          "resetOverrideEnabled": false,
+          "resetSettings": {
+            "dailyTime": null,
+            "weeklyDay": 2,
+            "weeklyTime": null
+          }
+        },
+        {
+          "id": "ffxiv-weekly-squadron-priority",
+          "name": "Squadron priority mission",
+          "notes": "Run the priority mission for squadron rewards. Location: Grand Company Barracks.",
+          "priority": 2,
+          "type": "weekly",
+          "completedAt": null,
+          "expiresAt": null,
+          "resetOverrideEnabled": false,
+          "resetSettings": {
+            "dailyTime": null,
+            "weeklyDay": 2,
+            "weeklyTime": null
+          }
+        },
+        {
+          "id": "ffxiv-weekly-challenge-logs",
+          "name": "Challenge logs",
+          "notes": "Finish your preferred Challenge Log entries. Location: Challenge Log and matching activities.",
+          "priority": 4,
+          "type": "weekly",
+          "completedAt": null,
+          "expiresAt": null,
+          "resetOverrideEnabled": false,
+          "resetSettings": {
+            "dailyTime": null,
+            "weeklyDay": 2,
+            "weeklyTime": null
+          }
+        },
+        {
+          "id": "ffxiv-weekly-custom-delivery",
+          "name": "Custom delivery",
+          "notes": "Spend weekly Custom Delivery allowances. Location: Custom Delivery client NPCs.",
+          "priority": 3,
+          "type": "weekly",
+          "completedAt": null,
+          "expiresAt": null,
+          "resetOverrideEnabled": false,
+          "resetSettings": {
+            "dailyTime": null,
+            "weeklyDay": 2,
+            "weeklyTime": null
+          }
+        },
+        {
+          "id": "ffxiv-weekly-wondrous-tails",
+          "name": "Wondrous Tails",
+          "notes": "Pick up, fill, and hand in your Wondrous Tails journal. Location: Khloe Aliapoh, Idyllshire.",
+          "priority": 4,
+          "type": "weekly",
+          "completedAt": null,
+          "expiresAt": null,
+          "resetOverrideEnabled": false,
+          "resetSettings": {
+            "dailyTime": null,
+            "weeklyDay": 2,
+            "weeklyTime": null
+          }
+        },
+        {
+          "id": "ffxiv-weekly-faux-hollows",
+          "name": "Faux Hollows",
+          "notes": "Do the current Unreal trial and Faux Hollows board. Location: Faux Commander, Idyllshire.",
+          "priority": 3,
+          "type": "weekly",
+          "completedAt": null,
+          "expiresAt": null,
+          "resetOverrideEnabled": false,
+          "resetSettings": {
+            "dailyTime": null,
+            "weeklyDay": 2,
+            "weeklyTime": null
+          }
+        },
+        {
+          "id": "ffxiv-weekly-tomestone-cap",
+          "name": "Tomestone cap",
+          "notes": "Cap the current weekly limited tomestones. Location: current endgame duties and vendors.",
+          "priority": 5,
+          "type": "weekly",
+          "completedAt": null,
+          "expiresAt": null,
+          "resetOverrideEnabled": false,
+          "resetSettings": {
+            "dailyTime": null,
+            "weeklyDay": 2,
+            "weeklyTime": null
+          }
+        },
+        {
+          "id": "ffxiv-weekly-doman-enclave",
+          "name": "Doman Enclave donation",
+          "notes": "Turn in items for the weekly donation cap. Location: Doman Enclave, Yanxia.",
+          "priority": 2,
+          "type": "weekly",
+          "completedAt": null,
+          "expiresAt": null,
+          "resetOverrideEnabled": false,
+          "resetSettings": {
+            "dailyTime": null,
+            "weeklyDay": 2,
+            "weeklyTime": null
+          }
+        },
+        {
+          "id": "ffxiv-weekly-masked-carnivale",
+          "name": "Masked Carnivale targets",
+          "notes": "Clear the weekly Blue Mage Carnivale targets. Location: The Celestium, Ul'dah - Steps of Thal.",
+          "priority": 3,
+          "type": "weekly",
+          "completedAt": null,
+          "expiresAt": null,
+          "resetOverrideEnabled": false,
+          "resetSettings": {
+            "dailyTime": null,
+            "weeklyDay": 2,
+            "weeklyTime": null
+          }
+        },
+        {
+          "id": "ffxiv-weekly-blue-mage-log",
+          "name": "Blue Mage Log",
+          "notes": "Clear Blue Mage Log duties for weekly rewards. Location: Blue Mage Log and matched duties.",
+          "priority": 3,
+          "type": "weekly",
+          "completedAt": null,
+          "expiresAt": null,
+          "resetOverrideEnabled": false,
+          "resetSettings": {
+            "dailyTime": null,
+            "weeklyDay": 2,
+            "weeklyTime": null
+          }
+        },
+        {
+          "id": "ffxiv-weekly-island-sanctuary",
+          "name": "Island Sanctuary weeklies",
+          "notes": "Handle weekly island objectives and agenda. Location: Island Sanctuary Hideaway.",
+          "priority": 2,
+          "type": "weekly",
+          "completedAt": null,
+          "expiresAt": null,
+          "resetOverrideEnabled": false,
+          "resetSettings": {
+            "dailyTime": null,
+            "weeklyDay": 2,
+            "weeklyTime": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "ffxiv-weekly-raids-and-lockouts",
+      "name": "Weekly Raids And Lockouts",
+      "notes": "Current-tier weekly lockout reminders from XIV ToDo.",
+      "priority": 5,
+      "expiresAt": null,
+      "resetOverrideEnabled": false,
+      "resetSettings": {
+        "dailyTime": null,
+        "weeklyDay": 2,
+        "weeklyTime": null
+      },
+      "tasks": [
+        {
+          "id": "ffxiv-weekly-normal-raid-lockout",
+          "name": "Normal raid lockout",
+          "notes": "Claim current-tier normal raid rewards. Location: current raid duty finder nodes.",
+          "priority": 4,
+          "type": "weekly",
+          "completedAt": null,
+          "expiresAt": null,
+          "resetOverrideEnabled": false,
+          "resetSettings": {
+            "dailyTime": null,
+            "weeklyDay": 2,
+            "weeklyTime": null
+          }
+        },
+        {
+          "id": "ffxiv-weekly-savage-raid-lockout",
+          "name": "Savage raid lockout",
+          "notes": "Clear current savage fights before reset for books and loot. Location: current savage raid tier.",
+          "priority": 5,
+          "type": "weekly",
+          "completedAt": null,
+          "expiresAt": null,
+          "resetOverrideEnabled": false,
+          "resetSettings": {
+            "dailyTime": null,
+            "weeklyDay": 2,
+            "weeklyTime": null
+          }
+        },
+        {
+          "id": "ffxiv-weekly-alliance-raid-lockout",
+          "name": "Alliance raid lockout",
+          "notes": "Claim current alliance raid weekly reward if applicable. Location: current alliance raid duty.",
+          "priority": 3,
+          "type": "weekly",
+          "completedAt": null,
+          "expiresAt": null,
+          "resetOverrideEnabled": false,
+          "resetSettings": {
+            "dailyTime": null,
+            "weeklyDay": 2,
+            "weeklyTime": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "ffxiv-weekly-gold-saucer",
+      "name": "Weekly Gold Saucer",
+      "notes": "Gold Saucer weekly checklist items from XIV ToDo.",
+      "priority": 3,
+      "expiresAt": null,
+      "resetOverrideEnabled": false,
+      "resetSettings": {
+        "dailyTime": null,
+        "weeklyDay": 2,
+        "weeklyTime": null
+      },
+      "tasks": [
+        {
+          "id": "ffxiv-weekly-gold-saucer-tournaments",
+          "name": "Gold Saucer tournaments",
+          "notes": "Check active tournament participation windows. Location: Gold Saucer.",
+          "priority": 2,
+          "type": "weekly",
+          "completedAt": null,
+          "expiresAt": null,
+          "resetOverrideEnabled": false,
+          "resetSettings": {
+            "dailyTime": null,
+            "weeklyDay": 2,
+            "weeklyTime": null
+          }
+        },
+        {
+          "id": "ffxiv-weekly-fashion-report",
+          "name": "Fashion Report",
+          "notes": "Submit Fashion Report and claim MGP. Location: Masked Rose, Gold Saucer.",
+          "priority": 4,
+          "type": "weekly",
+          "completedAt": null,
+          "expiresAt": null,
+          "resetOverrideEnabled": false,
+          "resetSettings": {
+            "dailyTime": null,
+            "weeklyDay": 2,
+            "weeklyTime": null
+          }
+        },
+        {
+          "id": "ffxiv-weekly-jumbo-cactpot",
+          "name": "Jumbo Cactpot",
+          "notes": "Buy and redeem weekly Jumbo Cactpot tickets. Location: Gold Saucer.",
+          "priority": 3,
+          "type": "weekly",
+          "completedAt": null,
+          "expiresAt": null,
+          "resetOverrideEnabled": false,
+          "resetSettings": {
+            "dailyTime": null,
+            "weeklyDay": 2,
+            "weeklyTime": null
+          }
+        }
+      ]
+    }
+  ],
+  "tasks": []
+}

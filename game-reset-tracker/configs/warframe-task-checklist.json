@@ -176,7 +176,7 @@
         {
           "id": "wf-daily-simaris",
           "name": "Cephalon Simaris standing",
-          "notes": "Relay syndicate standing task.",
+          "notes": "Relay syndicate standing task. Location: Any Relay.",
           "priority": 2,
           "type": "daily",
           "completedAt": null,
@@ -191,7 +191,7 @@
         {
           "id": "wf-daily-ostron",
           "name": "Ostron standing",
-          "notes": "Cetus standing. Requires Saya's Vigil.",
+          "notes": "Cetus standing. Location: Cetus, Earth. Requires Saya's Vigil.",
           "priority": 2,
           "type": "daily",
           "completedAt": null,
@@ -206,7 +206,7 @@
         {
           "id": "wf-daily-quills",
           "name": "The Quills standing",
-          "notes": "Cetus operator progression. Requires The War Within.",
+          "notes": "Cetus operator progression. Location: Cetus, Earth. Requires The War Within.",
           "priority": 2,
           "type": "daily",
           "completedAt": null,
@@ -221,7 +221,7 @@
         {
           "id": "wf-daily-solaris",
           "name": "Solaris United standing",
-          "notes": "Fortuna standing. Requires Vox Solaris.",
+          "notes": "Fortuna standing. Location: Fortuna, Venus. Requires Vox Solaris.",
           "priority": 2,
           "type": "daily",
           "completedAt": null,
@@ -236,7 +236,7 @@
         {
           "id": "wf-daily-vox",
           "name": "Vox Solaris standing",
-          "notes": "Operator-focused Fortuna syndicate.",
+          "notes": "Operator-focused Fortuna syndicate. Location: Fortuna, Venus.",
           "priority": 2,
           "type": "daily",
           "completedAt": null,
@@ -251,7 +251,7 @@
         {
           "id": "wf-daily-ventkids",
           "name": "Ventkids standing",
-          "notes": "K-drive standing in Fortuna.",
+          "notes": "K-drive standing in Fortuna. Location: Fortuna, Venus.",
           "priority": 1,
           "type": "daily",
           "completedAt": null,
@@ -266,7 +266,7 @@
         {
           "id": "wf-daily-entrati",
           "name": "Entrati standing",
-          "notes": "Necralisk standing. Requires Heart of Deimos.",
+          "notes": "Necralisk standing. Location: Necralisk, Deimos. Requires Heart of Deimos.",
           "priority": 2,
           "type": "daily",
           "completedAt": null,
@@ -281,7 +281,7 @@
         {
           "id": "wf-daily-necraloid",
           "name": "Necraloid standing",
-          "notes": "Necramech-related standing on Deimos.",
+          "notes": "Necramech-related standing on Deimos. Location: Necralisk, Deimos.",
           "priority": 2,
           "type": "daily",
           "completedAt": null,
@@ -296,7 +296,7 @@
         {
           "id": "wf-daily-holdfasts",
           "name": "Holdfasts standing",
-          "notes": "Zariman standing. Requires Angels of the Zariman.",
+          "notes": "Zariman standing. Location: Chrysalith, Zariman. Requires Angels of the Zariman.",
           "priority": 2,
           "type": "daily",
           "completedAt": null,
@@ -311,7 +311,7 @@
         {
           "id": "wf-daily-cavia",
           "name": "Cavia standing",
-          "notes": "Sanctum Anatomica standing. Requires Whispers in the Walls.",
+          "notes": "Sanctum Anatomica standing. Location: Sanctum Anatomica, Deimos. Requires Whispers in the Walls.",
           "priority": 2,
           "type": "daily",
           "completedAt": null,
@@ -326,7 +326,7 @@
         {
           "id": "wf-daily-hex",
           "name": "The Hex standing",
-          "notes": "1999 faction standing. Requires The Hex quest.",
+          "notes": "1999 faction standing. Location: Höllvania Central Mall. Requires The Hex quest.",
           "priority": 2,
           "type": "daily",
           "completedAt": null,
@@ -356,7 +356,7 @@
         {
           "id": "wf-daily-acrithis",
           "name": "Check Acrithis daily stock",
-          "notes": "Look for arcanes and Captura items.",
+          "notes": "Look for arcanes and Captura items. Location: Duviri or Dormizone.",
           "priority": 2,
           "type": "daily",
           "completedAt": null,
@@ -371,7 +371,7 @@
         {
           "id": "wf-daily-ticker-crew",
           "name": "Check Ticker crew hires",
-          "notes": "Review Railjack crew if relevant.",
+          "notes": "Review Railjack crew if relevant. Location: Fortuna, Venus.",
           "priority": 1,
           "type": "daily",
           "completedAt": null,
@@ -386,7 +386,7 @@
         {
           "id": "wf-daily-marie",
           "name": "Visit Marie",
-          "notes": "Check operator and amp mod offerings.",
+          "notes": "Check operator and amp mod offerings. Location: La Cathédrale, Sanctum Anatomica, Deimos.",
           "priority": 1,
           "type": "daily",
           "completedAt": null,
@@ -446,7 +446,7 @@
         {
           "id": "wf-weekly-ayatan",
           "name": "Maroo Ayatan hunt",
-          "notes": "Run the weekly sculpture mission.",
+          "notes": "Run the weekly sculpture mission. Location: Maroo's Bazaar, Mars.",
           "priority": 2,
           "type": "weekly",
           "completedAt": null,
@@ -461,7 +461,7 @@
         {
           "id": "wf-weekly-clem",
           "name": "Help Clem",
-          "notes": "Weekly Darvo mission. Requires A Man of Few Words.",
+          "notes": "Weekly Darvo mission. Location: Any Relay. Requires A Man of Few Words.",
           "priority": 2,
           "type": "weekly",
           "completedAt": null,
@@ -476,7 +476,7 @@
         {
           "id": "wf-weekly-kahl",
           "name": "Kahl mission",
-          "notes": "Break Narmer weekly for Stock.",
+          "notes": "Break Narmer weekly for Stock. Location: Drifter's Camp, Earth.",
           "priority": 4,
           "type": "weekly",
           "completedAt": null,
@@ -491,7 +491,7 @@
         {
           "id": "wf-weekly-archon-hunt",
           "name": "Archon Hunt",
-          "notes": "Guaranteed weekly Archon Shard.",
+          "notes": "Guaranteed weekly Archon Shard. Location: Navigation.",
           "priority": 5,
           "type": "weekly",
           "completedAt": null,
@@ -506,7 +506,7 @@
         {
           "id": "wf-weekly-duviri-circuit",
           "name": "Duviri Circuit",
-          "notes": "Check normal Circuit rewards and run if needed.",
+          "notes": "Check normal Circuit rewards and run if needed. Location: Navigation or Dormizone.",
           "priority": 3,
           "type": "weekly",
           "completedAt": null,
@@ -521,7 +521,7 @@
         {
           "id": "wf-weekly-duviri-circuit-sp",
           "name": "Steel Path Circuit",
-          "notes": "Check weekly Incarnon adapters and run if needed.",
+          "notes": "Check weekly Incarnon adapters and run if needed. Location: Navigation or Dormizone.",
           "priority": 5,
           "type": "weekly",
           "completedAt": null,
@@ -536,7 +536,7 @@
         {
           "id": "wf-weekly-calendar",
           "name": "1999 calendar tasks",
-          "notes": "Complete weekly calendar objectives.",
+          "notes": "Complete weekly calendar objectives. Location: POM-2 PC.",
           "priority": 3,
           "type": "weekly",
           "completedAt": null,
@@ -551,7 +551,7 @@
         {
           "id": "wf-weekly-invigorations",
           "name": "Helminth invigorations",
-          "notes": "Use weekly invigorations if available.",
+          "notes": "Use weekly invigorations if available. Location: Helminth in Base of Operations.",
           "priority": 3,
           "type": "weekly",
           "completedAt": null,
@@ -566,7 +566,7 @@
         {
           "id": "wf-weekly-descendia",
           "name": "Descendia normal run",
-          "notes": "Weekly tower mode for resources.",
+          "notes": "Weekly tower mode for resources. Location: Dark Refractory navigation.",
           "priority": 2,
           "type": "weekly",
           "completedAt": null,
@@ -581,7 +581,7 @@
         {
           "id": "wf-weekly-descendia-sp",
           "name": "Descendia Steel Path run",
-          "notes": "Weekly Steel Path tower mode.",
+          "notes": "Weekly Steel Path tower mode. Location: Dark Refractory navigation.",
           "priority": 3,
           "type": "weekly",
           "completedAt": null,
@@ -611,7 +611,7 @@
         {
           "id": "wf-weekly-netracells",
           "name": "Netracells",
-          "notes": "Use weekly search pulses on Netracells.",
+          "notes": "Use weekly search pulses on Netracells. Location: Sanctum Anatomica, Deimos.",
           "priority": 4,
           "type": "weekly",
           "completedAt": null,
@@ -626,7 +626,7 @@
         {
           "id": "wf-weekly-eda",
           "name": "Elite Deep Archimedea",
-          "notes": "Endgame weekly shard chase. Costs search pulses.",
+          "notes": "Endgame weekly shard chase. Location: Sanctum Anatomica, Deimos. Costs search pulses.",
           "priority": 5,
           "type": "weekly",
           "completedAt": null,
@@ -641,7 +641,7 @@
         {
           "id": "wf-weekly-eta",
           "name": "Elite Temporal Archimedea",
-          "notes": "1999 endgame weekly pulse sink.",
+          "notes": "1999 endgame weekly pulse sink. Location: Höllvania Central Mall. Costs search pulses.",
           "priority": 5,
           "type": "weekly",
           "completedAt": null,
@@ -671,7 +671,7 @@
         {
           "id": "wf-weekly-paladino",
           "name": "Trade Riven Slivers",
-          "notes": "Visit Paladino in Iron Wake.",
+          "notes": "Visit Paladino in Iron Wake. Location: Iron Wake, Earth.",
           "priority": 2,
           "type": "weekly",
           "completedAt": null,
@@ -686,7 +686,7 @@
         {
           "id": "wf-weekly-yonta-kuva",
           "name": "Buy Yonta Kuva",
-          "notes": "Spend Voidplumes on weekly Kuva.",
+          "notes": "Spend Voidplumes on weekly Kuva. Location: Chrysalith, Zariman.",
           "priority": 3,
           "type": "weekly",
           "completedAt": null,
@@ -701,7 +701,7 @@
         {
           "id": "wf-weekly-acrithis-shop",
           "name": "Check Acrithis weekly wares",
-          "notes": "Review Pathos Clamp shop offerings.",
+          "notes": "Review Pathos Clamp shop offerings. Location: Duviri or Dormizone.",
           "priority": 2,
           "type": "weekly",
           "completedAt": null,
@@ -716,7 +716,7 @@
         {
           "id": "wf-weekly-teshin",
           "name": "Check Teshin shop",
-          "notes": "Steel Essence shop, including Umbra Forma rotation.",
+          "notes": "Steel Essence shop, including Umbra Forma rotation. Location: Any Relay.",
           "priority": 4,
           "type": "weekly",
           "completedAt": null,
@@ -731,7 +731,7 @@
         {
           "id": "wf-weekly-bird3",
           "name": "Buy Bird 3 Archon Shard",
-          "notes": "Weekly shard for Cavia standing.",
+          "notes": "Weekly shard for Cavia standing. Location: Sanctum Anatomica, Deimos.",
           "priority": 5,
           "type": "weekly",
           "completedAt": null,
@@ -746,7 +746,7 @@
         {
           "id": "wf-weekly-nightcap",
           "name": "Trade with Nightcap",
-          "notes": "Swap resources for Kuva and Ayatan rewards.",
+          "notes": "Swap resources for Kuva and Ayatan rewards. Location: Fortuna, Venus.",
           "priority": 2,
           "type": "weekly",
           "completedAt": null,
@@ -776,7 +776,7 @@
         {
           "id": "wf-other-baro",
           "name": "Check Baro Ki'Teer",
-          "notes": "Review Baro inventory and spend Ducats if desired.",
+          "notes": "Review Baro inventory and spend Ducats if desired. Location: Any Relay with Baro active.",
           "priority": 4,
           "type": "event",
           "completedAt": null,
@@ -791,7 +791,7 @@
         {
           "id": "wf-other-grandmother",
           "name": "Grandmother token trade",
-          "notes": "8-hour vendor rotation on Deimos.",
+          "notes": "8-hour vendor rotation on Deimos. Location: Necralisk, Deimos.",
           "priority": 2,
           "type": "event",
           "completedAt": null,
@@ -806,7 +806,7 @@
         {
           "id": "wf-other-yonta",
           "name": "Yonta voidplume trade",
-          "notes": "8-hour Zariman vendor rotation.",
+          "notes": "8-hour Zariman vendor rotation. Location: Chrysalith, Zariman.",
           "priority": 2,
           "type": "event",
           "completedAt": null,
@@ -821,7 +821,7 @@
         {
           "id": "wf-other-loid",
           "name": "Loid voca trade",
-          "notes": "8-hour Sanctum vendor rotation.",
+          "notes": "8-hour Sanctum vendor rotation. Location: Sanctum Anatomica, Deimos.",
           "priority": 2,
           "type": "event",
           "completedAt": null,

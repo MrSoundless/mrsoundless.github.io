@@ -1,0 +1,1997 @@
+{
+    "id":  "preset-arknights-endfield-daily-weekly-checklist",
+    "name":  "Arknights: Endfield",
+    "notes":  "Preset based on EndfieldTools.DEV\u0027s Daily/Weekly Checklist. Reset defaults are inferred from the app source: daily reset at 04:00 UTC and weekly reset on Monday at 04:00 UTC. Rare Nodes and Eco-Farms are mapped as daily tasks with location and timer notes.",
+    "priority":  3,
+    "expiresAt":  null,
+    "resetSettings":  {
+                          "dailyTime":  "04:00",
+                          "weeklyDay":  1,
+                          "weeklyTime":  "04:00"
+                      },
+    "groups":  [
+                   {
+                       "id":  "endfield-overview-global-priorities",
+                       "name":  "Global Priorities",
+                       "notes":  "Section: World Management.",
+                       "priority":  3,
+                       "expiresAt":  null,
+                       "resetOverrideEnabled":  false,
+                       "resetSettings":  {
+                                             "dailyTime":  null,
+                                             "weeklyDay":  1,
+                                             "weeklyTime":  null
+                                         },
+                       "tasks":  [
+                                     {
+                                         "id":  "wm_depot_node_jobs",
+                                         "name":  "Depot Node Jobs",
+                                         "notes":  "Section: World Management. Block: Global Priorities. Target: 3.",
+                                         "priority":  3,
+                                         "type":  "daily",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     },
+                                     {
+                                         "id":  "wm_claim_daily_credits",
+                                         "name":  "Claim Daily Credits (300)",
+                                         "notes":  "Section: World Management. Block: Global Priorities.",
+                                         "priority":  3,
+                                         "type":  "daily",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     }
+                                 ]
+                   },
+                   {
+                       "id":  "endfield-overview-region-wuling",
+                       "name":  "Region: Wuling",
+                       "notes":  "Section: World Management.",
+                       "priority":  3,
+                       "expiresAt":  null,
+                       "resetOverrideEnabled":  false,
+                       "resetSettings":  {
+                                             "dailyTime":  null,
+                                             "weeklyDay":  1,
+                                             "weeklyTime":  null
+                                         },
+                       "tasks":  [
+                                     {
+                                         "id":  "wm_wuling_elastic_goods",
+                                         "name":  "Elastic Goods",
+                                         "notes":  "Section: World Management. Block: Region: Wuling.",
+                                         "priority":  3,
+                                         "type":  "daily",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     },
+                                     {
+                                         "id":  "wm_wuling_city_depo",
+                                         "name":  "Wuling City Depo",
+                                         "notes":  "Section: World Management. Block: Region: Wuling. Area: Local Depot Deliverys.",
+                                         "priority":  3,
+                                         "type":  "daily",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     },
+                                     {
+                                         "id":  "wm_wuling_sky_king_flats_const_site",
+                                         "name":  "Sky-King Flats Const. Site",
+                                         "notes":  "Section: World Management. Block: Region: Wuling. Area: Settlement Trades.",
+                                         "priority":  3,
+                                         "type":  "daily",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     }
+                                 ]
+                   },
+                   {
+                       "id":  "endfield-overview-region-valley-iv",
+                       "name":  "Region: Valley IV",
+                       "notes":  "Section: World Management.",
+                       "priority":  3,
+                       "expiresAt":  null,
+                       "resetOverrideEnabled":  false,
+                       "resetSettings":  {
+                                             "dailyTime":  null,
+                                             "weeklyDay":  1,
+                                             "weeklyTime":  null
+                                         },
+                       "tasks":  [
+                                     {
+                                         "id":  "wm_valley_elastic_goods",
+                                         "name":  "Elastic Goods",
+                                         "notes":  "Section: World Management. Block: Region: Valley IV.",
+                                         "priority":  3,
+                                         "type":  "daily",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     },
+                                     {
+                                         "id":  "wm_valley_originium_science_park_depo",
+                                         "name":  "Originium Science Park Depo",
+                                         "notes":  "Section: World Management. Block: Region: Valley IV. Area: Local Depot Deliverys.",
+                                         "priority":  3,
+                                         "type":  "daily",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     },
+                                     {
+                                         "id":  "wm_valley_origin_lodespring_depo",
+                                         "name":  "Origin Lodespring Depo",
+                                         "notes":  "Section: World Management. Block: Region: Valley IV. Area: Local Depot Deliverys.",
+                                         "priority":  3,
+                                         "type":  "daily",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     },
+                                     {
+                                         "id":  "wm_valley_power_plateau_depo",
+                                         "name":  "Power Plateau Depo",
+                                         "notes":  "Section: World Management. Block: Region: Valley IV. Area: Local Depot Deliverys.",
+                                         "priority":  3,
+                                         "type":  "daily",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     },
+                                     {
+                                         "id":  "wm_valley_refugee_camp",
+                                         "name":  "Refugee Camp",
+                                         "notes":  "Section: World Management. Block: Region: Valley IV. Area: Settlement Trades.",
+                                         "priority":  3,
+                                         "type":  "daily",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     },
+                                     {
+                                         "id":  "wm_valley_infra_station",
+                                         "name":  "Infra-Station",
+                                         "notes":  "Section: World Management. Block: Region: Valley IV. Area: Settlement Trades.",
+                                         "priority":  3,
+                                         "type":  "daily",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     },
+                                     {
+                                         "id":  "wm_valley_reconstruction_hq",
+                                         "name":  "Reconstruction HQ",
+                                         "notes":  "Section: World Management. Block: Region: Valley IV. Area: Settlement Trades.",
+                                         "priority":  3,
+                                         "type":  "daily",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     }
+                                 ]
+                   },
+                   {
+                       "id":  "endfield-overview-daily-harvesting",
+                       "name":  "Daily Harvesting",
+                       "notes":  "Section: World Management.",
+                       "priority":  3,
+                       "expiresAt":  null,
+                       "resetOverrideEnabled":  false,
+                       "resetSettings":  {
+                                             "dailyTime":  null,
+                                             "weeklyDay":  1,
+                                             "weeklyTime":  null
+                                         },
+                       "tasks":  [
+                                     {
+                                         "id":  "wm_collect_muck",
+                                         "name":  "Collect Muck (Poop)",
+                                         "notes":  "Section: World Management. Block: Daily Harvesting.",
+                                         "priority":  3,
+                                         "type":  "daily",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     }
+                                 ]
+                   },
+                   {
+                       "id":  "endfield-overview-activity-level",
+                       "name":  "Activity Level",
+                       "notes":  "Section: Operational Manual (Daily).",
+                       "priority":  3,
+                       "expiresAt":  null,
+                       "resetOverrideEnabled":  false,
+                       "resetSettings":  {
+                                             "dailyTime":  null,
+                                             "weeklyDay":  1,
+                                             "weeklyTime":  null
+                                         },
+                       "tasks":  [
+                                     {
+                                         "id":  "om_activity_level",
+                                         "name":  "Activity Level",
+                                         "notes":  "Section: Operational Manual (Daily). Block: Activity Level. Target: 100.",
+                                         "priority":  4,
+                                         "type":  "daily",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     }
+                                 ]
+                   },
+                   {
+                       "id":  "endfield-overview-daily-objectives",
+                       "name":  "Daily Objectives",
+                       "notes":  "Section: Operational Manual (Daily).",
+                       "priority":  3,
+                       "expiresAt":  null,
+                       "resetOverrideEnabled":  false,
+                       "resetSettings":  {
+                                             "dailyTime":  null,
+                                             "weeklyDay":  1,
+                                             "weeklyTime":  null
+                                         },
+                       "tasks":  [
+                                     {
+                                         "id":  "om_complete_daily_quest",
+                                         "name":  "Complete Daily Quest",
+                                         "notes":  "Section: Operational Manual (Daily). Block: Daily Objectives. Points: 80.",
+                                         "priority":  4,
+                                         "type":  "daily",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     },
+                                     {
+                                         "id":  "om_assemble_gear",
+                                         "name":  "Assemble Gear",
+                                         "notes":  "Section: Operational Manual (Daily). Block: Daily Objectives. Points: 40.",
+                                         "priority":  4,
+                                         "type":  "daily",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     },
+                                     {
+                                         "id":  "om_give_gift_to_op",
+                                         "name":  "Give Gift to Op",
+                                         "notes":  "Section: Operational Manual (Daily). Block: Daily Objectives. Points: 40.",
+                                         "priority":  4,
+                                         "type":  "daily",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     },
+                                     {
+                                         "id":  "om_log_in",
+                                         "name":  "Log In",
+                                         "notes":  "Section: Operational Manual (Daily). Block: Daily Objectives. Points: 20.",
+                                         "priority":  4,
+                                         "type":  "daily",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     },
+                                     {
+                                         "id":  "om_defeat_20_enemies",
+                                         "name":  "Defeat 20 Enemies",
+                                         "notes":  "Section: Operational Manual (Daily). Block: Daily Objectives. Points: 20.",
+                                         "priority":  4,
+                                         "type":  "daily",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     },
+                                     {
+                                         "id":  "om_level_up_operator",
+                                         "name":  "Level Up Operator",
+                                         "notes":  "Section: Operational Manual (Daily). Block: Daily Objectives. Points: 20.",
+                                         "priority":  4,
+                                         "type":  "daily",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     },
+                                     {
+                                         "id":  "om_level_up_weapon",
+                                         "name":  "Level Up Weapon",
+                                         "notes":  "Section: Operational Manual (Daily). Block: Daily Objectives. Points: 20.",
+                                         "priority":  4,
+                                         "type":  "daily",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     },
+                                     {
+                                         "id":  "om_acquire_5_gatherables",
+                                         "name":  "Acquire 5 Gatherables",
+                                         "notes":  "Section: Operational Manual (Daily). Block: Daily Objectives. Points: 20.",
+                                         "priority":  4,
+                                         "type":  "daily",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     },
+                                     {
+                                         "id":  "om_perform_crafting",
+                                         "name":  "Perform Crafting",
+                                         "notes":  "Section: Operational Manual (Daily). Block: Daily Objectives. Points: 20.",
+                                         "priority":  4,
+                                         "type":  "daily",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     },
+                                     {
+                                         "id":  "om_spend_60_sanity",
+                                         "name":  "Spend 60 Sanity",
+                                         "notes":  "Section: Operational Manual (Daily). Block: Daily Objectives. Points: 10.",
+                                         "priority":  4,
+                                         "type":  "daily",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     },
+                                     {
+                                         "id":  "om_spend_120_sanity",
+                                         "name":  "Spend 120 Sanity",
+                                         "notes":  "Section: Operational Manual (Daily). Block: Daily Objectives. Points: 10.",
+                                         "priority":  4,
+                                         "type":  "daily",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     }
+                                 ]
+                   },
+                   {
+                       "id":  "endfield-overview-sanity-tracker",
+                       "name":  "Sanity Tracker",
+                       "notes":  "Section: Operational Manual (Daily).",
+                       "priority":  3,
+                       "expiresAt":  null,
+                       "resetOverrideEnabled":  false,
+                       "resetSettings":  {
+                                             "dailyTime":  null,
+                                             "weeklyDay":  1,
+                                             "weeklyTime":  null
+                                         },
+                       "tasks":  [
+                                     {
+                                         "id":  "om_sanity_tracker",
+                                         "name":  "Sanity Tracker",
+                                         "notes":  "Section: Operational Manual (Daily). Block: Sanity Tracker. Target: 125.",
+                                         "priority":  4,
+                                         "type":  "daily",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     }
+                                 ]
+                   },
+                   {
+                       "id":  "endfield-overview-recycling-valley-vi",
+                       "name":  "Region: Valley VI",
+                       "notes":  "Section: Recycling Stations.",
+                       "priority":  3,
+                       "expiresAt":  null,
+                       "resetOverrideEnabled":  false,
+                       "resetSettings":  {
+                                             "dailyTime":  null,
+                                             "weeklyDay":  1,
+                                             "weeklyTime":  null
+                                         },
+                       "tasks":  [
+                                     {
+                                         "id":  "rc_valley_pass",
+                                         "name":  "Valley Pass",
+                                         "notes":  "Section: Recycling Stations. Block: Region: Valley VI. Area: Valley Pass.",
+                                         "priority":  3,
+                                         "type":  "daily",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     },
+                                     {
+                                         "id":  "rc_hub_base",
+                                         "name":  "HUB BASE",
+                                         "notes":  "Section: Recycling Stations. Block: Region: Valley VI. Area: The HUB.",
+                                         "priority":  3,
+                                         "type":  "daily",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     },
+                                     {
+                                         "id":  "rc_hub_base_power_plant",
+                                         "name":  "HUB BASE Power Plant",
+                                         "notes":  "Section: Recycling Stations. Block: Region: Valley VI. Area: The HUB.",
+                                         "priority":  3,
+                                         "type":  "daily",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     },
+                                     {
+                                         "id":  "rc_originium_byproduct_proc",
+                                         "name":  "Originium Byproduct Proc.",
+                                         "notes":  "Section: Recycling Stations. Block: Region: Valley VI. Area: The HUB.",
+                                         "priority":  3,
+                                         "type":  "daily",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     },
+                                     {
+                                         "id":  "rc_staff_lounge",
+                                         "name":  "Staff Lounge",
+                                         "notes":  "Section: Recycling Stations. Block: Region: Valley VI. Area: Aburrey Quarry.",
+                                         "priority":  3,
+                                         "type":  "daily",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     },
+                                     {
+                                         "id":  "rc_control_center",
+                                         "name":  "Control Center",
+                                         "notes":  "Section: Recycling Stations. Block: Region: Valley VI. Area: Originium Science Park.",
+                                         "priority":  3,
+                                         "type":  "daily",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     },
+                                     {
+                                         "id":  "rc_below_research_center",
+                                         "name":  "Below Research Center",
+                                         "notes":  "Section: Recycling Stations. Block: Region: Valley VI. Area: Originium Science Park.",
+                                         "priority":  3,
+                                         "type":  "daily",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     },
+                                     {
+                                         "id":  "rc_north_temp_stockpile",
+                                         "name":  "North of Temp. Stockpile",
+                                         "notes":  "Section: Recycling Stations. Block: Region: Valley VI. Area: Origin Lodespring.",
+                                         "priority":  3,
+                                         "type":  "daily",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     },
+                                     {
+                                         "id":  "rc_se_temp_stockpile",
+                                         "name":  "SE of Temp. Stockpile",
+                                         "notes":  "Section: Recycling Stations. Block: Region: Valley VI. Area: Origin Lodespring.",
+                                         "priority":  3,
+                                         "type":  "daily",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     },
+                                     {
+                                         "id":  "rc_united_parking_lot",
+                                         "name":  "United Parking Lot",
+                                         "notes":  "Section: Recycling Stations. Block: Region: Valley VI. Area: Power Plateau.",
+                                         "priority":  3,
+                                         "type":  "daily",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     },
+                                     {
+                                         "id":  "rc_evacuation_zone",
+                                         "name":  "Evacuation Zone",
+                                         "notes":  "Section: Recycling Stations. Block: Region: Valley VI. Area: Power Plateau.",
+                                         "priority":  3,
+                                         "type":  "daily",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     }
+                                 ]
+                   },
+                   {
+                       "id":  "endfield-overview-recycling-wuling",
+                       "name":  "Region: Wuling",
+                       "notes":  "Section: Recycling Stations.",
+                       "priority":  3,
+                       "expiresAt":  null,
+                       "resetOverrideEnabled":  false,
+                       "resetSettings":  {
+                                             "dailyTime":  null,
+                                             "weeklyDay":  1,
+                                             "weeklyTime":  null
+                                         },
+                       "tasks":  [
+                                     {
+                                         "id":  "rc_ecological_research_station",
+                                         "name":  "Ecological Research Station",
+                                         "notes":  "Section: Recycling Stations. Block: Region: Wuling. Area: Jingyu Valley.",
+                                         "priority":  3,
+                                         "type":  "daily",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     },
+                                     {
+                                         "id":  "rc_sky_king_flats",
+                                         "name":  "Sky King Flats",
+                                         "notes":  "Section: Recycling Stations. Block: Region: Wuling. Area: Jingyu Valley.",
+                                         "priority":  3,
+                                         "type":  "daily",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     },
+                                     {
+                                         "id":  "rc_north_zhailing_islet",
+                                         "name":  "North of Zhailing Islet",
+                                         "notes":  "Section: Recycling Stations. Block: Region: Wuling. Area: Jingyu Valley.",
+                                         "priority":  3,
+                                         "type":  "daily",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     },
+                                     {
+                                         "id":  "rc_wuling_city",
+                                         "name":  "Wuling City",
+                                         "notes":  "Section: Recycling Stations. Block: Region: Wuling. Area: Wuling City.",
+                                         "priority":  3,
+                                         "type":  "daily",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     }
+                                 ]
+                   },
+                   {
+                       "id":  "endfield-weekly-weekly-mission-list",
+                       "name":  "Mission",
+                       "notes":  "Section: All Weeklies.",
+                       "priority":  4,
+                       "expiresAt":  null,
+                       "resetOverrideEnabled":  false,
+                       "resetSettings":  {
+                                             "dailyTime":  null,
+                                             "weeklyDay":  1,
+                                             "weeklyTime":  null
+                                         },
+                       "tasks":  [
+                                     {
+                                         "id":  "wk_collect_aurylene_corrosion_space",
+                                         "name":  "Collect 1000 Aurylene Cristals in Corrosion Space",
+                                         "notes":  "Section: All Weeklies. Block: Mission. Target: 1000. Points: 5.",
+                                         "priority":  4,
+                                         "type":  "weekly",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     },
+                                     {
+                                         "id":  "wk_finish_umbral_monument",
+                                         "name":  "Finish any level of Umbral Monument",
+                                         "notes":  "Section: All Weeklies. Block: Mission. Points: 5.",
+                                         "priority":  4,
+                                         "type":  "weekly",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     },
+                                     {
+                                         "id":  "wk_collect_resources",
+                                         "name":  "Collect 35 resources",
+                                         "notes":  "Section: All Weeklies. Block: Mission. Target: 35. Points: 2.",
+                                         "priority":  4,
+                                         "type":  "weekly",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     },
+                                     {
+                                         "id":  "wk_craft_20_items",
+                                         "name":  "Craft 20 items",
+                                         "notes":  "Section: All Weeklies. Block: Mission. Target: 20. Points: 2.",
+                                         "priority":  4,
+                                         "type":  "weekly",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     },
+                                     {
+                                         "id":  "wk_buy_15_credit_shop",
+                                         "name":  "Buy 15 items in credit shop",
+                                         "notes":  "Section: All Weeklies. Block: Mission. Target: 15. Points: 1.",
+                                         "priority":  4,
+                                         "type":  "weekly",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     },
+                                     {
+                                         "id":  "wk_gift_item_10_times",
+                                         "name":  "Gift 1 item to an operator 10 times",
+                                         "notes":  "Section: All Weeklies. Block: Mission. Target: 10. Points: 1.",
+                                         "priority":  4,
+                                         "type":  "weekly",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     },
+                                     {
+                                         "id":  "wk_zipline_1000m",
+                                         "name":  "1000 meters using zipline",
+                                         "notes":  "Section: All Weeklies. Block: Mission. Target: 1000. Points: 1.",
+                                         "priority":  4,
+                                         "type":  "weekly",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     },
+                                     {
+                                         "id":  "wk_spend_1500_sanity",
+                                         "name":  "Spend 1500 sanity",
+                                         "notes":  "Section: All Weeklies. Block: Mission. Target: 1500. Points: 1.",
+                                         "priority":  4,
+                                         "type":  "weekly",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     },
+                                     {
+                                         "id":  "wk_kill_150_enemies",
+                                         "name":  "Kill 150 enemies",
+                                         "notes":  "Section: All Weeklies. Block: Mission. Target: 150. Points: 1.",
+                                         "priority":  4,
+                                         "type":  "weekly",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     },
+                                     {
+                                         "id":  "wk_apply_status_100_times",
+                                         "name":  "Apply 100 times a status",
+                                         "notes":  "Section: All Weeklies. Block: Mission. Target: 100. Points: 1.",
+                                         "priority":  4,
+                                         "type":  "weekly",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     }
+                                 ]
+                   },
+                   {
+                       "id":  "endfield-rare-nodes-rare-valley-vi",
+                       "name":  "Rare Nodes: Region: Valley VI",
+                       "notes":  "Section: Rare Material Nodes. Source tab: Rare Nodes.",
+                       "priority":  3,
+                       "expiresAt":  null,
+                       "resetOverrideEnabled":  false,
+                       "resetSettings":  {
+                                             "dailyTime":  null,
+                                             "weeklyDay":  1,
+                                             "weeklyTime":  null
+                                         },
+                       "tasks":  [
+                                     {
+                                         "id":  "rn_valley_pass_kalkonyx_mineral",
+                                         "name":  "Valley Pass: Kalkonyx (Mineral)",
+                                         "notes":  "Tab: Rare Nodes. Section: Rare Material Nodes. Block: Region: Valley VI. Timer: 24h rare-node refresh in EndfieldTools.",
+                                         "priority":  2,
+                                         "type":  "daily",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     },
+                                     {
+                                         "id":  "rn_valley_pass_pink_bolete",
+                                         "name":  "Valley Pass: Pink Bolete (Mushroom)",
+                                         "notes":  "Tab: Rare Nodes. Section: Rare Material Nodes. Block: Region: Valley VI. Timer: 24h rare-node refresh in EndfieldTools.",
+                                         "priority":  2,
+                                         "type":  "daily",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     },
+                                     {
+                                         "id":  "rn_hub_kalkonyx_1",
+                                         "name":  "The HUB: Kalkonyx (1)",
+                                         "notes":  "Tab: Rare Nodes. Section: Rare Material Nodes. Block: Region: Valley VI. Timer: 24h rare-node refresh in EndfieldTools.",
+                                         "priority":  2,
+                                         "type":  "daily",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     },
+                                     {
+                                         "id":  "rn_hub_kalkonyx_2",
+                                         "name":  "The HUB: Kalkonyx (2)",
+                                         "notes":  "Tab: Rare Nodes. Section: Rare Material Nodes. Block: Region: Valley VI. Timer: 24h rare-node refresh in EndfieldTools.",
+                                         "priority":  2,
+                                         "type":  "daily",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     },
+                                     {
+                                         "id":  "rn_hub_kalkonyx_3",
+                                         "name":  "The HUB: Kalkonyx (3)",
+                                         "notes":  "Tab: Rare Nodes. Section: Rare Material Nodes. Block: Region: Valley VI. Timer: 24h rare-node refresh in EndfieldTools.",
+                                         "priority":  2,
+                                         "type":  "daily",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     },
+                                     {
+                                         "id":  "rn_hub_kalkodendra_1",
+                                         "name":  "The HUB: Kalkodendra (1)",
+                                         "notes":  "Tab: Rare Nodes. Section: Rare Material Nodes. Block: Region: Valley VI. Timer: 24h rare-node refresh in EndfieldTools.",
+                                         "priority":  2,
+                                         "type":  "daily",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     },
+                                     {
+                                         "id":  "rn_hub_kalkodendra_2",
+                                         "name":  "The HUB: Kalkodendra (2)",
+                                         "notes":  "Tab: Rare Nodes. Section: Rare Material Nodes. Block: Region: Valley VI. Timer: 24h rare-node refresh in EndfieldTools.",
+                                         "priority":  2,
+                                         "type":  "daily",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     },
+                                     {
+                                         "id":  "rn_hub_kalkodendra_3",
+                                         "name":  "The HUB: Kalkodendra (3)",
+                                         "notes":  "Tab: Rare Nodes. Section: Rare Material Nodes. Block: Region: Valley VI. Timer: 24h rare-node refresh in EndfieldTools.",
+                                         "priority":  2,
+                                         "type":  "daily",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     },
+                                     {
+                                         "id":  "rn_hub_pink_bolete_1",
+                                         "name":  "The HUB: Pink Bolete (1)",
+                                         "notes":  "Tab: Rare Nodes. Section: Rare Material Nodes. Block: Region: Valley VI. Timer: 24h rare-node refresh in EndfieldTools.",
+                                         "priority":  2,
+                                         "type":  "daily",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     },
+                                     {
+                                         "id":  "rn_hub_pink_bolete_2",
+                                         "name":  "The HUB: Pink Bolete (2)",
+                                         "notes":  "Tab: Rare Nodes. Section: Rare Material Nodes. Block: Region: Valley VI. Timer: 24h rare-node refresh in EndfieldTools.",
+                                         "priority":  2,
+                                         "type":  "daily",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     },
+                                     {
+                                         "id":  "rn_hub_pink_bolete_3",
+                                         "name":  "The HUB: Pink Bolete (3)",
+                                         "notes":  "Tab: Rare Nodes. Section: Rare Material Nodes. Block: Region: Valley VI. Timer: 24h rare-node refresh in EndfieldTools.",
+                                         "priority":  2,
+                                         "type":  "daily",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     },
+                                     {
+                                         "id":  "rn_aburrey_kalkonyx",
+                                         "name":  "Aburrey Quarry: Kalkonyx",
+                                         "notes":  "Tab: Rare Nodes. Section: Rare Material Nodes. Block: Region: Valley VI. Timer: 24h rare-node refresh in EndfieldTools.",
+                                         "priority":  2,
+                                         "type":  "daily",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     },
+                                     {
+                                         "id":  "rn_aburrey_kalkodendra_1",
+                                         "name":  "Aburrey Quarry: Kalkodendra (1)",
+                                         "notes":  "Tab: Rare Nodes. Section: Rare Material Nodes. Block: Region: Valley VI. Timer: 24h rare-node refresh in EndfieldTools.",
+                                         "priority":  2,
+                                         "type":  "daily",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     },
+                                     {
+                                         "id":  "rn_aburrey_kalkodendra_2",
+                                         "name":  "Aburrey Quarry: Kalkodendra (2)",
+                                         "notes":  "Tab: Rare Nodes. Section: Rare Material Nodes. Block: Region: Valley VI. Timer: 24h rare-node refresh in EndfieldTools.",
+                                         "priority":  2,
+                                         "type":  "daily",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     },
+                                     {
+                                         "id":  "rn_aburrey_pink_bolete",
+                                         "name":  "Aburrey Quarry: Pink Bolete",
+                                         "notes":  "Tab: Rare Nodes. Section: Rare Material Nodes. Block: Region: Valley VI. Timer: 24h rare-node refresh in EndfieldTools.",
+                                         "priority":  2,
+                                         "type":  "daily",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     },
+                                     {
+                                         "id":  "rn_osp_kalkonyx_1",
+                                         "name":  "Originium Science Park: Kalkonyx (1)",
+                                         "notes":  "Tab: Rare Nodes. Section: Rare Material Nodes. Block: Region: Valley VI. Timer: 24h rare-node refresh in EndfieldTools.",
+                                         "priority":  2,
+                                         "type":  "daily",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     },
+                                     {
+                                         "id":  "rn_osp_kalkonyx_2",
+                                         "name":  "Originium Science Park: Kalkonyx (2)",
+                                         "notes":  "Tab: Rare Nodes. Section: Rare Material Nodes. Block: Region: Valley VI. Timer: 24h rare-node refresh in EndfieldTools.",
+                                         "priority":  2,
+                                         "type":  "daily",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     },
+                                     {
+                                         "id":  "rn_osp_pink_bolete_1",
+                                         "name":  "Originium Science Park: Pink Bolete (1)",
+                                         "notes":  "Tab: Rare Nodes. Section: Rare Material Nodes. Block: Region: Valley VI. Timer: 24h rare-node refresh in EndfieldTools.",
+                                         "priority":  2,
+                                         "type":  "daily",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     },
+                                     {
+                                         "id":  "rn_osp_pink_bolete_2",
+                                         "name":  "Originium Science Park: Pink Bolete (2)",
+                                         "notes":  "Tab: Rare Nodes. Section: Rare Material Nodes. Block: Region: Valley VI. Timer: 24h rare-node refresh in EndfieldTools.",
+                                         "priority":  2,
+                                         "type":  "daily",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     },
+                                     {
+                                         "id":  "rn_osp_kalkodendra",
+                                         "name":  "Originium Science Park: Kalkodendra",
+                                         "notes":  "Tab: Rare Nodes. Section: Rare Material Nodes. Block: Region: Valley VI. Timer: 24h rare-node refresh in EndfieldTools.",
+                                         "priority":  2,
+                                         "type":  "daily",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     },
+                                     {
+                                         "id":  "rn_lodespring_red_bolete_1",
+                                         "name":  "Origin Lodespring: Red Bolete (1)",
+                                         "notes":  "Tab: Rare Nodes. Section: Rare Material Nodes. Block: Region: Valley VI. Timer: 24h rare-node refresh in EndfieldTools.",
+                                         "priority":  2,
+                                         "type":  "daily",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     },
+                                     {
+                                         "id":  "rn_lodespring_red_bolete_2",
+                                         "name":  "Origin Lodespring: Red Bolete (2)",
+                                         "notes":  "Tab: Rare Nodes. Section: Rare Material Nodes. Block: Region: Valley VI. Timer: 24h rare-node refresh in EndfieldTools.",
+                                         "priority":  2,
+                                         "type":  "daily",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     },
+                                     {
+                                         "id":  "rn_lodespring_red_bolete_3",
+                                         "name":  "Origin Lodespring: Red Bolete (3)",
+                                         "notes":  "Tab: Rare Nodes. Section: Rare Material Nodes. Block: Region: Valley VI. Timer: 24h rare-node refresh in EndfieldTools.",
+                                         "priority":  2,
+                                         "type":  "daily",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     },
+                                     {
+                                         "id":  "rn_lodespring_chrysodendra_1",
+                                         "name":  "Origin Lodespring: Chrysodendra (1)",
+                                         "notes":  "Tab: Rare Nodes. Section: Rare Material Nodes. Block: Region: Valley VI. Timer: 24h rare-node refresh in EndfieldTools.",
+                                         "priority":  2,
+                                         "type":  "daily",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     },
+                                     {
+                                         "id":  "rn_lodespring_chrysodendra_2",
+                                         "name":  "Origin Lodespring: Chrysodendra (2)",
+                                         "notes":  "Tab: Rare Nodes. Section: Rare Material Nodes. Block: Region: Valley VI. Timer: 24h rare-node refresh in EndfieldTools.",
+                                         "priority":  2,
+                                         "type":  "daily",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     },
+                                     {
+                                         "id":  "rn_lodespring_auronyx_1",
+                                         "name":  "Origin Lodespring: Auronyx (1)",
+                                         "notes":  "Tab: Rare Nodes. Section: Rare Material Nodes. Block: Region: Valley VI. Timer: 24h rare-node refresh in EndfieldTools.",
+                                         "priority":  2,
+                                         "type":  "daily",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     },
+                                     {
+                                         "id":  "rn_lodespring_auronyx_2",
+                                         "name":  "Origin Lodespring: Auronyx (2)",
+                                         "notes":  "Tab: Rare Nodes. Section: Rare Material Nodes. Block: Region: Valley VI. Timer: 24h rare-node refresh in EndfieldTools.",
+                                         "priority":  2,
+                                         "type":  "daily",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     },
+                                     {
+                                         "id":  "rn_lodespring_auronyx_3",
+                                         "name":  "Origin Lodespring: Auronyx (3)",
+                                         "notes":  "Tab: Rare Nodes. Section: Rare Material Nodes. Block: Region: Valley VI. Timer: 24h rare-node refresh in EndfieldTools.",
+                                         "priority":  2,
+                                         "type":  "daily",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     },
+                                     {
+                                         "id":  "rn_power_plateau_auronyx",
+                                         "name":  "Power Plateau: Auronyx",
+                                         "notes":  "Tab: Rare Nodes. Section: Rare Material Nodes. Block: Region: Valley VI. Timer: 24h rare-node refresh in EndfieldTools.",
+                                         "priority":  2,
+                                         "type":  "daily",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     },
+                                     {
+                                         "id":  "rn_power_plateau_chrysodendra_1",
+                                         "name":  "Power Plateau: Chrysodendra (1)",
+                                         "notes":  "Tab: Rare Nodes. Section: Rare Material Nodes. Block: Region: Valley VI. Timer: 24h rare-node refresh in EndfieldTools.",
+                                         "priority":  2,
+                                         "type":  "daily",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     },
+                                     {
+                                         "id":  "rn_power_plateau_chrysodendra_2",
+                                         "name":  "Power Plateau: Chrysodendra (2)",
+                                         "notes":  "Tab: Rare Nodes. Section: Rare Material Nodes. Block: Region: Valley VI. Timer: 24h rare-node refresh in EndfieldTools.",
+                                         "priority":  2,
+                                         "type":  "daily",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     },
+                                     {
+                                         "id":  "rn_power_plateau_red_bolete",
+                                         "name":  "Power Plateau: Red Bolete",
+                                         "notes":  "Tab: Rare Nodes. Section: Rare Material Nodes. Block: Region: Valley VI. Timer: 24h rare-node refresh in EndfieldTools.",
+                                         "priority":  2,
+                                         "type":  "daily",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     }
+                                 ]
+                   },
+                   {
+                       "id":  "endfield-eco-farms-eco-valley-plots",
+                       "name":  "Eco-Farms: Plots",
+                       "notes":  "Section: Eco-Farm (Valley IV) - 16 Plots. Source tab: Eco-Farms.",
+                       "priority":  3,
+                       "expiresAt":  null,
+                       "resetOverrideEnabled":  false,
+                       "resetSettings":  {
+                                             "dailyTime":  null,
+                                             "weeklyDay":  1,
+                                             "weeklyTime":  null
+                                         },
+                       "tasks":  [
+                                     {
+                                         "id":  "ef_valley_plot_1",
+                                         "name":  "ECO Plot 1",
+                                         "notes":  "Tab: Eco-Farms. Section: Eco-Farm (Valley IV) - 16 Plots. Block: Plots. Crop: Tartpepper. Track planting or harvest progress manually; imported as a daily task in this app.",
+                                         "priority":  2,
+                                         "type":  "daily",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     },
+                                     {
+                                         "id":  "ef_valley_plot_2",
+                                         "name":  "ECO Plot 2",
+                                         "notes":  "Tab: Eco-Farms. Section: Eco-Farm (Valley IV) - 16 Plots. Block: Plots. Crop: Tartpepper. Track planting or harvest progress manually; imported as a daily task in this app.",
+                                         "priority":  2,
+                                         "type":  "daily",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     },
+                                     {
+                                         "id":  "ef_valley_plot_3",
+                                         "name":  "ECO Plot 3",
+                                         "notes":  "Tab: Eco-Farms. Section: Eco-Farm (Valley IV) - 16 Plots. Block: Plots. Crop: Tartpepper. Track planting or harvest progress manually; imported as a daily task in this app.",
+                                         "priority":  2,
+                                         "type":  "daily",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     },
+                                     {
+                                         "id":  "ef_valley_plot_4",
+                                         "name":  "ECO Plot 4",
+                                         "notes":  "Tab: Eco-Farms. Section: Eco-Farm (Valley IV) - 16 Plots. Block: Plots. Crop: Tartpepper. Track planting or harvest progress manually; imported as a daily task in this app.",
+                                         "priority":  2,
+                                         "type":  "daily",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     },
+                                     {
+                                         "id":  "ef_valley_plot_5",
+                                         "name":  "ECO Plot 5",
+                                         "notes":  "Tab: Eco-Farms. Section: Eco-Farm (Valley IV) - 16 Plots. Block: Plots. Crop: Reed Rye. Track planting or harvest progress manually; imported as a daily task in this app.",
+                                         "priority":  2,
+                                         "type":  "daily",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     },
+                                     {
+                                         "id":  "ef_valley_plot_6",
+                                         "name":  "ECO Plot 6",
+                                         "notes":  "Tab: Eco-Farms. Section: Eco-Farm (Valley IV) - 16 Plots. Block: Plots. Crop: Reed Rye. Track planting or harvest progress manually; imported as a daily task in this app.",
+                                         "priority":  2,
+                                         "type":  "daily",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     },
+                                     {
+                                         "id":  "ef_valley_plot_7",
+                                         "name":  "ECO Plot 7",
+                                         "notes":  "Tab: Eco-Farms. Section: Eco-Farm (Valley IV) - 16 Plots. Block: Plots. Crop: Tartpepper. Track planting or harvest progress manually; imported as a daily task in this app.",
+                                         "priority":  2,
+                                         "type":  "daily",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     },
+                                     {
+                                         "id":  "ef_valley_plot_8",
+                                         "name":  "ECO Plot 8",
+                                         "notes":  "Tab: Eco-Farms. Section: Eco-Farm (Valley IV) - 16 Plots. Block: Plots. Crop: Tartpepper. Track planting or harvest progress manually; imported as a daily task in this app.",
+                                         "priority":  2,
+                                         "type":  "daily",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     },
+                                     {
+                                         "id":  "ef_valley_plot_9",
+                                         "name":  "ECO Plot 9",
+                                         "notes":  "Tab: Eco-Farms. Section: Eco-Farm (Valley IV) - 16 Plots. Block: Plots. Crop: Reed Rye. Track planting or harvest progress manually; imported as a daily task in this app.",
+                                         "priority":  2,
+                                         "type":  "daily",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     },
+                                     {
+                                         "id":  "ef_valley_plot_10",
+                                         "name":  "ECO Plot 10",
+                                         "notes":  "Tab: Eco-Farms. Section: Eco-Farm (Valley IV) - 16 Plots. Block: Plots. Crop: Reed Rye. Track planting or harvest progress manually; imported as a daily task in this app.",
+                                         "priority":  2,
+                                         "type":  "daily",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     },
+                                     {
+                                         "id":  "ef_valley_plot_11",
+                                         "name":  "ECO Plot 11",
+                                         "notes":  "Tab: Eco-Farms. Section: Eco-Farm (Valley IV) - 16 Plots. Block: Plots. Crop: Reed Rye. Track planting or harvest progress manually; imported as a daily task in this app.",
+                                         "priority":  2,
+                                         "type":  "daily",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     },
+                                     {
+                                         "id":  "ef_valley_plot_12",
+                                         "name":  "ECO Plot 12",
+                                         "notes":  "Tab: Eco-Farms. Section: Eco-Farm (Valley IV) - 16 Plots. Block: Plots. Crop: Reed Rye. Track planting or harvest progress manually; imported as a daily task in this app.",
+                                         "priority":  2,
+                                         "type":  "daily",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     },
+                                     {
+                                         "id":  "ef_valley_plot_13",
+                                         "name":  "ECO Plot 13",
+                                         "notes":  "Tab: Eco-Farms. Section: Eco-Farm (Valley IV) - 16 Plots. Block: Plots. Crop: Reed Rye. Track planting or harvest progress manually; imported as a daily task in this app.",
+                                         "priority":  2,
+                                         "type":  "daily",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     },
+                                     {
+                                         "id":  "ef_valley_plot_14",
+                                         "name":  "ECO Plot 14",
+                                         "notes":  "Tab: Eco-Farms. Section: Eco-Farm (Valley IV) - 16 Plots. Block: Plots. Crop: Reed Rye. Track planting or harvest progress manually; imported as a daily task in this app.",
+                                         "priority":  2,
+                                         "type":  "daily",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     },
+                                     {
+                                         "id":  "ef_valley_plot_15",
+                                         "name":  "ECO Plot 15",
+                                         "notes":  "Tab: Eco-Farms. Section: Eco-Farm (Valley IV) - 16 Plots. Block: Plots. Crop: Reed Rye. Track planting or harvest progress manually; imported as a daily task in this app.",
+                                         "priority":  2,
+                                         "type":  "daily",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     },
+                                     {
+                                         "id":  "ef_valley_plot_16",
+                                         "name":  "ECO Plot 16",
+                                         "notes":  "Tab: Eco-Farms. Section: Eco-Farm (Valley IV) - 16 Plots. Block: Plots. Crop: Reed Rye. Track planting or harvest progress manually; imported as a daily task in this app.",
+                                         "priority":  2,
+                                         "type":  "daily",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     }
+                                 ]
+                   },
+                   {
+                       "id":  "endfield-eco-farms-eco-wuling-plots",
+                       "name":  "Eco-Farms: Plots",
+                       "notes":  "Section: Wuling Farm (Wuling) - 20 Plots. Source tab: Eco-Farms.",
+                       "priority":  3,
+                       "expiresAt":  null,
+                       "resetOverrideEnabled":  false,
+                       "resetSettings":  {
+                                             "dailyTime":  null,
+                                             "weeklyDay":  1,
+                                             "weeklyTime":  null
+                                         },
+                       "tasks":  [
+                                     {
+                                         "id":  "ef_wuling_plot_1",
+                                         "name":  "ARG Plot 1",
+                                         "notes":  "Tab: Eco-Farms. Section: Wuling Farm (Wuling) - 20 Plots. Block: Plots. Crop: Amber Rice. Track planting or harvest progress manually; imported as a daily task in this app.",
+                                         "priority":  2,
+                                         "type":  "daily",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     },
+                                     {
+                                         "id":  "ef_wuling_plot_2",
+                                         "name":  "ARG Plot 2",
+                                         "notes":  "Tab: Eco-Farms. Section: Wuling Farm (Wuling) - 20 Plots. Block: Plots. Crop: Amber Rice. Track planting or harvest progress manually; imported as a daily task in this app.",
+                                         "priority":  2,
+                                         "type":  "daily",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     },
+                                     {
+                                         "id":  "ef_wuling_plot_3",
+                                         "name":  "ARG Plot 3",
+                                         "notes":  "Tab: Eco-Farms. Section: Wuling Farm (Wuling) - 20 Plots. Block: Plots. Crop: Reed Rye. Track planting or harvest progress manually; imported as a daily task in this app.",
+                                         "priority":  2,
+                                         "type":  "daily",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     },
+                                     {
+                                         "id":  "ef_wuling_plot_4",
+                                         "name":  "ARG Plot 4",
+                                         "notes":  "Tab: Eco-Farms. Section: Wuling Farm (Wuling) - 20 Plots. Block: Plots. Crop: Reed Rye. Track planting or harvest progress manually; imported as a daily task in this app.",
+                                         "priority":  2,
+                                         "type":  "daily",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     },
+                                     {
+                                         "id":  "ef_wuling_plot_5",
+                                         "name":  "ARG Plot 5",
+                                         "notes":  "Tab: Eco-Farms. Section: Wuling Farm (Wuling) - 20 Plots. Block: Plots. Crop: Redjade Ginseng. Track planting or harvest progress manually; imported as a daily task in this app.",
+                                         "priority":  2,
+                                         "type":  "daily",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     },
+                                     {
+                                         "id":  "ef_wuling_plot_6",
+                                         "name":  "ARG Plot 6",
+                                         "notes":  "Tab: Eco-Farms. Section: Wuling Farm (Wuling) - 20 Plots. Block: Plots. Crop: Redjade Ginseng. Track planting or harvest progress manually; imported as a daily task in this app.",
+                                         "priority":  2,
+                                         "type":  "daily",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     },
+                                     {
+                                         "id":  "ef_wuling_plot_7",
+                                         "name":  "ARG Plot 7",
+                                         "notes":  "Tab: Eco-Farms. Section: Wuling Farm (Wuling) - 20 Plots. Block: Plots. Crop: Reed Rye. Track planting or harvest progress manually; imported as a daily task in this app.",
+                                         "priority":  2,
+                                         "type":  "daily",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     },
+                                     {
+                                         "id":  "ef_wuling_plot_8",
+                                         "name":  "ARG Plot 8",
+                                         "notes":  "Tab: Eco-Farms. Section: Wuling Farm (Wuling) - 20 Plots. Block: Plots. Crop: Reed Rye. Track planting or harvest progress manually; imported as a daily task in this app.",
+                                         "priority":  2,
+                                         "type":  "daily",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     },
+                                     {
+                                         "id":  "ef_wuling_plot_9",
+                                         "name":  "ARG Plot 9",
+                                         "notes":  "Tab: Eco-Farms. Section: Wuling Farm (Wuling) - 20 Plots. Block: Plots. Crop: Reed Rye. Track planting or harvest progress manually; imported as a daily task in this app.",
+                                         "priority":  2,
+                                         "type":  "daily",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     },
+                                     {
+                                         "id":  "ef_wuling_plot_10",
+                                         "name":  "ARG Plot 10",
+                                         "notes":  "Tab: Eco-Farms. Section: Wuling Farm (Wuling) - 20 Plots. Block: Plots. Crop: Reed Rye. Track planting or harvest progress manually; imported as a daily task in this app.",
+                                         "priority":  2,
+                                         "type":  "daily",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     },
+                                     {
+                                         "id":  "ef_wuling_plot_11",
+                                         "name":  "ARG Plot 11",
+                                         "notes":  "Tab: Eco-Farms. Section: Wuling Farm (Wuling) - 20 Plots. Block: Plots. Crop: Reed Rye. Track planting or harvest progress manually; imported as a daily task in this app.",
+                                         "priority":  2,
+                                         "type":  "daily",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     },
+                                     {
+                                         "id":  "ef_wuling_plot_12",
+                                         "name":  "ARG Plot 12",
+                                         "notes":  "Tab: Eco-Farms. Section: Wuling Farm (Wuling) - 20 Plots. Block: Plots. Crop: Reed Rye. Track planting or harvest progress manually; imported as a daily task in this app.",
+                                         "priority":  2,
+                                         "type":  "daily",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     },
+                                     {
+                                         "id":  "ef_wuling_plot_13",
+                                         "name":  "ARG Plot 13",
+                                         "notes":  "Tab: Eco-Farms. Section: Wuling Farm (Wuling) - 20 Plots. Block: Plots. Crop: Tartpepper. Track planting or harvest progress manually; imported as a daily task in this app.",
+                                         "priority":  2,
+                                         "type":  "daily",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     },
+                                     {
+                                         "id":  "ef_wuling_plot_14",
+                                         "name":  "ARG Plot 14",
+                                         "notes":  "Tab: Eco-Farms. Section: Wuling Farm (Wuling) - 20 Plots. Block: Plots. Crop: Tartpepper. Track planting or harvest progress manually; imported as a daily task in this app.",
+                                         "priority":  2,
+                                         "type":  "daily",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     },
+                                     {
+                                         "id":  "ef_wuling_plot_15",
+                                         "name":  "ARG Plot 15",
+                                         "notes":  "Tab: Eco-Farms. Section: Wuling Farm (Wuling) - 20 Plots. Block: Plots. Crop: Amber Rice. Track planting or harvest progress manually; imported as a daily task in this app.",
+                                         "priority":  2,
+                                         "type":  "daily",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     },
+                                     {
+                                         "id":  "ef_wuling_plot_16",
+                                         "name":  "ARG Plot 16",
+                                         "notes":  "Tab: Eco-Farms. Section: Wuling Farm (Wuling) - 20 Plots. Block: Plots. Crop: Amber Rice. Track planting or harvest progress manually; imported as a daily task in this app.",
+                                         "priority":  2,
+                                         "type":  "daily",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     },
+                                     {
+                                         "id":  "ef_wuling_plot_17",
+                                         "name":  "ARG Plot 17",
+                                         "notes":  "Tab: Eco-Farms. Section: Wuling Farm (Wuling) - 20 Plots. Block: Plots. Crop: Redjade Ginseng. Track planting or harvest progress manually; imported as a daily task in this app.",
+                                         "priority":  2,
+                                         "type":  "daily",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     },
+                                     {
+                                         "id":  "ef_wuling_plot_18",
+                                         "name":  "ARG Plot 18",
+                                         "notes":  "Tab: Eco-Farms. Section: Wuling Farm (Wuling) - 20 Plots. Block: Plots. Crop: Redjade Ginseng. Track planting or harvest progress manually; imported as a daily task in this app.",
+                                         "priority":  2,
+                                         "type":  "daily",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     },
+                                     {
+                                         "id":  "ef_wuling_plot_19",
+                                         "name":  "ARG Plot 19",
+                                         "notes":  "Tab: Eco-Farms. Section: Wuling Farm (Wuling) - 20 Plots. Block: Plots. Crop: Reed Rye. Track planting or harvest progress manually; imported as a daily task in this app.",
+                                         "priority":  2,
+                                         "type":  "daily",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     },
+                                     {
+                                         "id":  "ef_wuling_plot_20",
+                                         "name":  "ARG Plot 20",
+                                         "notes":  "Tab: Eco-Farms. Section: Wuling Farm (Wuling) - 20 Plots. Block: Plots. Crop: Reed Rye. Track planting or harvest progress manually; imported as a daily task in this app.",
+                                         "priority":  2,
+                                         "type":  "daily",
+                                         "completedAt":  null,
+                                         "expiresAt":  null,
+                                         "resetOverrideEnabled":  false,
+                                         "resetSettings":  {
+                                                               "dailyTime":  null,
+                                                               "weeklyDay":  1,
+                                                               "weeklyTime":  null
+                                                           }
+                                     }
+                                 ]
+                   }
+               ],
+    "tasks":  [
+
+              ]
+}
