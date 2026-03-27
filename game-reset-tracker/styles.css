@@ -90,6 +90,12 @@ button {
   gap: 18px;
 }
 
+.sidebar-aux {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
 .brand-card,
 .panel,
 .hero {
@@ -167,6 +173,7 @@ button {
   display: flex;
   flex-direction: column;
   gap: 24px;
+  min-width: 0;
 }
 
 .panel-header,
@@ -384,6 +391,8 @@ textarea {
   background: transparent;
   text-decoration: none;
   color: inherit;
+  max-width: 100%;
+  white-space: normal;
 }
 
 .primary-button {
@@ -441,6 +450,7 @@ body[data-theme="dark"] .entity-link {
 .stack-list {
   display: grid;
   gap: 6px;
+  min-width: 0;
 }
 
 .group-task-list {
@@ -552,6 +562,7 @@ body[data-theme="dark"] .task-card.completed:not(.expired) {
   border-color: rgba(82, 63, 39, 0.08);
   padding: 10px 11px;
   border-left: 4px solid var(--game-accent, transparent);
+  min-width: 0;
 }
 
 .game-card .entity-row {
@@ -573,14 +584,14 @@ body[data-theme="dark"] .task-card.completed:not(.expired) {
 
 .game-card-summary {
   margin-top: 2px;
+  overflow-wrap: anywhere;
 }
 
 .game-card-groups {
   margin-top: 4px;
   font-size: 0.76rem;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .game-links-row {
@@ -594,6 +605,7 @@ body[data-theme="dark"] .task-card.completed:not(.expired) {
 
 .game-card .entity-link {
   background: #fffdf8;
+  text-align: center;
 }
 
 .game-links-row .entity-link.active,
@@ -605,6 +617,28 @@ body[data-theme="dark"] .task-card.completed:not(.expired) {
 .global-games-card {
   border-style: solid;
   background: rgba(250, 248, 242, 0.92);
+}
+
+.side-column {
+  min-width: 0;
+}
+
+.side-column .game-card .entity-row {
+  flex-direction: column;
+  gap: 10px;
+}
+
+.side-column .game-card-main,
+.side-column .game-card-actions {
+  width: 100%;
+}
+
+.side-column .game-card-main {
+  flex-basis: auto;
+}
+
+.side-column .game-card-actions {
+  justify-content: flex-start;
 }
 
 .group-title h3 {
@@ -847,14 +881,77 @@ body[data-theme="dark"] .badge {
   margin: 0;
 }
 
-@media (max-width: 1080px) {
-  .app-shell,
+@media (max-width: 1500px) {
+  .app-shell {
+    grid-template-columns: minmax(240px, 300px) minmax(0, 1fr);
+    gap: 20px;
+    padding: 20px;
+  }
+
+  .hero {
+    padding: 22px;
+    margin-bottom: 20px;
+  }
+}
+
+@media (max-width: 1500px) {
   .content-grid {
     grid-template-columns: 1fr;
   }
 
   .hero {
     flex-direction: column;
+  }
+}
+
+@media (max-width: 1100px) {
+  .app-shell {
+    grid-template-columns: minmax(240px, 280px) minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 900px) {
+  .app-shell {
+    grid-template-columns: 1fr;
+    padding: 18px;
+    gap: 18px;
+  }
+
+  .brand-card,
+  .panel {
+    padding: 18px;
+  }
+
+  .hero {
+    padding: 20px;
+    margin-bottom: 18px;
+  }
+
+  .hero h2 {
+    font-size: 1.85rem;
+  }
+
+  .hero-stats {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .stat-card {
+    flex: 1 1 140px;
+  }
+
+  .panel-header {
+    align-items: flex-start;
+  }
+
+  .inline-actions,
+  .game-card-actions,
+  .task-actions {
+    justify-content: flex-start;
+  }
+
+  .game-card-actions {
+    width: 100%;
   }
 }
 

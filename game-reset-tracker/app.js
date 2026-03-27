@@ -90,8 +90,11 @@
     emptyState: document.getElementById("emptyState"),
     taskList: document.getElementById("taskList"),
     gamesList: document.getElementById("gamesList"),
+    gamesPanel: document.getElementById("gamesPanel"),
     editorHost: document.getElementById("editorHost"),
     editorPanel: document.getElementById("editorPanel"),
+    sideColumn: document.getElementById("sideColumn"),
+    sidebarAux: document.getElementById("sidebarAux"),
     editorTemplate: document.getElementById("editorTemplate"),
     confirmModal: document.getElementById("confirmModal"),
     confirmTitle: document.getElementById("confirmTitle"),
@@ -101,6 +104,7 @@
   };
 
   let confirmationState = null;
+  const twoColumnRailMedia = window.matchMedia("(max-width: 1500px) and (min-width: 901px)");
   const googleDriveState = {
     accessToken: null,
     tokenClient: null,
@@ -110,6 +114,7 @@
   bindEvents();
   initializeIntegrations();
   applyTheme();
+  syncResponsivePanels();
   render();
   setInterval(render, CONFIG.refreshIntervalMs);
 
@@ -208,6 +213,24 @@
     elements.resetDemoButton.addEventListener("click", requestRestoreDemo);
     bindPanelToggles();
     bindConfirmationModal();
+    if (twoColumnRailMedia.addEventListener) {
+      twoColumnRailMedia.addEventListener("change", syncResponsivePanels);
+    } else if (twoColumnRailMedia.addListener) {
+      twoColumnRailMedia.addListener(syncResponsivePanels);
+    }
+  }
+
+  function syncResponsivePanels() {
+    const target = twoColumnRailMedia.matches ? elements.sidebarAux : elements.sideColumn;
+    if (!target) {
+      return;
+    }
+
+    [elements.editorPanel, elements.gamesPanel].forEach((panel) => {
+      if (panel && panel.parentElement !== target) {
+        target.appendChild(panel);
+      }
+    });
   }
 
   function initializeIntegrations() {
@@ -521,6 +544,7 @@
   }
 
   function render() {
+    syncResponsivePanels();
     const model = deriveModel();
     syncFilterControls(model.games);
     renderHero(model);
@@ -1339,9 +1363,13 @@
 
   function renderEditor() {
     if (!state.editor) {
-      elements.editorHost.innerHTML = '<p class="editor-empty muted">Select a game, group, or task to edit it here, or create a new one.</p>';
+      elements.editorHost.innerHTML = "";
+      elements.editorPanel.hidden = true;
+      elements.editorPanel.classList.remove("is-active");
       return;
     }
+
+    elements.editorPanel.hidden = false;
 
     const template = elements.editorTemplate.content.cloneNode(true);
     const form = template.getElementById("entityForm");
@@ -1468,7 +1496,6 @@
   function closeEditor() {
     state.editor = null;
     renderEditor();
-    elements.editorPanel.classList.remove("is-active");
   }
 
   function handleEditorSubmit(event) {
