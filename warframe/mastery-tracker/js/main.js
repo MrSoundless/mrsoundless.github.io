@@ -1,29 +1,29 @@
-function normalizeAnalyticsMeasurementId(measurementId) {
-	if (typeof measurementId !== 'string')
+function normalizeClarityProjectId(projectId) {
+	if (typeof projectId !== 'string')
 		return '';
-	return measurementId.trim().toUpperCase();
+	return projectId.trim();
 }
-function initializeAnalytics() {
-	if (!GA_MEASUREMENT_ID || !/^G-[A-Z0-9]+$/.test(GA_MEASUREMENT_ID))
+
+function initializeClarity() {
+	if (!CLARITY_PROJECT_ID)
 		return;
-	window.dataLayer = window.dataLayer || [];
-	window.gtag = window.gtag || function() {
-		window.dataLayer.push(arguments);
+
+	window.clarity = window.clarity || function() {
+		(window.clarity.q = window.clarity.q || []).push(arguments);
 	};
-	window.gtag('js', new Date());
-	window.gtag('config', GA_MEASUREMENT_ID, {
-		send_page_view: true
-	});
+
 	var script = document.createElement('script');
 	script.async = true;
-	script.src = 'https://www.googletagmanager.com/gtag/js?id=' + encodeURIComponent(GA_MEASUREMENT_ID);
+	script.src = 'https://www.clarity.ms/tag/' + encodeURIComponent(CLARITY_PROJECT_ID);
 	document.head.appendChild(script);
-	analyticsReady = true;
+	clarityReady = true;
 }
-function trackAnalyticsEvent(name, params) {
-	if (!analyticsReady || typeof window.gtag !== 'function')
+
+function trackClarityEvent(name) {
+	if (!clarityReady || typeof window.clarity !== 'function')
 		return;
-	window.gtag('event', name, params || {});
+
+	window.clarity('event', name);
 }
 
 var allItems = [];
@@ -36,11 +36,11 @@ var APP_CONFIG = window.WARFRAME_CONFIG;
 if (!APP_CONFIG)
 	throw new Error('WARFRAME_CONFIG is missing. Load js/config.js before js/main.js.');
 
-var ANALYTICS_CONFIG = APP_CONFIG.analytics || {};
+var CLARITY_CONFIG = APP_CONFIG.clarity || {};
 var STORAGE_CONFIG = APP_CONFIG.storage || {};
 var GOOGLE_CONFIG = APP_CONFIG.google || {};
-var GA_MEASUREMENT_ID = normalizeAnalyticsMeasurementId(ANALYTICS_CONFIG.measurementId);
-var analyticsReady = false;
+var CLARITY_PROJECT_ID = normalizeClarityProjectId(CLARITY_CONFIG.projectId);
+var clarityReady = false;
 
 var STORAGE_KEY = STORAGE_CONFIG.saveDataKey;
 var GOOGLE_CLIENT_ID = GOOGLE_CONFIG.clientId;
@@ -56,14 +56,14 @@ var GOOGLE_SCOPE = GOOGLE_CONFIG.scope;
 loadSavedData();
 parseGoogleAuthRedirect();
 restorePersistedGoogleSession();
-initializeAnalytics();
+initializeClarity();
 
 $(document).ready(function() {
 	$('#search').on('input', search);
 	$(document).on('change', 'input[type=checkbox]', handleCheckboxChanged);
 	$('#import-field').on('change', updateImportLabel);
 	$('#export-button').click(function() {
-		trackAnalyticsEvent('export_save_file');
+		trackClarityEvent('export_save_file');
 		downloadObjectAsJson(saveData, 'warframe-collections');
 	});
 	$('#import-button').click(function() {
@@ -527,7 +527,7 @@ function handleFileSelect() {
 }
 
 function receiveImportedText(text) {
-	trackAnalyticsEvent('import_save_file');
+	trackClarityEvent('import_save_file');
 	try {
 		saveData = JSON.parse(text);
 		if (!Array.isArray(saveData))
@@ -602,7 +602,7 @@ function initializeGoogleSyncUi() {
 }
 
 function connectGoogleAccount() {
-	trackAnalyticsEvent('google_connect_started');
+	trackClarityEvent('google_connect_started');
 	if (!GOOGLE_CLIENT_ID || GOOGLE_CLIENT_ID.indexOf('YOUR_GOOGLE_WEB_CLIENT_ID') === 0) {
 		updateGoogleStatus('Google setup needed', 'Add your Google OAuth web client ID in js/main.js before using cloud sync.', 'warning');
 		return;
@@ -613,7 +613,7 @@ function connectGoogleAccount() {
 }
 
 function disconnectGoogleAccount() {
-	trackAnalyticsEvent('google_disconnected');
+	trackClarityEvent('google_disconnected');
 	if (googleAccessToken)
 		revokeGoogleToken(googleAccessToken);
 
@@ -807,7 +807,7 @@ function scheduleGoogleAutoSync() {
 }
 
 function pushSaveDataToGoogle(showAlerts) {
-	trackAnalyticsEvent('google_upload_started', { manual: !!showAlerts });
+	trackClarityEvent(showAlerts ? 'google_upload_started_manual' : 'google_upload_started_auto');
 	var token;
 	try {
 		token = getValidGoogleAccessToken();
@@ -834,7 +834,7 @@ function pushSaveDataToGoogle(showAlerts) {
 }
 
 function pullSaveDataFromGoogle() {
-	trackAnalyticsEvent('google_download_started');
+	trackClarityEvent('google_download_started');
 	var token;
 	try {
 		token = getValidGoogleAccessToken();

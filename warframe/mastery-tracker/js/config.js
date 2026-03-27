@@ -1,6 +1,6 @@
 window.WARFRAME_CONFIG = {
-	analytics: {
-		measurementId: 'G-K76HNX69EV'
+	clarity: {
+		projectId: 'w2ctak950h'
 	},
 	storage: {
 		saveDataKey: 'warframe-collections'
