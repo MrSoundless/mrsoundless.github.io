@@ -1,6 +1,15 @@
 window.GAME_RESET_TRACKER_CONFIG = {
   storageKey: "game-reset-tracker-state-v1",
+  uiPrefsKey: "game-reset-tracker-ui-prefs-v1",
   refreshIntervalMs: 60 * 1000,
+  googleDrive: {
+    clientId: "247042345233-0docusbduv33kd9sobj6h4bf9istku6k.apps.googleusercontent.com",
+    scope: "https://www.googleapis.com/auth/drive.appdata",
+    backupFileName: "game-reset-tracker-backup.json",
+  },
+  clarity: {
+    projectId: "w2cxfu8nta",
+  },
   expiringSoonHours: 48,
   urgencyWindowsHours: {
     daily: 4,

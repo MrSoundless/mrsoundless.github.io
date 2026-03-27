@@ -34,6 +34,10 @@ body {
     linear-gradient(180deg, #f9f3e8 0%, var(--bg) 48%, #efe7d8 100%);
 }
 
+[hidden] {
+  display: none !important;
+}
+
 button,
 input,
 select,
@@ -180,10 +184,86 @@ button {
   border-top: 0;
 }
 
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(23, 18, 12, 0.48);
+  backdrop-filter: blur(8px);
+  z-index: 1000;
+}
+
+.modal-card {
+  width: min(100%, 420px);
+  border-radius: 22px;
+  border: 1px solid rgba(82, 63, 39, 0.12);
+  background: rgba(255, 252, 246, 0.98);
+  box-shadow: 0 24px 60px rgba(41, 28, 13, 0.24);
+  padding: 22px;
+}
+
+.modal-card h2 {
+  margin: 8px 0 10px;
+  font-family: "Space Grotesk", sans-serif;
+}
+
+.modal-card .form-actions {
+  margin-top: 16px;
+  justify-content: flex-end;
+}
+
+.primary-button.danger {
+  background: var(--danger);
+}
+
 .panel-header {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 16px;
+}
+
+.panel-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+}
+
+.panel-chevron {
+  font-size: 0.78rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+}
+
+.panel-body {
+  display: block;
+}
+
+.panel.is-collapsed .panel-body {
+  display: none;
+}
+
+.panel.is-collapsed .panel-header {
+  margin-bottom: 0;
+}
+
+.panel.is-collapsed .panel-collapse-hide {
+  display: none;
+}
+
+.editor-panel.is-active {
+  border-color: rgba(29, 107, 87, 0.3);
+  box-shadow: 0 18px 50px rgba(29, 107, 87, 0.16);
 }
 
 .hero-stats {
@@ -319,6 +399,12 @@ textarea {
   padding: 9px 10px;
 }
 
+.global-games-card {
+  border-style: dashed;
+  background:
+    linear-gradient(135deg, rgba(29, 107, 87, 0.08), rgba(255, 252, 246, 0.95) 55%);
+}
+
 .group-section {
   background:
     linear-gradient(180deg, rgba(29, 107, 87, 0.08), rgba(29, 107, 87, 0.02) 64px, rgba(255, 252, 246, 0.96) 64px),
@@ -374,6 +460,26 @@ textarea {
   gap: 6px;
   flex-wrap: wrap;
   align-items: center;
+}
+
+.game-card {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(255, 252, 246, 0.96));
+  border-color: rgba(82, 63, 39, 0.1);
+}
+
+.game-card .entity-row {
+  align-items: flex-start;
+}
+
+.game-card .badge-row {
+  gap: 6px;
+}
+
+.game-group-links {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(82, 63, 39, 0.08);
 }
 
 .group-title h3 {

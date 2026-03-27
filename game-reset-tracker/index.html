@@ -19,18 +19,15 @@
         <p class="muted">Recurring task tracking with inherited reset rules, local storage, and no backend.</p>
       </div>
 
-      <section class="panel">
+      <section class="panel" data-panel="filters">
         <div class="panel-header">
-          <h2>Views</h2>
+          <button class="panel-toggle" type="button" data-toggle-panel="filters" aria-expanded="true">
+            <h2>Filters</h2>
+            <span class="panel-chevron">Hide</span>
+          </button>
+          <button class="ghost-button panel-collapse-hide" id="resetFiltersButton" type="button">Reset</button>
         </div>
-        <div class="view-toggle" id="viewToggle"></div>
-      </section>
-
-      <section class="panel">
-        <div class="panel-header">
-          <h2>Filters</h2>
-          <button class="ghost-button" id="resetFiltersButton" type="button">Reset</button>
-        </div>
+        <div class="panel-body">
         <form id="filtersForm" class="filters-form">
           <label>
             <span>Game</span>
@@ -76,12 +73,17 @@
             </select>
           </label>
         </form>
+        </div>
       </section>
 
-      <section class="panel">
+      <section class="panel" data-panel="data">
         <div class="panel-header">
-          <h2>Data</h2>
+          <button class="panel-toggle" type="button" data-toggle-panel="data" aria-expanded="true">
+            <h2>Data</h2>
+            <span class="panel-chevron">Hide</span>
+          </button>
         </div>
+        <div class="panel-body">
         <div class="data-block">
           <div class="data-section">
             <p class="data-label">Build</p>
@@ -94,6 +96,17 @@
             <p class="data-label">Backup</p>
             <div class="action-grid action-grid-tight">
               <button class="secondary-button" id="exportButton" type="button">Export tracker</button>
+            </div>
+          </div>
+
+          <div class="data-section">
+            <p class="data-label">Google Drive</p>
+            <p class="muted" id="googleDriveStatus">Google Drive sync is not connected.</p>
+            <div class="action-grid action-grid-tight">
+              <button class="secondary-button" id="googleConnectButton" type="button">Connect Google</button>
+              <button class="secondary-button" id="googleSaveButton" type="button">Save to Drive</button>
+              <button class="secondary-button" id="googleLoadButton" type="button">Load from Drive</button>
+              <button class="ghost-button" id="googleDisconnectButton" type="button">Disconnect</button>
             </div>
           </div>
 
@@ -111,6 +124,7 @@
                 <span>Import JSON</span>
                 <input type="file" id="importInput" accept="application/json">
               </label>
+              <a class="secondary-button" target="_blank" href="./configs/">Browse presets</a>
             </div>
           </div>
 
@@ -120,6 +134,7 @@
               <button class="ghost-button danger-text" id="resetDemoButton" type="button">Restore demo</button>
             </div>
           </div>
+        </div>
         </div>
       </section>
     </aside>
@@ -143,29 +158,46 @@
             </div>
             <div id="emptyState" class="empty-state" hidden>
               <h3>No matching tasks</h3>
-              <p class="muted">Try adjusting filters, adding a task, or switching views.</p>
+              <p class="muted">Try adjusting filters, adding a task, or switching games.</p>
             </div>
             <div id="taskList" class="task-list"></div>
           </section>
         </div>
 
         <div class="content-column side-column">
-          <section class="panel">
-            <div class="panel-header">
-              <h2>Games</h2>
-            </div>
-            <div id="gamesList" class="stack-list"></div>
-          </section>
-
-          <section class="panel">
+          <section class="panel editor-panel" id="editorPanel">
             <div class="panel-header">
               <h2>Editor</h2>
             </div>
             <div id="editorHost"></div>
           </section>
+
+          <section class="panel" data-panel="games">
+            <div class="panel-header">
+              <button class="panel-toggle" type="button" data-toggle-panel="games" aria-expanded="true">
+                <h2>Games</h2>
+                <span class="panel-chevron">Hide</span>
+              </button>
+            </div>
+            <div class="panel-body">
+              <div id="gamesList" class="stack-list"></div>
+            </div>
+          </section>
         </div>
       </section>
     </main>
+  </div>
+
+  <div class="modal-backdrop" id="confirmModal" hidden>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="confirmTitle">
+      <p class="eyebrow">Confirm Action</p>
+      <h2 id="confirmTitle">Are you sure?</h2>
+      <p class="muted" id="confirmMessage"></p>
+      <div class="form-actions">
+        <button class="ghost-button" type="button" id="confirmCancelButton">Cancel</button>
+        <button class="primary-button" type="button" id="confirmAcceptButton">Confirm</button>
+      </div>
+    </div>
   </div>
 
   <template id="editorTemplate">
@@ -264,6 +296,7 @@
   </template>
 
   <script src="./config.js"></script>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script src="./app.js"></script>
 </body>
 </html>

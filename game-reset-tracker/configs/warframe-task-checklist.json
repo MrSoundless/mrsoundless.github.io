@@ -1,0 +1,840 @@
+{
+  "id": "preset-warframe-task-checklist",
+  "name": "Warframe",
+  "notes": "Preset based on the Warframe Tools Task Checklist.",
+  "priority": 3,
+  "expiresAt": null,
+  "resetSettings": {
+    "dailyTime": "01:00",
+    "weeklyDay": 1,
+    "weeklyTime": "02:00"
+  },
+  "groups": [
+    {
+      "id": "wf-daily-core",
+      "name": "Daily Core",
+      "notes": "Core daily checklist based on Warframe Tools.",
+      "priority": 4,
+      "expiresAt": null,
+      "resetOverrideEnabled": false,
+      "resetSettings": {
+        "dailyTime": null,
+        "weeklyDay": 1,
+        "weeklyTime": null
+      },
+      "tasks": [
+        {
+          "id": "wf-daily-login",
+          "name": "Daily login reward",
+          "notes": "Log in and claim the daily reward.",
+          "priority": 4,
+          "type": "daily",
+          "completedAt": null,
+          "expiresAt": null,
+          "resetOverrideEnabled": false,
+          "resetSettings": {
+            "dailyTime": null,
+            "weeklyDay": 1,
+            "weeklyTime": null
+          }
+        },
+        {
+          "id": "wf-daily-forma",
+          "name": "Start or collect Forma",
+          "notes": "Check Foundry and keep Forma crafting.",
+          "priority": 4,
+          "type": "daily",
+          "completedAt": null,
+          "expiresAt": null,
+          "resetOverrideEnabled": false,
+          "resetSettings": {
+            "dailyTime": null,
+            "weeklyDay": 1,
+            "weeklyTime": null
+          }
+        },
+        {
+          "id": "wf-daily-craft-other",
+          "name": "Daily Foundry crafting",
+          "notes": "Craft reusable resource or utility items if needed.",
+          "priority": 2,
+          "type": "daily",
+          "completedAt": null,
+          "expiresAt": null,
+          "resetOverrideEnabled": false,
+          "resetSettings": {
+            "dailyTime": null,
+            "weeklyDay": 1,
+            "weeklyTime": null
+          }
+        },
+        {
+          "id": "wf-daily-faction-standing",
+          "name": "Cap faction standing",
+          "notes": "Earn standing with pledged syndicates.",
+          "priority": 4,
+          "type": "daily",
+          "completedAt": null,
+          "expiresAt": null,
+          "resetOverrideEnabled": false,
+          "resetSettings": {
+            "dailyTime": null,
+            "weeklyDay": 1,
+            "weeklyTime": null
+          }
+        },
+        {
+          "id": "wf-daily-faction-spend",
+          "name": "Spend capped faction standing",
+          "notes": "Use excess standing on packs or rewards.",
+          "priority": 2,
+          "type": "daily",
+          "completedAt": null,
+          "expiresAt": null,
+          "resetOverrideEnabled": false,
+          "resetSettings": {
+            "dailyTime": null,
+            "weeklyDay": 1,
+            "weeklyTime": null
+          }
+        },
+        {
+          "id": "wf-daily-dark-sector",
+          "name": "Dark Sector credits run",
+          "notes": "Early-game credit boost if still useful.",
+          "priority": 1,
+          "type": "daily",
+          "completedAt": null,
+          "expiresAt": null,
+          "resetOverrideEnabled": false,
+          "resetSettings": {
+            "dailyTime": null,
+            "weeklyDay": 1,
+            "weeklyTime": null
+          }
+        },
+        {
+          "id": "wf-daily-sortie",
+          "name": "Complete Sortie",
+          "notes": "Run the 3 daily Sortie missions. Requires The War Within.",
+          "priority": 4,
+          "type": "daily",
+          "completedAt": null,
+          "expiresAt": null,
+          "resetOverrideEnabled": false,
+          "resetSettings": {
+            "dailyTime": null,
+            "weeklyDay": 1,
+            "weeklyTime": null
+          }
+        },
+        {
+          "id": "wf-daily-focus",
+          "name": "Cap Focus gain",
+          "notes": "Push daily Focus gain if relevant. Requires The Second Dream.",
+          "priority": 3,
+          "type": "daily",
+          "completedAt": null,
+          "expiresAt": null,
+          "resetOverrideEnabled": false,
+          "resetSettings": {
+            "dailyTime": null,
+            "weeklyDay": 1,
+            "weeklyTime": null
+          }
+        },
+        {
+          "id": "wf-daily-steel-path",
+          "name": "Steel Path incursions",
+          "notes": "Run daily Steel Path missions for Steel Essence.",
+          "priority": 4,
+          "type": "daily",
+          "completedAt": null,
+          "expiresAt": null,
+          "resetOverrideEnabled": false,
+          "resetSettings": {
+            "dailyTime": null,
+            "weeklyDay": 1,
+            "weeklyTime": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "wf-daily-world-syndicates",
+      "name": "Daily World Syndicates",
+      "notes": "Open-world and special standing grinds.",
+      "priority": 3,
+      "expiresAt": null,
+      "resetOverrideEnabled": false,
+      "resetSettings": {
+        "dailyTime": null,
+        "weeklyDay": 1,
+        "weeklyTime": null
+      },
+      "tasks": [
+        {
+          "id": "wf-daily-simaris",
+          "name": "Cephalon Simaris standing",
+          "notes": "Relay syndicate standing task.",
+          "priority": 2,
+          "type": "daily",
+          "completedAt": null,
+          "expiresAt": null,
+          "resetOverrideEnabled": false,
+          "resetSettings": {
+            "dailyTime": null,
+            "weeklyDay": 1,
+            "weeklyTime": null
+          }
+        },
+        {
+          "id": "wf-daily-ostron",
+          "name": "Ostron standing",
+          "notes": "Cetus standing. Requires Saya's Vigil.",
+          "priority": 2,
+          "type": "daily",
+          "completedAt": null,
+          "expiresAt": null,
+          "resetOverrideEnabled": false,
+          "resetSettings": {
+            "dailyTime": null,
+            "weeklyDay": 1,
+            "weeklyTime": null
+          }
+        },
+        {
+          "id": "wf-daily-quills",
+          "name": "The Quills standing",
+          "notes": "Cetus operator progression. Requires The War Within.",
+          "priority": 2,
+          "type": "daily",
+          "completedAt": null,
+          "expiresAt": null,
+          "resetOverrideEnabled": false,
+          "resetSettings": {
+            "dailyTime": null,
+            "weeklyDay": 1,
+            "weeklyTime": null
+          }
+        },
+        {
+          "id": "wf-daily-solaris",
+          "name": "Solaris United standing",
+          "notes": "Fortuna standing. Requires Vox Solaris.",
+          "priority": 2,
+          "type": "daily",
+          "completedAt": null,
+          "expiresAt": null,
+          "resetOverrideEnabled": false,
+          "resetSettings": {
+            "dailyTime": null,
+            "weeklyDay": 1,
+            "weeklyTime": null
+          }
+        },
+        {
+          "id": "wf-daily-vox",
+          "name": "Vox Solaris standing",
+          "notes": "Operator-focused Fortuna syndicate.",
+          "priority": 2,
+          "type": "daily",
+          "completedAt": null,
+          "expiresAt": null,
+          "resetOverrideEnabled": false,
+          "resetSettings": {
+            "dailyTime": null,
+            "weeklyDay": 1,
+            "weeklyTime": null
+          }
+        },
+        {
+          "id": "wf-daily-ventkids",
+          "name": "Ventkids standing",
+          "notes": "K-drive standing in Fortuna.",
+          "priority": 1,
+          "type": "daily",
+          "completedAt": null,
+          "expiresAt": null,
+          "resetOverrideEnabled": false,
+          "resetSettings": {
+            "dailyTime": null,
+            "weeklyDay": 1,
+            "weeklyTime": null
+          }
+        },
+        {
+          "id": "wf-daily-entrati",
+          "name": "Entrati standing",
+          "notes": "Necralisk standing. Requires Heart of Deimos.",
+          "priority": 2,
+          "type": "daily",
+          "completedAt": null,
+          "expiresAt": null,
+          "resetOverrideEnabled": false,
+          "resetSettings": {
+            "dailyTime": null,
+            "weeklyDay": 1,
+            "weeklyTime": null
+          }
+        },
+        {
+          "id": "wf-daily-necraloid",
+          "name": "Necraloid standing",
+          "notes": "Necramech-related standing on Deimos.",
+          "priority": 2,
+          "type": "daily",
+          "completedAt": null,
+          "expiresAt": null,
+          "resetOverrideEnabled": false,
+          "resetSettings": {
+            "dailyTime": null,
+            "weeklyDay": 1,
+            "weeklyTime": null
+          }
+        },
+        {
+          "id": "wf-daily-holdfasts",
+          "name": "Holdfasts standing",
+          "notes": "Zariman standing. Requires Angels of the Zariman.",
+          "priority": 2,
+          "type": "daily",
+          "completedAt": null,
+          "expiresAt": null,
+          "resetOverrideEnabled": false,
+          "resetSettings": {
+            "dailyTime": null,
+            "weeklyDay": 1,
+            "weeklyTime": null
+          }
+        },
+        {
+          "id": "wf-daily-cavia",
+          "name": "Cavia standing",
+          "notes": "Sanctum Anatomica standing. Requires Whispers in the Walls.",
+          "priority": 2,
+          "type": "daily",
+          "completedAt": null,
+          "expiresAt": null,
+          "resetOverrideEnabled": false,
+          "resetSettings": {
+            "dailyTime": null,
+            "weeklyDay": 1,
+            "weeklyTime": null
+          }
+        },
+        {
+          "id": "wf-daily-hex",
+          "name": "The Hex standing",
+          "notes": "1999 faction standing. Requires The Hex quest.",
+          "priority": 2,
+          "type": "daily",
+          "completedAt": null,
+          "expiresAt": null,
+          "resetOverrideEnabled": false,
+          "resetSettings": {
+            "dailyTime": null,
+            "weeklyDay": 1,
+            "weeklyTime": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "wf-daily-vendors",
+      "name": "Daily Vendors",
+      "notes": "Daily vendor checks from Warframe Tools.",
+      "priority": 2,
+      "expiresAt": null,
+      "resetOverrideEnabled": false,
+      "resetSettings": {
+        "dailyTime": null,
+        "weeklyDay": 1,
+        "weeklyTime": null
+      },
+      "tasks": [
+        {
+          "id": "wf-daily-acrithis",
+          "name": "Check Acrithis daily stock",
+          "notes": "Look for arcanes and Captura items.",
+          "priority": 2,
+          "type": "daily",
+          "completedAt": null,
+          "expiresAt": null,
+          "resetOverrideEnabled": false,
+          "resetSettings": {
+            "dailyTime": null,
+            "weeklyDay": 1,
+            "weeklyTime": null
+          }
+        },
+        {
+          "id": "wf-daily-ticker-crew",
+          "name": "Check Ticker crew hires",
+          "notes": "Review Railjack crew if relevant.",
+          "priority": 1,
+          "type": "daily",
+          "completedAt": null,
+          "expiresAt": null,
+          "resetOverrideEnabled": false,
+          "resetSettings": {
+            "dailyTime": null,
+            "weeklyDay": 1,
+            "weeklyTime": null
+          }
+        },
+        {
+          "id": "wf-daily-marie",
+          "name": "Visit Marie",
+          "notes": "Check operator and amp mod offerings.",
+          "priority": 1,
+          "type": "daily",
+          "completedAt": null,
+          "expiresAt": null,
+          "resetOverrideEnabled": false,
+          "resetSettings": {
+            "dailyTime": null,
+            "weeklyDay": 1,
+            "weeklyTime": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "wf-weekly-core",
+      "name": "Weekly Core",
+      "notes": "Main weekly checklist based on Warframe Tools.",
+      "priority": 5,
+      "expiresAt": null,
+      "resetOverrideEnabled": false,
+      "resetSettings": {
+        "dailyTime": null,
+        "weeklyDay": 1,
+        "weeklyTime": null
+      },
+      "tasks": [
+        {
+          "id": "wf-weekly-nightwave",
+          "name": "Weekly Nightwave acts",
+          "notes": "Clear relevant weekly Nightwave objectives.",
+          "priority": 4,
+          "type": "weekly",
+          "completedAt": null,
+          "expiresAt": null,
+          "resetOverrideEnabled": false,
+          "resetSettings": {
+            "dailyTime": null,
+            "weeklyDay": 1,
+            "weeklyTime": null
+          }
+        },
+        {
+          "id": "wf-weekly-nightwave-spend",
+          "name": "Spend Nightwave credits",
+          "notes": "Buy items if you are near cap or want rewards.",
+          "priority": 2,
+          "type": "weekly",
+          "completedAt": null,
+          "expiresAt": null,
+          "resetOverrideEnabled": false,
+          "resetSettings": {
+            "dailyTime": null,
+            "weeklyDay": 1,
+            "weeklyTime": null
+          }
+        },
+        {
+          "id": "wf-weekly-ayatan",
+          "name": "Maroo Ayatan hunt",
+          "notes": "Run the weekly sculpture mission.",
+          "priority": 2,
+          "type": "weekly",
+          "completedAt": null,
+          "expiresAt": null,
+          "resetOverrideEnabled": false,
+          "resetSettings": {
+            "dailyTime": null,
+            "weeklyDay": 1,
+            "weeklyTime": null
+          }
+        },
+        {
+          "id": "wf-weekly-clem",
+          "name": "Help Clem",
+          "notes": "Weekly Darvo mission. Requires A Man of Few Words.",
+          "priority": 2,
+          "type": "weekly",
+          "completedAt": null,
+          "expiresAt": null,
+          "resetOverrideEnabled": false,
+          "resetSettings": {
+            "dailyTime": null,
+            "weeklyDay": 1,
+            "weeklyTime": null
+          }
+        },
+        {
+          "id": "wf-weekly-kahl",
+          "name": "Kahl mission",
+          "notes": "Break Narmer weekly for Stock.",
+          "priority": 4,
+          "type": "weekly",
+          "completedAt": null,
+          "expiresAt": null,
+          "resetOverrideEnabled": false,
+          "resetSettings": {
+            "dailyTime": null,
+            "weeklyDay": 1,
+            "weeklyTime": null
+          }
+        },
+        {
+          "id": "wf-weekly-archon-hunt",
+          "name": "Archon Hunt",
+          "notes": "Guaranteed weekly Archon Shard.",
+          "priority": 5,
+          "type": "weekly",
+          "completedAt": null,
+          "expiresAt": null,
+          "resetOverrideEnabled": false,
+          "resetSettings": {
+            "dailyTime": null,
+            "weeklyDay": 1,
+            "weeklyTime": null
+          }
+        },
+        {
+          "id": "wf-weekly-duviri-circuit",
+          "name": "Duviri Circuit",
+          "notes": "Check normal Circuit rewards and run if needed.",
+          "priority": 3,
+          "type": "weekly",
+          "completedAt": null,
+          "expiresAt": null,
+          "resetOverrideEnabled": false,
+          "resetSettings": {
+            "dailyTime": null,
+            "weeklyDay": 1,
+            "weeklyTime": null
+          }
+        },
+        {
+          "id": "wf-weekly-duviri-circuit-sp",
+          "name": "Steel Path Circuit",
+          "notes": "Check weekly Incarnon adapters and run if needed.",
+          "priority": 5,
+          "type": "weekly",
+          "completedAt": null,
+          "expiresAt": null,
+          "resetOverrideEnabled": false,
+          "resetSettings": {
+            "dailyTime": null,
+            "weeklyDay": 1,
+            "weeklyTime": null
+          }
+        },
+        {
+          "id": "wf-weekly-calendar",
+          "name": "1999 calendar tasks",
+          "notes": "Complete weekly calendar objectives.",
+          "priority": 3,
+          "type": "weekly",
+          "completedAt": null,
+          "expiresAt": null,
+          "resetOverrideEnabled": false,
+          "resetSettings": {
+            "dailyTime": null,
+            "weeklyDay": 1,
+            "weeklyTime": null
+          }
+        },
+        {
+          "id": "wf-weekly-invigorations",
+          "name": "Helminth invigorations",
+          "notes": "Use weekly invigorations if available.",
+          "priority": 3,
+          "type": "weekly",
+          "completedAt": null,
+          "expiresAt": null,
+          "resetOverrideEnabled": false,
+          "resetSettings": {
+            "dailyTime": null,
+            "weeklyDay": 1,
+            "weeklyTime": null
+          }
+        },
+        {
+          "id": "wf-weekly-descendia",
+          "name": "Descendia normal run",
+          "notes": "Weekly tower mode for resources.",
+          "priority": 2,
+          "type": "weekly",
+          "completedAt": null,
+          "expiresAt": null,
+          "resetOverrideEnabled": false,
+          "resetSettings": {
+            "dailyTime": null,
+            "weeklyDay": 1,
+            "weeklyTime": null
+          }
+        },
+        {
+          "id": "wf-weekly-descendia-sp",
+          "name": "Descendia Steel Path run",
+          "notes": "Weekly Steel Path tower mode.",
+          "priority": 3,
+          "type": "weekly",
+          "completedAt": null,
+          "expiresAt": null,
+          "resetOverrideEnabled": false,
+          "resetSettings": {
+            "dailyTime": null,
+            "weeklyDay": 1,
+            "weeklyTime": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "wf-weekly-search-pulses",
+      "name": "Weekly Search Pulses",
+      "notes": "Sanctum and Archimedea weekly pulse usage.",
+      "priority": 4,
+      "expiresAt": null,
+      "resetOverrideEnabled": false,
+      "resetSettings": {
+        "dailyTime": null,
+        "weeklyDay": 1,
+        "weeklyTime": null
+      },
+      "tasks": [
+        {
+          "id": "wf-weekly-netracells",
+          "name": "Netracells",
+          "notes": "Use weekly search pulses on Netracells.",
+          "priority": 4,
+          "type": "weekly",
+          "completedAt": null,
+          "expiresAt": null,
+          "resetOverrideEnabled": false,
+          "resetSettings": {
+            "dailyTime": null,
+            "weeklyDay": 1,
+            "weeklyTime": null
+          }
+        },
+        {
+          "id": "wf-weekly-eda",
+          "name": "Elite Deep Archimedea",
+          "notes": "Endgame weekly shard chase. Costs search pulses.",
+          "priority": 5,
+          "type": "weekly",
+          "completedAt": null,
+          "expiresAt": null,
+          "resetOverrideEnabled": false,
+          "resetSettings": {
+            "dailyTime": null,
+            "weeklyDay": 1,
+            "weeklyTime": null
+          }
+        },
+        {
+          "id": "wf-weekly-eta",
+          "name": "Elite Temporal Archimedea",
+          "notes": "1999 endgame weekly pulse sink.",
+          "priority": 5,
+          "type": "weekly",
+          "completedAt": null,
+          "expiresAt": null,
+          "resetOverrideEnabled": false,
+          "resetSettings": {
+            "dailyTime": null,
+            "weeklyDay": 1,
+            "weeklyTime": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "wf-weekly-vendors",
+      "name": "Weekly Vendors",
+      "notes": "Weekly shop and trade checks.",
+      "priority": 3,
+      "expiresAt": null,
+      "resetOverrideEnabled": false,
+      "resetSettings": {
+        "dailyTime": null,
+        "weeklyDay": 1,
+        "weeklyTime": null
+      },
+      "tasks": [
+        {
+          "id": "wf-weekly-paladino",
+          "name": "Trade Riven Slivers",
+          "notes": "Visit Paladino in Iron Wake.",
+          "priority": 2,
+          "type": "weekly",
+          "completedAt": null,
+          "expiresAt": null,
+          "resetOverrideEnabled": false,
+          "resetSettings": {
+            "dailyTime": null,
+            "weeklyDay": 1,
+            "weeklyTime": null
+          }
+        },
+        {
+          "id": "wf-weekly-yonta-kuva",
+          "name": "Buy Yonta Kuva",
+          "notes": "Spend Voidplumes on weekly Kuva.",
+          "priority": 3,
+          "type": "weekly",
+          "completedAt": null,
+          "expiresAt": null,
+          "resetOverrideEnabled": false,
+          "resetSettings": {
+            "dailyTime": null,
+            "weeklyDay": 1,
+            "weeklyTime": null
+          }
+        },
+        {
+          "id": "wf-weekly-acrithis-shop",
+          "name": "Check Acrithis weekly wares",
+          "notes": "Review Pathos Clamp shop offerings.",
+          "priority": 2,
+          "type": "weekly",
+          "completedAt": null,
+          "expiresAt": null,
+          "resetOverrideEnabled": false,
+          "resetSettings": {
+            "dailyTime": null,
+            "weeklyDay": 1,
+            "weeklyTime": null
+          }
+        },
+        {
+          "id": "wf-weekly-teshin",
+          "name": "Check Teshin shop",
+          "notes": "Steel Essence shop, including Umbra Forma rotation.",
+          "priority": 4,
+          "type": "weekly",
+          "completedAt": null,
+          "expiresAt": null,
+          "resetOverrideEnabled": false,
+          "resetSettings": {
+            "dailyTime": null,
+            "weeklyDay": 1,
+            "weeklyTime": null
+          }
+        },
+        {
+          "id": "wf-weekly-bird3",
+          "name": "Buy Bird 3 Archon Shard",
+          "notes": "Weekly shard for Cavia standing.",
+          "priority": 5,
+          "type": "weekly",
+          "completedAt": null,
+          "expiresAt": null,
+          "resetOverrideEnabled": false,
+          "resetSettings": {
+            "dailyTime": null,
+            "weeklyDay": 1,
+            "weeklyTime": null
+          }
+        },
+        {
+          "id": "wf-weekly-nightcap",
+          "name": "Trade with Nightcap",
+          "notes": "Swap resources for Kuva and Ayatan rewards.",
+          "priority": 2,
+          "type": "weekly",
+          "completedAt": null,
+          "expiresAt": null,
+          "resetOverrideEnabled": false,
+          "resetSettings": {
+            "dailyTime": null,
+            "weeklyDay": 1,
+            "weeklyTime": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "wf-other-rotations",
+      "name": "Other Rotations",
+      "notes": "Mapped from Warframe Tools 'Other Tasks'. Imported as event tasks because the app does not yet support 8-hour reset windows.",
+      "priority": 2,
+      "expiresAt": null,
+      "resetOverrideEnabled": false,
+      "resetSettings": {
+        "dailyTime": null,
+        "weeklyDay": 1,
+        "weeklyTime": null
+      },
+      "tasks": [
+        {
+          "id": "wf-other-baro",
+          "name": "Check Baro Ki'Teer",
+          "notes": "Review Baro inventory and spend Ducats if desired.",
+          "priority": 4,
+          "type": "event",
+          "completedAt": null,
+          "expiresAt": null,
+          "resetOverrideEnabled": false,
+          "resetSettings": {
+            "dailyTime": null,
+            "weeklyDay": 1,
+            "weeklyTime": null
+          }
+        },
+        {
+          "id": "wf-other-grandmother",
+          "name": "Grandmother token trade",
+          "notes": "8-hour vendor rotation on Deimos.",
+          "priority": 2,
+          "type": "event",
+          "completedAt": null,
+          "expiresAt": null,
+          "resetOverrideEnabled": false,
+          "resetSettings": {
+            "dailyTime": null,
+            "weeklyDay": 1,
+            "weeklyTime": null
+          }
+        },
+        {
+          "id": "wf-other-yonta",
+          "name": "Yonta voidplume trade",
+          "notes": "8-hour Zariman vendor rotation.",
+          "priority": 2,
+          "type": "event",
+          "completedAt": null,
+          "expiresAt": null,
+          "resetOverrideEnabled": false,
+          "resetSettings": {
+            "dailyTime": null,
+            "weeklyDay": 1,
+            "weeklyTime": null
+          }
+        },
+        {
+          "id": "wf-other-loid",
+          "name": "Loid voca trade",
+          "notes": "8-hour Sanctum vendor rotation.",
+          "priority": 2,
+          "type": "event",
+          "completedAt": null,
+          "expiresAt": null,
+          "resetOverrideEnabled": false,
+          "resetSettings": {
+            "dailyTime": null,
+            "weeklyDay": 1,
+            "weeklyTime": null
+          }
+        }
+      ]
+    }
+  ],
+  "tasks": []
+}
