@@ -1361,73 +1361,6 @@
     `;
   }
 
-  function renderEditor() {
-    if (!state.editor) {
-      elements.editorHost.innerHTML = "";
-      elements.editorPanel.hidden = true;
-      elements.editorPanel.classList.remove("is-active");
-      return;
-    }
-
-    elements.editorPanel.hidden = false;
-
-    const template = elements.editorTemplate.content.cloneNode(true);
-    const form = template.getElementById("entityForm");
-    const entity = getEditorEntity();
-    const isGame = state.editor.entityType === "game";
-    const isTask = state.editor.entityType === "task";
-    const parentSection = template.querySelector('[data-role="parent-fields"]');
-    const targetGroupSelect = form.elements.targetGroupId;
-    const availableGroups = getAvailableGroupsForEditor();
-    const resetFieldsSection = template.querySelector('[data-role="reset-fields"]');
-
-    form.elements.id.value = entity.id || "";
-    form.elements.entityType.value = state.editor.entityType;
-    form.elements.parentType.value = entity.parentType || "";
-    form.elements.parentId.value = entity.parentId || "";
-    form.elements.name.value = entity.name || "";
-    form.elements.notes.value = entity.notes || "";
-    form.elements.priority.value = String(entity.priority || 3);
-    form.elements.taskType.value = entity.type || "daily";
-    form.elements.resetEnabled.checked = Boolean(entity.resetOverrideEnabled || isGame);
-    form.elements.dailyTime.value = entity.resetSettings ? entity.resetSettings.dailyTime || "" : "";
-    form.elements.weeklyDay.value = String(entity.resetSettings && Number.isInteger(Number(entity.resetSettings.weeklyDay)) ? Number(entity.resetSettings.weeklyDay) : 1);
-    form.elements.weeklyTime.value = entity.resetSettings ? entity.resetSettings.weeklyTime || "" : "";
-    form.elements.expiresAt.value = entity.expiresAt ? toDateTimeLocalValue(entity.expiresAt) : "";
-
-    targetGroupSelect.innerHTML = availableGroups.length
-      ? availableGroups.map((group) => `<option value="${escapeHtml(group.id)}">${escapeHtml(group.gameName)} / ${escapeHtml(group.name)}</option>`).join("")
-      : '<option value="">No groups yet</option>';
-    targetGroupSelect.value = entity.parentId || (availableGroups[0] ? availableGroups[0].id : "");
-
-    parentSection.hidden = !isTask;
-    template.querySelector('[data-role="task-fields"]').hidden = !isTask;
-    if (isGame) {
-      form.elements.resetEnabled.closest("label").hidden = true;
-    }
-    if (!isTask) {
-      form.elements.taskType.closest("label").hidden = true;
-    }
-    if (state.editor.mode === "create") {
-      template.querySelector('[data-action="delete"]').hidden = true;
-    }
-    if (isTask && !availableGroups.length) {
-      form.querySelector('button[type="submit"]').disabled = true;
-    }
-
-    if (!isGame) {
-      form.elements.resetEnabled.addEventListener("change", () => syncResetFieldState(form, resetFieldsSection, isGame));
-    }
-    syncResetFieldState(form, resetFieldsSection, isGame);
-
-    form.addEventListener("submit", handleEditorSubmit);
-    template.querySelector('[data-action="cancel"]').addEventListener("click", closeEditor);
-    template.querySelector('[data-action="delete"]').addEventListener("click", handleDeleteEntity);
-
-    elements.editorHost.innerHTML = "";
-    elements.editorHost.appendChild(template);
-  }
-
   function revealEditor() {
     elements.editorPanel.classList.add("is-active");
     window.setTimeout(() => {
@@ -1447,46 +1380,6 @@
     });
   }
 
-  function getEditorEntity() {
-    if (!state.editor) {
-      return {};
-    }
-
-    if (state.editor.mode === "create") {
-      const base = {
-        parentType: state.editor.parentType,
-        parentId: state.editor.parentId,
-        priority: 3,
-        type: "daily",
-        resetOverrideEnabled: state.editor.entityType === "game",
-        resetSettings: createDefaultResetSettings(),
-      };
-
-      if (state.editor.entityType === "task" && state.editor.parentType === "game") {
-        const game = state.data.games.find((item) => item.id === state.editor.parentId);
-        if (game && game.groups[0]) {
-          base.parentType = "group";
-          base.parentId = game.groups[0].id;
-        }
-      }
-
-      return base;
-    }
-
-    const found = findEntityById(state.editor.entityType, state.editor.id);
-    if (!found) {
-      return {};
-    }
-    if (state.editor.entityType === "task") {
-      return {
-        ...found.entity,
-        parentType: "group",
-        parentId: found.parent.id,
-      };
-    }
-    return found.entity;
-  }
-
   function openEditor(config) {
     state.editor = config;
     renderEditor();
@@ -1496,54 +1389,6 @@
   function closeEditor() {
     state.editor = null;
     renderEditor();
-  }
-
-  function handleEditorSubmit(event) {
-    event.preventDefault();
-    const form = event.currentTarget;
-    const formData = new FormData(form);
-    const entityType = String(formData.get("entityType"));
-    const resetOverrideEnabled = entityType === "game" ? true : formData.get("resetEnabled") === "on";
-    const existing = formData.get("id") ? findEntityById(entityType, String(formData.get("id"))) : null;
-
-    const payload = {
-      id: String(formData.get("id") || crypto.randomUUID()),
-      name: String(formData.get("name") || "").trim(),
-      notes: String(formData.get("notes") || "").trim(),
-      priority: Number(formData.get("priority") || 3),
-      expiresAt: formData.get("expiresAt") ? new Date(String(formData.get("expiresAt"))).toISOString() : null,
-      resetOverrideEnabled,
-      resetSettings: {
-        dailyTime: String(formData.get("dailyTime") || "") || null,
-        weeklyDay: Number(formData.get("weeklyDay") || 1),
-        weeklyTime: String(formData.get("weeklyTime") || "") || null,
-      },
-    };
-
-    if (!payload.name) {
-      return;
-    }
-
-    if (entityType === "task") {
-      payload.type = String(formData.get("taskType") || "daily");
-      payload.completedAt = existing && existing.entity.completedAt ? existing.entity.completedAt : null;
-    }
-
-    if (state.editor.mode === "create") {
-      createEntity(entityType, payload, {
-        parentType: entityType === "task" ? "group" : String(formData.get("parentType") || ""),
-        parentId: entityType === "task" ? String(formData.get("targetGroupId") || "") : String(formData.get("parentId") || ""),
-      });
-    } else {
-      updateEntity(entityType, payload);
-      if (entityType === "task") {
-        moveTaskToGroup(payload.id, String(formData.get("targetGroupId") || ""));
-      }
-    }
-
-    saveState();
-    closeEditor();
-    render();
   }
 
   function handleDeleteEntity() {
@@ -1562,102 +1407,6 @@
         closeEditor();
         render();
       },
-    });
-  }
-
-  function createEntity(entityType, payload, parentRef) {
-    if (entityType === "game") {
-      state.data.games.push({
-        id: payload.id,
-        name: payload.name,
-        notes: payload.notes,
-        priority: payload.priority,
-        expiresAt: payload.expiresAt,
-        resetSettings: payload.resetSettings,
-        groups: [],
-      });
-      return;
-    }
-
-    if (entityType === "group") {
-      const game = state.data.games.find((item) => item.id === parentRef.parentId);
-      if (!game) {
-        return;
-      }
-      game.groups.push({
-        id: payload.id,
-        name: payload.name,
-        notes: payload.notes,
-        priority: payload.priority,
-        expiresAt: payload.expiresAt,
-        resetOverrideEnabled: payload.resetOverrideEnabled,
-        resetSettings: payload.resetSettings,
-        tasks: [],
-      });
-      return;
-    }
-
-    const group = findTaskParent(parentRef.parentId);
-    if (!group) {
-      return;
-    }
-    group.tasks.push({
-      id: payload.id,
-      name: payload.name,
-      notes: payload.notes,
-      priority: payload.priority,
-      type: payload.type,
-      completedAt: payload.completedAt,
-      expiresAt: payload.expiresAt,
-      resetOverrideEnabled: payload.resetOverrideEnabled,
-      resetSettings: payload.resetSettings,
-    });
-  }
-
-  function updateEntity(entityType, payload) {
-    const found = findEntityById(entityType, payload.id);
-    if (!found) {
-      return;
-    }
-    Object.assign(found.entity, payload);
-  }
-
-  function moveTaskToGroup(taskId, targetGroupId) {
-    const found = findEntityById("task", taskId);
-    if (!found || !targetGroupId || found.parent.id === targetGroupId) {
-      return;
-    }
-
-    const targetGroup = findTaskParent(targetGroupId);
-    if (!targetGroup) {
-      return;
-    }
-
-    found.parent.tasks = found.parent.tasks.filter((task) => task.id !== taskId);
-    targetGroup.tasks.push(found.entity);
-  }
-
-  function deleteEntity(entityType, id) {
-    if (entityType === "game") {
-      state.data.games = state.data.games.filter((game) => game.id !== id);
-      if (state.view.gameId === id) {
-        state.view.mode = "global";
-        state.view.gameId = null;
-      }
-      return;
-    }
-
-    if (entityType === "group") {
-      state.data.games.forEach((game) => {
-        game.groups = game.groups.filter((group) => group.id !== id);
-      });
-      return;
-    }
-
-    state.data.games.forEach((game) => {
-      game.groups.forEach((group) => {
-        group.tasks = group.tasks.filter((task) => task.id !== id);
-      });
     });
   }
 
@@ -1706,21 +1455,6 @@
     }
 
     return null;
-  }
-
-  function getAvailableGroupsForEditor() {
-    const groups = [];
-    state.data.games.forEach((game) => {
-      game.groups.forEach((group) => {
-        groups.push({
-          id: group.id,
-          name: group.name,
-          gameId: game.id,
-          gameName: game.name,
-        });
-      });
-    });
-    return groups;
   }
 
   function exportJson() {
@@ -1947,9 +1681,13 @@
   }
   function renderEditor() {
     if (!state.editor) {
-      elements.editorHost.innerHTML = '<p class="editor-empty muted">Select a game, group, or task to edit it here, or create a new one.</p>';
+      elements.editorHost.innerHTML = "";
+      elements.editorPanel.hidden = true;
+      elements.editorPanel.classList.remove("is-active");
       return;
     }
+
+    elements.editorPanel.hidden = false;
 
     const template = elements.editorTemplate.content.cloneNode(true);
     const form = template.getElementById("entityForm");
