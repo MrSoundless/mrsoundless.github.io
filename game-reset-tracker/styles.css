@@ -833,9 +833,8 @@ body[data-theme="dark"] .badge {
 
 .task-notes {
   max-width: 60ch;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 @media (max-width: 760px) {
@@ -852,7 +851,7 @@ body[data-theme="dark"] .badge {
   }
 
   .task-notes {
-    white-space: normal;
+    overflow-wrap: anywhere;
   }
 }
 

@@ -2,6 +2,7 @@ window.GAME_RESET_TRACKER_CONFIG = {
   storageKey: "game-reset-tracker-state-v1",
   uiPrefsKey: "game-reset-tracker-ui-prefs-v1",
   refreshIntervalMs: 60 * 1000,
+  docsBaseUrl: "https://github.com/MrSoundless/mrsoundless.github.io/tree/master/",
   googleDrive: {
     clientId: "247042345233-0docusbduv33kd9sobj6h4bf9istku6k.apps.googleusercontent.com",
     scope: "https://www.googleapis.com/auth/drive.appdata",

@@ -19,6 +19,7 @@
         <p class="muted">Recurring task tracking with inherited reset rules, local storage, and no backend.</p>
         <div class="brand-actions">
           <button class="ghost-button" id="themeToggleButton" type="button">Dark mode</button>
+          <a class="secondary-button" id="guideLink" href="./README.md" target="_blank" rel="noopener noreferrer">Open guide</a>
         </div>
       </div>
 
@@ -260,8 +261,14 @@
             <option value="daily">Daily</option>
             <option value="weekly">Weekly</option>
             <option value="one-time">One-time</option>
-            <option value="event">Event</option>
           </select>
+        </label>
+      </div>
+
+      <div class="form-section" data-role="group-fields">
+        <label class="checkbox-row">
+          <input type="checkbox" name="isEventGroup">
+          <span>Event group</span>
         </label>
       </div>
 
@@ -294,7 +301,7 @@
         </label>
       </div>
 
-      <div class="form-section">
+      <div class="form-section" data-role="expiration-fields">
         <label>
           <span>Expiration date</span>
           <input name="expiresAt" type="datetime-local">

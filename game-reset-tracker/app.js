@@ -3,6 +3,7 @@
     storageKey: "game-reset-tracker-state-v1",
     uiPrefsKey: "game-reset-tracker-ui-prefs-v1",
     refreshIntervalMs: 60 * 1000,
+    docsBaseUrl: "",
     expiringSoonHours: 48,
     urgencyWindowsHours: {
       daily: 4,
@@ -70,6 +71,7 @@
     sortBy: document.getElementById("sortBy"),
     resetFiltersButton: document.getElementById("resetFiltersButton"),
     themeToggleButton: document.getElementById("themeToggleButton"),
+    guideLink: document.getElementById("guideLink"),
     addGameButton: document.getElementById("addGameButton"),
     exportButton: document.getElementById("exportButton"),
     googleDriveStatus: document.getElementById("googleDriveStatus"),
@@ -114,6 +116,7 @@
   bindEvents();
   initializeIntegrations();
   applyTheme();
+  applyGuideLink();
   syncResponsivePanels();
   render();
   setInterval(render, CONFIG.refreshIntervalMs);
@@ -148,6 +151,17 @@
     if (elements.themeToggleButton) {
       elements.themeToggleButton.textContent = state.theme === "dark" ? "Light mode" : "Dark mode";
     }
+  }
+
+  function applyGuideLink() {
+    if (!elements.guideLink) {
+      return;
+    }
+
+    const baseUrl = String(CONFIG.docsBaseUrl || "").trim();
+    elements.guideLink.href = baseUrl
+      ? `${baseUrl.replace(/\/?$/, "/")}game-reset-tracker/README.md`
+      : "./README.md";
   }
 
   function toggleTheme() {
@@ -673,12 +687,14 @@
   }
 
   function deriveGroup(group, game, parentResetSettings, now) {
+    const isEventGroup = Boolean(group.isEventGroup);
     const settings = group.resetOverrideEnabled
       ? normalizeResetSettings(group.resetSettings, parentResetSettings)
       : parentResetSettings;
 
     return {
       ...group,
+      isEventGroup,
       isDisabled: Boolean(group.isDisabled),
       groupKey: group.id,
       isVirtual: false,
@@ -686,7 +702,7 @@
       gameId: game.id,
       gameName: game.name,
       tasks: group.tasks.map((task) => deriveTask(task, group, game, settings, now)),
-      isExpired: isExpiredAt(group.expiresAt, now) || isExpiredAt(game.expiresAt, now),
+      isExpired: isExpiredAt(isEventGroup ? group.expiresAt : null, now) || isExpiredAt(game.expiresAt, now),
     };
   }
 
@@ -720,20 +736,28 @@
     const settings = task.resetOverrideEnabled
       ? normalizeResetSettings(task.resetSettings, parentResetSettings)
       : parentResetSettings;
+    const derivedType = group && group.isEventGroup
+      ? "event"
+      : task.type === "event"
+      ? "one-time"
+      : task.type;
     const completedAt = task.completedAt ? new Date(task.completedAt) : null;
-    const expirationDate = task.expiresAt ? new Date(task.expiresAt) : null;
-    const isExpired = isExpiredAt(task.expiresAt, now) || isExpiredAt(group && group.expiresAt, now) || isExpiredAt(game.expiresAt, now);
+    const effectiveExpiresAt = group && group.isEventGroup
+      ? group.expiresAt || null
+      : task.expiresAt || (group && group.expiresAt) || game.expiresAt || null;
+    const expirationDate = effectiveExpiresAt ? new Date(effectiveExpiresAt) : null;
+    const isExpired = isExpiredAt(effectiveExpiresAt, now);
 
     let nextResetAt = null;
     let lastWindowStart = null;
     let status = "available";
     let canComplete = !isExpired;
 
-    if (task.type === "daily") {
+    if (derivedType === "daily") {
       lastWindowStart = getDailyWindowStart(now, settings.dailyTime);
       nextResetAt = getNextDailyReset(now, settings.dailyTime);
       status = completedAt && completedAt >= lastWindowStart ? "completed" : "available";
-    } else if (task.type === "weekly") {
+    } else if (derivedType === "weekly") {
       lastWindowStart = getWeeklyWindowStart(now, settings.weeklyDay, settings.weeklyTime);
       nextResetAt = getNextWeeklyReset(now, settings.weeklyDay, settings.weeklyTime);
       status = completedAt && completedAt >= lastWindowStart ? "completed" : "available";
@@ -750,10 +774,11 @@
       canComplete = false;
     }
 
-    const timing = deriveTaskTiming(task.type, nextResetAt, expirationDate, now);
+    const timing = deriveTaskTiming(derivedType, nextResetAt, expirationDate, now);
 
     return {
       ...task,
+      type: derivedType,
       isDisabled: Boolean(task.isDisabled || (group && group.isDisabled)),
       gameId: game.id,
       gameName: game.name,
@@ -1276,19 +1301,21 @@
     const isCollapsed = Boolean(state.collapsedGroups[group.groupKey]);
     const resetLabel = group.isVirtual
       ? "Uses game reset"
+      : group.isEventGroup
+      ? "Event group"
       : group.resetOverrideEnabled
       ? `Custom reset / Daily ${group.effectiveResetSettings.dailyTime} / Weekly ${dayName(group.effectiveResetSettings.weeklyDay)} ${group.effectiveResetSettings.weeklyTime}`
       : "Uses game reset";
     const groupCountdown = renderGroupCountdown(group.summary, group.tasks);
-    const eventCount = group.tasks.filter((task) => task.type === "event").length;
-    const eventLabel = eventCount === group.tasks.length && eventCount > 0
+    const eventCount = group.isEventGroup ? group.tasks.length : group.tasks.filter((task) => task.type === "event").length;
+    const eventLabel = group.isEventGroup
       ? '<span class="badge event-badge">Event Group</span>'
       : eventCount > 0
       ? `<span class="badge event-badge">${eventCount} event${eventCount === 1 ? "" : "s"}</span>`
       : "";
 
     return `
-      <section class="group-section ${group.isExpired ? "expired" : ""} ${eventCount ? "has-events" : ""} ${group.isDisabled ? "disabled-item" : ""}" style="${gameAccentStyle(group.gameId || group.gameName)}">
+      <section class="group-section ${group.isExpired ? "expired" : ""} ${group.isEventGroup || eventCount ? "has-events" : ""} ${group.isDisabled ? "disabled-item" : ""}" style="${gameAccentStyle(group.gameId || group.gameName)}">
         <div class="group-header">
           <div class="group-title">
             <div class="group-title-row">
@@ -1303,7 +1330,7 @@
                 ${group.summary.expired ? `<span class="badge expired">${group.summary.expired} expired</span>` : ""}
               </div>
             </div>
-            <p class="subtle">${escapeHtml(group.gameName)} / ${escapeHtml(resetLabel)}${group.expiresAt ? ` / Expires ${escapeHtml(formatDateTime(group.expiresAt))}` : ""}</p>
+            <p class="subtle">${escapeHtml(group.gameName)} / ${escapeHtml(resetLabel)}${group.isEventGroup && group.expiresAt ? ` / Expires ${escapeHtml(formatDateTime(group.expiresAt))}` : ""}</p>
             ${group.notes ? `<p class="subtle group-notes">${escapeHtml(group.notes)}</p>` : ""}
             ${groupCountdown}
           </div>
@@ -1348,7 +1375,9 @@
             </div>
             <div class="task-meta">
               <div class="subtle">${escapeHtml(formatTiming(task))}</div>
-              <div class="subtle">Reset: ${escapeHtml(task.inheritedFrom)}${task.nextResetAt ? ` / ${escapeHtml(formatDateTime(task.nextResetAt))}` : ""}${task.expirationDate ? ` / Expires ${escapeHtml(formatDateTime(task.expirationDate))}` : ""}</div>
+              <div class="subtle">${task.type === "event"
+                ? `Event${task.expirationDate ? ` / Expires ${escapeHtml(formatDateTime(task.expirationDate))}` : ""}`
+                : `Reset: ${escapeHtml(task.inheritedFrom)}${task.nextResetAt ? ` / ${escapeHtml(formatDateTime(task.nextResetAt))}` : ""}${task.expirationDate ? ` / Expires ${escapeHtml(formatDateTime(task.expirationDate))}` : ""}`}</div>
               ${renderTaskCountdown(task)}
               ${task.notes ? `<div class="task-notes subtle">${escapeHtml(task.notes)}</div>` : ""}
             </div>
@@ -1697,8 +1726,12 @@
     const form = template.getElementById("entityForm");
     const entity = getEditorEntity();
     const isGame = state.editor.entityType === "game";
+    const isGroup = state.editor.entityType === "group";
     const isTask = state.editor.entityType === "task";
     const parentSection = template.querySelector('[data-role="parent-fields"]');
+    const groupFieldsSection = template.querySelector('[data-role="group-fields"]');
+    const taskFieldsSection = template.querySelector('[data-role="task-fields"]');
+    const expirationFieldsSection = template.querySelector('[data-role="expiration-fields"]');
     const targetGameSelect = form.elements.targetGameId;
     const targetGroupSelect = form.elements.targetGroupId;
     const availableGames = getAvailableGamesForEditor();
@@ -1711,7 +1744,8 @@
     form.elements.name.value = entity.name || "";
     form.elements.notes.value = entity.notes || "";
     form.elements.priority.value = String(entity.priority || 3);
-    form.elements.taskType.value = entity.type || "daily";
+    form.elements.taskType.value = entity.type === "event" ? "one-time" : entity.type || "daily";
+    form.elements.isEventGroup.checked = Boolean(entity.isEventGroup);
     form.elements.resetEnabled.checked = Boolean(entity.resetOverrideEnabled || isGame);
     form.elements.dailyTime.value = entity.resetSettings ? entity.resetSettings.dailyTime || "" : "";
     form.elements.weeklyDay.value = String(entity.resetSettings && Number.isInteger(Number(entity.resetSettings.weeklyDay)) ? Number(entity.resetSettings.weeklyDay) : 1);
@@ -1725,12 +1759,9 @@
     syncGroupOptions(form, entity.targetGroupId || "", entity.groupKey || null);
 
     parentSection.hidden = !isTask;
-    template.querySelector('[data-role="task-fields"]').hidden = !isTask;
+    groupFieldsSection.hidden = !isGroup;
     if (isGame) {
       form.elements.resetEnabled.closest("label").hidden = true;
-    }
-    if (!isTask) {
-      form.elements.taskType.closest("label").hidden = true;
     }
     if (state.editor.mode === "create") {
       template.querySelector('[data-action="delete"]').hidden = true;
@@ -1739,11 +1770,48 @@
       form.querySelector('button[type="submit"]').disabled = true;
     }
 
-    targetGameSelect.addEventListener("change", () => syncGroupOptions(form, "", null));
+    targetGameSelect.addEventListener("change", () => {
+      syncGroupOptions(form, "", null);
+      syncEditorFormSections(form, {
+        isGame,
+        isGroup,
+        isTask,
+        taskFieldsSection,
+        groupFieldsSection,
+        resetFieldsSection,
+        expirationFieldsSection,
+      });
+    });
+    targetGroupSelect.addEventListener("change", () => syncEditorFormSections(form, {
+      isGame,
+      isGroup,
+      isTask,
+      taskFieldsSection,
+      groupFieldsSection,
+      resetFieldsSection,
+      expirationFieldsSection,
+    }));
+    form.elements.isEventGroup.addEventListener("change", () => syncEditorFormSections(form, {
+      isGame,
+      isGroup,
+      isTask,
+      taskFieldsSection,
+      groupFieldsSection,
+      resetFieldsSection,
+      expirationFieldsSection,
+    }));
     if (!isGame) {
       form.elements.resetEnabled.addEventListener("change", () => syncResetFieldState(form, resetFieldsSection, isGame));
     }
-    syncResetFieldState(form, resetFieldsSection, isGame);
+    syncEditorFormSections(form, {
+      isGame,
+      isGroup,
+      isTask,
+      taskFieldsSection,
+      groupFieldsSection,
+      resetFieldsSection,
+      expirationFieldsSection,
+    });
 
     form.addEventListener("submit", handleEditorSubmit);
     template.querySelector('[data-action="cancel"]').addEventListener("click", closeEditor);
@@ -1767,6 +1835,21 @@
     form.elements.targetGroupId.value = selectedGroupId || (preferred ? preferred.id : "");
   }
 
+  function syncEditorFormSections(form, sections) {
+    const selectedGroup = form.elements.targetGroupId
+      ? getAvailableGroupsForGame(form.elements.targetGameId.value).find((group) => group.id === form.elements.targetGroupId.value)
+      : null;
+    const taskInEventGroup = sections.isTask && selectedGroup && selectedGroup.isEventGroup;
+    const groupIsEvent = sections.isGroup && form.elements.isEventGroup.checked;
+
+    sections.taskFieldsSection.hidden = !sections.isTask || Boolean(taskInEventGroup);
+    sections.groupFieldsSection.hidden = !sections.isGroup;
+    sections.expirationFieldsSection.hidden = !(groupIsEvent);
+    sections.resetFieldsSection.hidden = groupIsEvent;
+
+    syncResetFieldState(form, sections.resetFieldsSection, sections.isGame || groupIsEvent);
+  }
+
   function getEditorEntity() {
     if (!state.editor) {
       return {};
@@ -1781,6 +1864,7 @@
         groupKey: state.editor.groupKey || null,
         priority: 3,
         type: "daily",
+        isEventGroup: false,
         resetOverrideEnabled: state.editor.entityType === "game",
         resetSettings: createDefaultResetSettings(),
       };
@@ -1808,15 +1892,19 @@
     const form = event.currentTarget;
     const formData = new FormData(form);
     const entityType = String(formData.get("entityType"));
-    const resetOverrideEnabled = entityType === "game" ? true : formData.get("resetEnabled") === "on";
+    const isEventGroup = entityType === "group" && formData.get("isEventGroup") === "on";
+    const resetOverrideEnabled = entityType === "game" ? true : isEventGroup ? false : formData.get("resetEnabled") === "on";
     const existing = formData.get("id") ? findEntityById(entityType, String(formData.get("id"))) : null;
+    const expiresAt = entityType === "group" && isEventGroup && formData.get("expiresAt")
+      ? new Date(String(formData.get("expiresAt"))).toISOString()
+      : null;
 
     const payload = {
       id: String(formData.get("id") || crypto.randomUUID()),
       name: String(formData.get("name") || "").trim(),
       notes: String(formData.get("notes") || "").trim(),
       priority: Number(formData.get("priority") || 3),
-      expiresAt: formData.get("expiresAt") ? new Date(String(formData.get("expiresAt"))).toISOString() : null,
+      expiresAt,
       resetOverrideEnabled,
       resetSettings: {
         dailyTime: String(formData.get("dailyTime") || "") || null,
@@ -1824,6 +1912,10 @@
         weeklyTime: String(formData.get("weeklyTime") || "") || null,
       },
     };
+
+    if (entityType === "group") {
+      payload.isEventGroup = isEventGroup;
+    }
 
     if (!payload.name) {
       return;
@@ -1880,6 +1972,7 @@
         notes: payload.notes,
         priority: payload.priority,
         isDisabled: false,
+        isEventGroup: Boolean(payload.isEventGroup),
         expiresAt: payload.expiresAt,
         resetOverrideEnabled: payload.resetOverrideEnabled,
         resetSettings: payload.resetSettings,
@@ -2163,6 +2256,7 @@
       groupKey: group.id,
       gameId: game.id,
       gameName: game.name,
+      isEventGroup: Boolean(group.isEventGroup),
     }));
   }
 
