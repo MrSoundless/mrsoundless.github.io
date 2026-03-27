@@ -903,15 +903,19 @@
 
   function compareTasks(a, b, sortBy) {
     if (sortBy === "time") {
-      return compareOptionalDates(a.nextRelevantAt, b.nextRelevantAt) || compareByAvailability(a, b) || compareByName(a, b);
+      return compareOptionalDates(a.nextRelevantAt, b.nextRelevantAt) || compareByPriority(a, b) || compareByAvailability(a, b) || compareByName(a, b);
     }
     if (sortBy === "alphabetical") {
-      return compareByName(a, b) || compareByAvailability(a, b);
+      return compareByName(a, b) || compareByPriority(a, b) || compareByAvailability(a, b);
     }
     if (sortBy === "priority") {
-      return (b.priority || 0) - (a.priority || 0) || compareByAvailability(a, b) || compareByName(a, b);
+      return compareByPriority(a, b) || compareByAvailability(a, b) || compareOptionalDates(a.nextRelevantAt, b.nextRelevantAt) || compareByName(a, b);
     }
-    return compareOptionalDates(a.nextRelevantAt, b.nextRelevantAt) || compareByAvailability(a, b) || compareByName(a, b);
+    return compareOptionalDates(a.nextRelevantAt, b.nextRelevantAt) || compareByPriority(a, b) || compareByAvailability(a, b) || compareByName(a, b);
+  }
+
+  function compareByPriority(a, b) {
+    return (b.priority || 0) - (a.priority || 0);
   }
 
   function compareByAvailability(a, b) {
