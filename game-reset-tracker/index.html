@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Game Reset Tracker</title>
+  <meta name="description" content="Track recurring in-game tasks across multiple games with local-only storage.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand-card">
+        <p class="eyebrow">Static Tracker</p>
+        <h1>Game Reset Tracker</h1>
+        <p class="muted">Recurring task tracking with inherited reset rules, local storage, and no backend.</p>
+      </div>
+
+      <section class="panel">
+        <div class="panel-header">
+          <h2>Views</h2>
+        </div>
+        <div class="view-toggle" id="viewToggle"></div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-header">
+          <h2>Filters</h2>
+          <button class="ghost-button" id="resetFiltersButton" type="button">Reset</button>
+        </div>
+        <form id="filtersForm" class="filters-form">
+          <label>
+            <span>Game</span>
+            <select id="filterGame"></select>
+          </label>
+          <label>
+            <span>Type</span>
+            <select id="filterType">
+              <option value="all">All types</option>
+              <option value="daily">Daily</option>
+              <option value="weekly">Weekly</option>
+              <option value="one-time">One-time</option>
+              <option value="event">Event</option>
+            </select>
+          </label>
+          <label>
+            <span>State</span>
+            <select id="filterState">
+              <option value="all">All states</option>
+              <option value="available">Available</option>
+              <option value="completed">Completed</option>
+              <option value="expired">Expired</option>
+            </select>
+          </label>
+          <label class="checkbox-row">
+            <input type="checkbox" id="filterExpiringSoon">
+            <span>Expiring soon</span>
+          </label>
+          <label class="checkbox-row">
+            <input type="checkbox" id="hideCompleted">
+            <span>Hide completed</span>
+          </label>
+          <label class="checkbox-row">
+            <input type="checkbox" id="hideExpired">
+            <span>Hide expired</span>
+          </label>
+          <label>
+            <span>Sort</span>
+            <select id="sortBy">
+              <option value="time">Time remaining</option>
+              <option value="alphabetical">Alphabetical</option>
+              <option value="priority">Priority</option>
+            </select>
+          </label>
+        </form>
+      </section>
+
+      <section class="panel">
+        <div class="panel-header">
+          <h2>Data</h2>
+        </div>
+        <div class="data-block">
+          <div class="data-section">
+            <p class="data-label">Build</p>
+            <div class="action-grid action-grid-tight">
+              <button class="primary-button" id="addGameButton" type="button">Add game</button>
+            </div>
+          </div>
+
+          <div class="data-section">
+            <p class="data-label">Backup</p>
+            <div class="action-grid action-grid-tight">
+              <button class="secondary-button" id="exportButton" type="button">Export tracker</button>
+            </div>
+          </div>
+
+          <div class="data-section">
+            <p class="data-label">Import</p>
+            <label>
+              <span>Import mode</span>
+              <select id="importMode">
+                <option value="merge" selected>Merge into current tracker</option>
+                <option value="replace">Replace entire tracker</option>
+              </select>
+            </label>
+            <div class="action-grid action-grid-tight">
+              <label class="secondary-button file-button">
+                <span>Import JSON</span>
+                <input type="file" id="importInput" accept="application/json">
+              </label>
+            </div>
+          </div>
+
+          <div class="data-section danger-zone">
+            <p class="data-label">Reset</p>
+            <div class="action-grid action-grid-tight">
+              <button class="ghost-button danger-text" id="resetDemoButton" type="button">Restore demo</button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </aside>
+
+    <main class="main-content">
+      <header class="hero">
+        <div>
+          <p class="eyebrow">Reset-aware workflow</p>
+          <h2 id="heroTitle">Global dashboard</h2>
+          <p class="muted" id="heroSubtitle">All games, groups, and tasks in one place.</p>
+        </div>
+        <div class="hero-stats" id="heroStats"></div>
+      </header>
+
+      <section class="content-grid">
+        <div class="content-column">
+          <section class="panel">
+            <div class="panel-header">
+              <h2 id="listTitle">Tasks</h2>
+              <div class="inline-actions" id="contextActions"></div>
+            </div>
+            <div id="emptyState" class="empty-state" hidden>
+              <h3>No matching tasks</h3>
+              <p class="muted">Try adjusting filters, adding a task, or switching views.</p>
+            </div>
+            <div id="taskList" class="task-list"></div>
+          </section>
+        </div>
+
+        <div class="content-column side-column">
+          <section class="panel">
+            <div class="panel-header">
+              <h2>Games</h2>
+            </div>
+            <div id="gamesList" class="stack-list"></div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-header">
+              <h2>Editor</h2>
+            </div>
+            <div id="editorHost"></div>
+          </section>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <template id="editorTemplate">
+    <form id="entityForm" class="editor-form">
+      <input type="hidden" name="id">
+      <input type="hidden" name="entityType">
+      <input type="hidden" name="parentType">
+      <input type="hidden" name="parentId">
+
+      <label>
+        <span>Name</span>
+        <input name="name" type="text" required maxlength="120">
+      </label>
+
+      <label>
+        <span>Notes</span>
+        <textarea name="notes" rows="3" maxlength="400" placeholder="Optional context"></textarea>
+      </label>
+
+      <label>
+        <span>Priority</span>
+        <select name="priority">
+          <option value="1">1 · Low</option>
+          <option value="2">2</option>
+          <option value="3" selected>3 · Normal</option>
+          <option value="4">4</option>
+          <option value="5">5 · High</option>
+        </select>
+      </label>
+
+      <div class="form-section" data-role="parent-fields">
+        <label>
+          <span>Game</span>
+          <select name="targetGameId"></select>
+        </label>
+        <label>
+          <span>Group</span>
+          <select name="targetGroupId"></select>
+        </label>
+      </div>
+
+      <div class="form-section" data-role="task-fields">
+        <label>
+          <span>Task type</span>
+          <select name="taskType">
+            <option value="daily">Daily</option>
+            <option value="weekly">Weekly</option>
+            <option value="one-time">One-time</option>
+            <option value="event">Event</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="form-section" data-role="reset-fields">
+        <label class="checkbox-row">
+          <input type="checkbox" name="resetEnabled">
+          <span>Override inherited reset settings</span>
+        </label>
+        <div class="two-up">
+          <label>
+            <span>Daily reset time</span>
+            <input name="dailyTime" type="time">
+          </label>
+          <label>
+            <span>Weekly reset day</span>
+            <select name="weeklyDay">
+              <option value="0">Sunday</option>
+              <option value="1">Monday</option>
+              <option value="2">Tuesday</option>
+              <option value="3">Wednesday</option>
+              <option value="4">Thursday</option>
+              <option value="5">Friday</option>
+              <option value="6">Saturday</option>
+            </select>
+          </label>
+        </div>
+        <label>
+          <span>Weekly reset time</span>
+          <input name="weeklyTime" type="time">
+        </label>
+      </div>
+
+      <div class="form-section">
+        <label>
+          <span>Expiration date</span>
+          <input name="expiresAt" type="datetime-local">
+        </label>
+      </div>
+
+      <div class="form-actions">
+        <button class="primary-button" type="submit">Save</button>
+        <button class="ghost-button" type="button" data-action="cancel">Cancel</button>
+        <button class="ghost-button danger-text" type="button" data-action="delete">Delete</button>
+      </div>
+    </form>
+  </template>
+
+  <script src="./config.js"></script>
+  <script src="./app.js"></script>
+</body>
+</html>

@@ -1,0 +1,2017 @@
+(function () {
+  const CONFIG = window.GAME_RESET_TRACKER_CONFIG || {
+    storageKey: "game-reset-tracker-state-v1",
+    refreshIntervalMs: 60 * 1000,
+    expiringSoonHours: 48,
+    urgencyWindowsHours: {
+      daily: 4,
+      weekly: 24,
+    },
+    defaultResetSettings: {
+      dailyTime: "04:00",
+      weeklyDay: 1,
+      weeklyTime: "04:00",
+    },
+    defaultFilters: {
+      gameId: "all",
+      type: "all",
+      state: "all",
+      expiringSoon: false,
+      hideCompleted: false,
+      hideExpired: false,
+      sortBy: "time",
+    },
+    exportConfig: {
+      trackerFilename: "game-reset-tracker-export.json",
+    },
+    importConfig: {
+      replaceConfirmMessage: "Replace your entire tracker with this import? This will remove your current local data.",
+      invalidFileMessage: "Import failed. Please choose a valid Game Reset Tracker game JSON or full export file.",
+      mergeSuccessPrefix: "Imported",
+      replaceSuccessPrefix: "Replaced tracker with",
+    },
+    buildDemoData() {
+      return { games: [] };
+    },
+  };
+
+  const state = {
+    data: loadState(),
+    filters: createDefaultFilters(),
+    view: {
+      mode: "global",
+      gameId: null,
+      groupKey: null,
+    },
+    editor: null,
+    collapsedGroups: {},
+  };
+
+  const elements = {
+    viewToggle: document.getElementById("viewToggle"),
+    filtersForm: document.getElementById("filtersForm"),
+    filterGame: document.getElementById("filterGame"),
+    filterType: document.getElementById("filterType"),
+    filterState: document.getElementById("filterState"),
+    filterExpiringSoon: document.getElementById("filterExpiringSoon"),
+    hideCompleted: document.getElementById("hideCompleted"),
+    hideExpired: document.getElementById("hideExpired"),
+    sortBy: document.getElementById("sortBy"),
+    resetFiltersButton: document.getElementById("resetFiltersButton"),
+    addGameButton: document.getElementById("addGameButton"),
+    exportButton: document.getElementById("exportButton"),
+    importInput: document.getElementById("importInput"),
+    importMode: document.getElementById("importMode"),
+    resetDemoButton: document.getElementById("resetDemoButton"),
+    heroTitle: document.getElementById("heroTitle"),
+    heroSubtitle: document.getElementById("heroSubtitle"),
+    heroStats: document.getElementById("heroStats"),
+    listTitle: document.getElementById("listTitle"),
+    contextActions: document.getElementById("contextActions"),
+    emptyState: document.getElementById("emptyState"),
+    taskList: document.getElementById("taskList"),
+    gamesList: document.getElementById("gamesList"),
+    editorHost: document.getElementById("editorHost"),
+    editorTemplate: document.getElementById("editorTemplate"),
+  };
+
+  bindEvents();
+  render();
+  setInterval(render, CONFIG.refreshIntervalMs);
+
+  function createDefaultFilters() {
+    return { ...CONFIG.defaultFilters };
+  }
+
+  function createDefaultResetSettings() {
+    return { ...CONFIG.defaultResetSettings };
+  }
+
+  function bindEvents() {
+    elements.filtersForm.addEventListener("input", syncFiltersFromForm);
+    elements.filtersForm.addEventListener("change", syncFiltersFromForm);
+    elements.resetFiltersButton.addEventListener("click", resetFilters);
+    elements.addGameButton.addEventListener("click", () => openEditor({ mode: "create", entityType: "game", parentType: null, parentId: null }));
+    elements.exportButton.addEventListener("click", exportJson);
+    elements.importInput.addEventListener("change", importJson);
+    elements.resetDemoButton.addEventListener("click", restoreDemoData);
+  }
+
+  function loadState() {
+    const raw = localStorage.getItem(CONFIG.storageKey);
+    if (!raw) {
+      return CONFIG.buildDemoData();
+    }
+
+    try {
+      const parsed = JSON.parse(raw);
+      if (!parsed || !Array.isArray(parsed.games)) {
+        return CONFIG.buildDemoData();
+      }
+      return parsed;
+    } catch (error) {
+      console.error("Failed to parse saved state", error);
+      return CONFIG.buildDemoData();
+    }
+  }
+
+  function saveState() {
+    localStorage.setItem(CONFIG.storageKey, JSON.stringify(state.data));
+  }
+
+  function resetFilters() {
+    state.filters = createDefaultFilters();
+    state.view.groupKey = null;
+    render();
+  }
+
+  function syncFiltersFromForm() {
+    state.filters.gameId = elements.filterGame.value;
+    state.filters.type = elements.filterType.value;
+    state.filters.state = elements.filterState.value;
+    state.filters.expiringSoon = elements.filterExpiringSoon.checked;
+    state.filters.hideCompleted = elements.hideCompleted.checked;
+    state.filters.hideExpired = elements.hideExpired.checked;
+    state.filters.sortBy = elements.sortBy.value;
+    render();
+  }
+
+  function setView(mode, gameId, groupKey) {
+    state.view.mode = mode;
+    state.view.gameId = gameId || null;
+    state.view.groupKey = groupKey || null;
+    if (mode === "focused" && gameId) {
+      state.filters.gameId = gameId;
+    }
+    render();
+  }
+
+  function render() {
+    const model = deriveModel();
+    syncFilterControls(model.games);
+    renderViewToggle(model.games);
+    renderHero(model);
+    renderContextActions(model);
+    renderTaskList(model);
+    renderGamesList(model.games);
+    renderEditor();
+  }
+
+  function syncFilterControls(games) {
+    elements.filterGame.innerHTML = ['<option value="all">All games</option>']
+      .concat(games.map((game) => `<option value="${escapeHtml(game.id)}">${escapeHtml(game.name)}</option>`))
+      .join("");
+
+    elements.filterGame.value = games.some((game) => game.id === state.filters.gameId) || state.filters.gameId === "all"
+      ? state.filters.gameId
+      : "all";
+    if (elements.filterGame.value !== state.filters.gameId) {
+      state.filters.gameId = elements.filterGame.value;
+    }
+
+    elements.filterType.value = state.filters.type;
+    elements.filterState.value = state.filters.state;
+    elements.filterExpiringSoon.checked = state.filters.expiringSoon;
+    elements.hideCompleted.checked = state.filters.hideCompleted;
+    elements.hideExpired.checked = state.filters.hideExpired;
+    elements.sortBy.value = state.filters.sortBy;
+  }
+
+  function deriveModel() {
+    const now = new Date();
+    const games = state.data.games.map((game) => deriveGame(game, now));
+    const scopeId = state.view.mode === "focused" ? state.view.gameId : null;
+    const scopedGroupKey = state.view.groupKey;
+    let tasks = games.flatMap((game) => game.tasks);
+
+    if (scopeId) {
+      tasks = tasks.filter((task) => task.gameId === scopeId);
+    }
+    if (scopedGroupKey) {
+      tasks = tasks.filter((task) => task.groupKey === scopedGroupKey);
+    }
+    if (state.filters.gameId !== "all") {
+      tasks = tasks.filter((task) => task.gameId === state.filters.gameId);
+    }
+    if (state.filters.type !== "all") {
+      tasks = tasks.filter((task) => task.type === state.filters.type);
+    }
+    if (state.filters.state !== "all") {
+      tasks = tasks.filter((task) => task.status === state.filters.state);
+    }
+    if (state.filters.expiringSoon) {
+      tasks = tasks.filter((task) => task.expiringSoon);
+    }
+    if (state.filters.hideCompleted) {
+      tasks = tasks.filter((task) => task.status !== "completed");
+    }
+    if (state.filters.hideExpired) {
+      tasks = tasks.filter((task) => !task.isExpired);
+    }
+
+    tasks = tasks.slice().sort((a, b) => compareTasks(a, b, state.filters.sortBy));
+
+    const groupSections = [];
+    const sectionMap = new Map();
+    tasks.forEach((task) => {
+      if (!sectionMap.has(task.groupKey)) {
+        const group = games
+          .flatMap((game) => game.groups)
+          .find((item) => item.groupKey === task.groupKey);
+        if (!group) {
+          return;
+        }
+        const section = {
+          ...group,
+          tasks: [],
+        };
+        sectionMap.set(task.groupKey, section);
+        groupSections.push(section);
+      }
+      sectionMap.get(task.groupKey).tasks.push(task);
+    });
+
+    groupSections.forEach((section) => {
+      section.summary = summarizeTasks(section.tasks);
+    });
+
+    return {
+      games,
+      tasks,
+      groupSections,
+      stats: {
+        total: tasks.length,
+        available: tasks.filter((task) => task.status === "available").length,
+        completed: tasks.filter((task) => task.status === "completed").length,
+        expired: tasks.filter((task) => task.status === "expired").length,
+      },
+    };
+  }
+
+  function deriveGame(game, now) {
+    const settings = normalizeResetSettings(game.resetSettings, null);
+    const baseGame = {
+      ...game,
+      tasks: Array.isArray(game.tasks) ? game.tasks : [],
+      groups: Array.isArray(game.groups) ? game.groups : [],
+    };
+    const groups = baseGame.groups.map((group) => deriveGroup(group, baseGame, settings, now));
+    const directGroup = deriveVirtualGroup(baseGame, settings, now);
+    if (directGroup) {
+      groups.unshift(directGroup);
+    }
+    return {
+      ...baseGame,
+      effectiveResetSettings: settings,
+      groups,
+      tasks: groups.flatMap((group) => group.tasks),
+      isExpired: isExpiredAt(game.expiresAt, now),
+    };
+  }
+
+  function deriveGroup(group, game, parentResetSettings, now) {
+    const settings = group.resetOverrideEnabled
+      ? normalizeResetSettings(group.resetSettings, parentResetSettings)
+      : parentResetSettings;
+
+    return {
+      ...group,
+      groupKey: group.id,
+      isVirtual: false,
+      effectiveResetSettings: settings,
+      gameId: game.id,
+      gameName: game.name,
+      tasks: group.tasks.map((task) => deriveTask(task, group, game, settings, now)),
+      isExpired: isExpiredAt(group.expiresAt, now) || isExpiredAt(game.expiresAt, now),
+    };
+  }
+
+  function deriveVirtualGroup(game, parentResetSettings, now) {
+    const directTasks = Array.isArray(game.tasks) ? game.tasks : [];
+    if (!directTasks.length) {
+      return null;
+    }
+
+    const virtualGroup = {
+      id: null,
+      groupKey: `${game.id}::ungrouped`,
+      name: "Ungrouped",
+      notes: "Tasks attached directly to the game.",
+      priority: game.priority || 3,
+      expiresAt: game.expiresAt,
+      resetOverrideEnabled: false,
+      resetSettings: parentResetSettings,
+      gameId: game.id,
+      gameName: game.name,
+      effectiveResetSettings: parentResetSettings,
+      isExpired: isExpiredAt(game.expiresAt, now),
+      isVirtual: true,
+      tasks: directTasks.map((task) => deriveTask(task, null, game, parentResetSettings, now)),
+    };
+    return virtualGroup;
+  }
+
+  function deriveTask(task, group, game, parentResetSettings, now) {
+    const settings = task.resetOverrideEnabled
+      ? normalizeResetSettings(task.resetSettings, parentResetSettings)
+      : parentResetSettings;
+    const completedAt = task.completedAt ? new Date(task.completedAt) : null;
+    const expirationDate = task.expiresAt ? new Date(task.expiresAt) : null;
+    const isExpired = isExpiredAt(task.expiresAt, now) || isExpiredAt(group && group.expiresAt, now) || isExpiredAt(game.expiresAt, now);
+
+    let nextResetAt = null;
+    let lastWindowStart = null;
+    let status = "available";
+    let canComplete = !isExpired;
+
+    if (task.type === "daily") {
+      lastWindowStart = getDailyWindowStart(now, settings.dailyTime);
+      nextResetAt = getNextDailyReset(now, settings.dailyTime);
+      status = completedAt && completedAt >= lastWindowStart ? "completed" : "available";
+    } else if (task.type === "weekly") {
+      lastWindowStart = getWeeklyWindowStart(now, settings.weeklyDay, settings.weeklyTime);
+      nextResetAt = getNextWeeklyReset(now, settings.weeklyDay, settings.weeklyTime);
+      status = completedAt && completedAt >= lastWindowStart ? "completed" : "available";
+    } else {
+      status = completedAt ? "completed" : "available";
+      canComplete = !completedAt && !isExpired;
+    }
+
+    if (isExpired) {
+      status = "expired";
+      canComplete = false;
+    }
+
+    const timing = deriveTaskTiming(task.type, nextResetAt, expirationDate, now);
+
+    return {
+      ...task,
+      gameId: game.id,
+      gameName: game.name,
+      groupId: group ? group.id : null,
+      groupKey: group ? group.groupKey || group.id : `${game.id}::ungrouped`,
+      groupName: group ? group.name : "Ungrouped",
+      effectiveResetSettings: settings,
+      completedAt,
+      expirationDate,
+      nextResetAt,
+      lastWindowStart,
+      status,
+      isExpired,
+      canComplete,
+      expiringSoon: timing.isUrgent,
+      timingLabel: timing.label,
+      countdownText: timing.countdownText,
+      nextRelevantAt: timing.nextRelevantAt,
+      isUrgent: timing.isUrgent,
+      urgencyKind: timing.kind,
+      inheritedFrom: task.resetOverrideEnabled ? "task" : group && group.resetOverrideEnabled ? "group" : "game",
+    };
+  }
+
+  function summarizeTasks(tasks) {
+    const sortedRelevant = tasks
+      .map((task) => task.nextRelevantAt)
+      .filter(Boolean)
+      .sort((a, b) => a.getTime() - b.getTime());
+    return {
+      total: tasks.length,
+      available: tasks.filter((task) => task.status === "available").length,
+      completed: tasks.filter((task) => task.status === "completed").length,
+      expired: tasks.filter((task) => task.status === "expired").length,
+      urgent: tasks.filter((task) => task.isUrgent).length,
+      nextRelevantAt: sortedRelevant[0] || null,
+    };
+  }
+
+  function deriveTaskTiming(type, nextResetAt, expirationDate, now) {
+    if (type === "event") {
+      return buildTimingInfo("event", expirationDate, now, true);
+    }
+
+    if (type === "daily") {
+      return buildTimingInfo("reset", nextResetAt, now, false, CONFIG.urgencyWindowsHours.daily);
+    }
+
+    if (type === "weekly") {
+      return buildTimingInfo("reset", nextResetAt, now, false, CONFIG.urgencyWindowsHours.weekly);
+    }
+
+    if (expirationDate) {
+      return buildTimingInfo("expires", expirationDate, now, true);
+    }
+
+    return {
+      kind: null,
+      label: "",
+      countdownText: "",
+      nextRelevantAt: null,
+      isUrgent: false,
+    };
+  }
+
+  function buildTimingInfo(kind, date, now, alwaysShowCountdown, urgentWindowHours) {
+    if (!date) {
+      return {
+        kind: null,
+        label: "",
+        countdownText: "",
+        nextRelevantAt: null,
+        isUrgent: false,
+      };
+    }
+
+    const diffMs = date.getTime() - now.getTime();
+    const isUrgent = diffMs > 0 && (alwaysShowCountdown || diffMs <= urgentWindowHours * 60 * 60 * 1000);
+    return {
+      kind,
+      label: kind === "event" ? "Ends in" : kind === "expires" ? "Expires in" : "Resets in",
+      countdownText: formatCountdown(diffMs),
+      nextRelevantAt: date,
+      isUrgent,
+    };
+  }
+
+  function normalizeResetSettings(settings, fallback) {
+    const safeFallback = fallback || createDefaultResetSettings();
+    return {
+      dailyTime: settings && settings.dailyTime ? settings.dailyTime : safeFallback.dailyTime,
+      weeklyDay: settings && Number.isInteger(Number(settings.weeklyDay)) ? Number(settings.weeklyDay) : safeFallback.weeklyDay,
+      weeklyTime: settings && settings.weeklyTime ? settings.weeklyTime : safeFallback.weeklyTime,
+    };
+  }
+
+  function isExpiredAt(isoString, now) {
+    if (!isoString) {
+      return false;
+    }
+    return new Date(isoString).getTime() <= now.getTime();
+  }
+
+  function getDailyWindowStart(now, timeString) {
+    const [hours, minutes] = parseTimeString(timeString);
+    const start = new Date(now);
+    start.setHours(hours, minutes, 0, 0);
+    if (now.getTime() < start.getTime()) {
+      start.setDate(start.getDate() - 1);
+    }
+    return start;
+  }
+
+  function getNextDailyReset(now, timeString) {
+    const [hours, minutes] = parseTimeString(timeString);
+    const next = new Date(now);
+    next.setHours(hours, minutes, 0, 0);
+    if (next.getTime() <= now.getTime()) {
+      next.setDate(next.getDate() + 1);
+    }
+    return next;
+  }
+
+  function getWeeklyWindowStart(now, targetDay, timeString) {
+    const nextReset = getNextWeeklyReset(now, targetDay, timeString);
+    const start = new Date(nextReset);
+    start.setDate(start.getDate() - 7);
+    return start;
+  }
+
+  function getNextWeeklyReset(now, targetDay, timeString) {
+    const [hours, minutes] = parseTimeString(timeString);
+    const next = new Date(now);
+    next.setHours(hours, minutes, 0, 0);
+    const dayDelta = (targetDay - now.getDay() + 7) % 7;
+    next.setDate(now.getDate() + dayDelta);
+    if (dayDelta === 0 && next.getTime() <= now.getTime()) {
+      next.setDate(next.getDate() + 7);
+    }
+    return next;
+  }
+
+  function parseTimeString(timeString) {
+    const [hours, minutes] = (timeString || CONFIG.defaultResetSettings.dailyTime).split(":").map(Number);
+    return [hours || 0, minutes || 0];
+  }
+
+  function compareTasks(a, b, sortBy) {
+    if (sortBy === "time") {
+      return compareOptionalDates(a.nextRelevantAt, b.nextRelevantAt) || compareByAvailability(a, b) || compareByName(a, b);
+    }
+    if (sortBy === "alphabetical") {
+      return compareByName(a, b) || compareByAvailability(a, b);
+    }
+    if (sortBy === "priority") {
+      return (b.priority || 0) - (a.priority || 0) || compareByAvailability(a, b) || compareByName(a, b);
+    }
+    return compareOptionalDates(a.nextRelevantAt, b.nextRelevantAt) || compareByAvailability(a, b) || compareByName(a, b);
+  }
+
+  function compareByAvailability(a, b) {
+    const rank = { available: 0, completed: 1, expired: 2 };
+    return rank[a.status] - rank[b.status];
+  }
+
+  function compareOptionalDates(a, b) {
+    if (!a && !b) {
+      return 0;
+    }
+    if (!a) {
+      return 1;
+    }
+    if (!b) {
+      return -1;
+    }
+    return a.getTime() - b.getTime();
+  }
+
+  function compareByName(a, b) {
+    return a.name.localeCompare(b.name);
+  }
+
+  function renderViewToggle(games) {
+    const buttons = [`<button class="chip-button ${state.view.mode === "global" ? "active" : ""}" data-action="global" type="button">Global</button>`];
+    games.forEach((game) => {
+      buttons.push(`<button class="chip-button ${state.view.mode === "focused" && state.view.gameId === game.id ? "active" : ""}" data-action="focused" data-game-id="${escapeHtml(game.id)}" type="button">${escapeHtml(game.name)}</button>`);
+    });
+    elements.viewToggle.innerHTML = buttons.join("");
+
+    elements.viewToggle.querySelectorAll("button").forEach((button) => {
+      button.addEventListener("click", () => {
+        if (button.dataset.action === "global") {
+          setView("global", null);
+          return;
+        }
+        setView("focused", button.dataset.gameId);
+      });
+    });
+  }
+
+  function renderHero(model) {
+    const focusedGame = state.view.mode === "focused"
+      ? model.games.find((game) => game.id === state.view.gameId)
+      : null;
+    const focusedGroup = focusedGame && state.view.groupKey
+      ? focusedGame.groups.find((group) => group.groupKey === state.view.groupKey)
+      : null;
+
+    elements.heroTitle.textContent = focusedGroup
+      ? `${focusedGame.name} / ${focusedGroup.name}`
+      : focusedGame ? focusedGame.name : "Global dashboard";
+    elements.heroSubtitle.textContent = focusedGroup
+      ? "Focused group view with group summaries, actions, and inherited reset settings."
+      : focusedGame
+      ? "Focused game view with the same reset-aware tracking rules."
+      : "All games, groups, and tasks in one place.";
+    elements.listTitle.textContent = focusedGroup ? `${focusedGroup.name} tasks` : focusedGame ? `${focusedGame.name} groups` : "Groups";
+    elements.heroStats.innerHTML = [
+      statMarkup("Visible", model.stats.total),
+      statMarkup("Available", model.stats.available),
+      statMarkup("Done", model.stats.completed),
+      statMarkup("Expired", model.stats.expired),
+    ].join("");
+  }
+
+  function statMarkup(label, value) {
+    return `<div class="stat-card"><span class="subtle">${label}</span><strong>${value}</strong></div>`;
+  }
+
+  function renderContextActions(model) {
+    const focusedGame = state.view.mode === "focused"
+      ? model.games.find((game) => game.id === state.view.gameId)
+      : null;
+    const focusedGroup = focusedGame && state.view.groupKey
+      ? focusedGame.groups.find((group) => group.groupKey === state.view.groupKey)
+      : null;
+    const actions = [];
+
+    if (focusedGame) {
+      actions.push(`<button class="secondary-button" data-add="group" data-game-id="${escapeHtml(focusedGame.id)}" type="button">Add group</button>`);
+      actions.push(`<button class="secondary-button" data-export-game="${escapeHtml(focusedGame.id)}" type="button">Export game</button>`);
+      actions.push(`<button class="secondary-button" data-add="task" data-scope-game="${escapeHtml(focusedGame.id)}" data-scope-group="${escapeHtml(focusedGroup ? focusedGroup.groupKey : "")}" type="button">Add task</button>`);
+    } else {
+      actions.push(`<button class="secondary-button" data-add="task" type="button">Quick add task</button>`);
+    }
+    if (model.groupSections.length > 1) {
+      actions.push('<button class="ghost-button" data-collapse-all="true" type="button">Collapse all</button>');
+      actions.push('<button class="ghost-button" data-expand-all="true" type="button">Expand all</button>');
+    }
+    elements.contextActions.innerHTML = actions.join("");
+
+    elements.contextActions.querySelectorAll("[data-add]").forEach((button) => {
+      button.addEventListener("click", () => {
+        if (button.dataset.add === "group") {
+          openEditor({ mode: "create", entityType: "group", parentType: "game", parentId: button.dataset.gameId });
+          return;
+        }
+
+        const defaultGameId = focusedGame ? focusedGame.id : (model.games[0] ? model.games[0].id : null);
+        if (!defaultGameId) {
+          openEditor({ mode: "create", entityType: "game", parentType: null, parentId: null });
+          return;
+        }
+        openEditor({
+          mode: "create",
+          entityType: "task",
+          parentType: "game",
+          parentId: defaultGameId,
+          groupKey: button.dataset.scopeGroup || null,
+        });
+      });
+    });
+
+    elements.contextActions.querySelectorAll("[data-export-game]").forEach((button) => {
+      button.addEventListener("click", () => exportGameJson(button.dataset.exportGame));
+    });
+    elements.contextActions.querySelectorAll("[data-collapse-all]").forEach((button) => {
+      button.addEventListener("click", () => collapseAllGroups(model.groupSections));
+    });
+    elements.contextActions.querySelectorAll("[data-expand-all]").forEach((button) => {
+      button.addEventListener("click", expandAllGroups);
+    });
+  }
+
+  function renderTaskList(model) {
+    if (!model.groupSections.length) {
+      elements.emptyState.hidden = false;
+      elements.taskList.innerHTML = "";
+      return;
+    }
+
+    elements.emptyState.hidden = true;
+    elements.taskList.innerHTML = model.groupSections.map(renderGroupSection).join("");
+
+    elements.taskList.querySelectorAll("[data-complete-id]").forEach((button) => {
+      button.addEventListener("click", () => completeTask(button.dataset.completeId));
+    });
+    elements.taskList.querySelectorAll("[data-edit-task]").forEach((button) => {
+      button.addEventListener("click", () => openEditor({ mode: "edit", entityType: "task", id: button.dataset.editTask }));
+    });
+    elements.taskList.querySelectorAll("[data-toggle-group]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const key = button.dataset.toggleGroup;
+        state.collapsedGroups[key] = !state.collapsedGroups[key];
+        render();
+      });
+    });
+    elements.taskList.querySelectorAll("[data-focus-group]").forEach((button) => {
+      button.addEventListener("click", () => setView("focused", button.dataset.gameId, button.dataset.focusGroup));
+    });
+    elements.taskList.querySelectorAll("[data-clear-group-focus]").forEach((button) => {
+      button.addEventListener("click", () => setView("focused", button.dataset.gameId, null));
+    });
+    elements.taskList.querySelectorAll("[data-group-complete]").forEach((button) => {
+      button.addEventListener("click", () => completeGroupAvailableTasks(button.dataset.groupComplete));
+    });
+    elements.taskList.querySelectorAll("[data-group-export]").forEach((button) => {
+      button.addEventListener("click", () => exportGroupJson(button.dataset.groupExport));
+    });
+    elements.taskList.querySelectorAll("[data-group-add-task]").forEach((button) => {
+      button.addEventListener("click", () => openEditor({
+        mode: "create",
+        entityType: "task",
+        parentType: "game",
+        parentId: button.dataset.gameId,
+        groupKey: button.dataset.groupAddTask,
+      }));
+    });
+    elements.taskList.querySelectorAll("[data-edit-group]").forEach((button) => {
+      button.addEventListener("click", () => openEditor({ mode: "edit", entityType: "group", id: button.dataset.editGroup }));
+    });
+  }
+
+  function renderGroupSection(group) {
+    const isCollapsed = Boolean(state.collapsedGroups[group.groupKey]);
+    const resetLabel = group.isVirtual
+      ? "Uses game reset"
+      : group.resetOverrideEnabled
+      ? `Custom reset · Daily ${group.effectiveResetSettings.dailyTime} · Weekly ${dayName(group.effectiveResetSettings.weeklyDay)} ${group.effectiveResetSettings.weeklyTime}`
+      : "Uses game reset";
+
+    return `
+      <section class="group-section ${group.isExpired ? "expired" : ""}">
+        <div class="group-header">
+          <div class="group-title">
+            <div class="group-title-row">
+              <button class="ghost-button group-toggle" type="button" data-toggle-group="${escapeHtml(group.groupKey)}">${isCollapsed ? "Show" : "Hide"}</button>
+              <h3>${escapeHtml(group.name)}</h3>
+              <div class="badge-row">
+                <span class="badge">${group.summary.available} open</span>
+                <span class="badge">${group.summary.completed} done</span>
+                ${group.summary.expired ? `<span class="badge expired">${group.summary.expired} expired</span>` : ""}
+              </div>
+            </div>
+            <p class="subtle">${escapeHtml(group.gameName)} · ${escapeHtml(resetLabel)}${group.expiresAt ? ` · Expires ${escapeHtml(formatDateTime(group.expiresAt))}` : ""}</p>
+            ${group.notes ? `<p class="subtle group-notes">${escapeHtml(group.notes)}</p>` : ""}
+          </div>
+          <div class="group-actions">
+            <button class="task-action" type="button" data-focus-group="${escapeHtml(group.groupKey)}" data-game-id="${escapeHtml(group.gameId)}">Focus</button>
+            ${state.view.groupKey === group.groupKey ? `<button class="task-action" type="button" data-clear-group-focus="true" data-game-id="${escapeHtml(group.gameId)}">Back</button>` : ""}
+            <button class="task-action" type="button" data-group-add-task="${escapeHtml(group.groupKey)}" data-game-id="${escapeHtml(group.gameId)}">Add task</button>
+            <button class="task-action" type="button" data-group-complete="${escapeHtml(group.groupKey)}">Complete open</button>
+            <button class="task-action" type="button" data-group-export="${escapeHtml(group.groupKey)}">Export</button>
+            ${group.isVirtual ? "" : `<button class="task-action" type="button" data-edit-group="${escapeHtml(group.id)}">Edit group</button>`}
+          </div>
+        </div>
+        ${isCollapsed ? "" : `<div class="group-task-list">${group.tasks.map(renderTaskCard).join("")}</div>`}
+      </section>
+    `;
+  }
+
+  function renderTaskCard(task) {
+    const badges = [
+      `<span class="badge ${escapeHtml(task.status)}">${escapeHtml(capitalize(task.status))}</span>`,
+      `<span class="badge">${escapeHtml(task.type)}</span>`,
+      `<span class="badge">P${escapeHtml(String(task.priority || 3))}</span>`,
+    ];
+    if (task.expiringSoon) {
+      badges.push('<span class="badge soon">Soon</span>');
+    }
+
+    return `
+      <article class="task-card ${escapeHtml(task.status)}">
+        <div class="task-row">
+          <div class="task-main">
+            <div class="task-head">
+              <div class="task-title-block">
+                <h3>${escapeHtml(task.name)}</h3>
+                <p class="subtle">${escapeHtml(task.gameName)} / ${escapeHtml(task.groupName)}</p>
+              </div>
+              <div class="badge-row">${badges.join("")}</div>
+            </div>
+            <div class="task-meta">
+              <div class="subtle">${escapeHtml(formatTiming(task))}</div>
+              <div class="subtle">Reset: ${escapeHtml(task.inheritedFrom)}${task.nextResetAt ? ` · ${escapeHtml(formatDateTime(task.nextResetAt))}` : ""}${task.expirationDate ? ` · Expires ${escapeHtml(formatDateTime(task.expirationDate))}` : ""}</div>
+              ${task.notes ? `<div class="task-notes subtle">${escapeHtml(task.notes)}</div>` : ""}
+            </div>
+          </div>
+          <div class="task-actions">
+            <button class="task-action ${task.canComplete ? "complete" : ""}" type="button" data-complete-id="${escapeHtml(task.id)}" ${task.canComplete ? "" : "disabled"}>
+              ${task.status === "completed" && (task.type === "daily" || task.type === "weekly") ? "Done" : task.completedAt ? "Done" : "Complete"}
+            </button>
+            <button class="task-action" type="button" data-edit-task="${escapeHtml(task.id)}">Edit</button>
+          </div>
+        </div>
+      </article>
+    `;
+  }
+
+  function formatTiming(task) {
+    if (task.isExpired) {
+      return `Expired ${formatDateTime(task.expirationDate || new Date())}`;
+    }
+    if (task.status === "completed" && task.completedAt) {
+      return `Completed ${formatDateTime(task.completedAt)}`;
+    }
+    if (task.type === "one-time" || task.type === "event") {
+      return task.expirationDate ? `Expires ${formatDateTime(task.expirationDate)}` : "No automatic reset";
+    }
+    return task.nextResetAt ? `Available until ${formatDateTime(task.nextResetAt)}` : "Reset schedule unavailable";
+  }
+
+  function renderTaskCountdown(task) {
+    if (!task.countdownText || !task.timingLabel) {
+      return "";
+    }
+
+    return `<div class="countdown-pill ${task.isUrgent ? "urgent" : ""}">${escapeHtml(task.timingLabel)} <strong>${escapeHtml(task.countdownText)}</strong></div>`;
+  }
+
+  function renderGroupCountdown(summary, tasks) {
+    const priorityTask = tasks
+      .filter((task) => task.countdownText && task.status !== "completed" && task.status !== "expired")
+      .sort((a, b) => {
+        if (a.isUrgent !== b.isUrgent) {
+          return a.isUrgent ? -1 : 1;
+        }
+        return compareOptionalDates(a.nextRelevantAt, b.nextRelevantAt);
+      })[0];
+
+    if (!priorityTask) {
+      return "";
+    }
+
+    const label = priorityTask.timingLabel || "Next";
+    return `<div class="countdown-pill group-countdown ${priorityTask.isUrgent ? "urgent" : ""}">${escapeHtml(label)} <strong>${escapeHtml(priorityTask.countdownText)}</strong></div>`;
+  }
+
+  function renderGamesList(games) {
+    elements.gamesList.innerHTML = games.map((game) => `
+      <article class="game-card">
+        <div class="entity-row">
+          <div>
+            <h3>${escapeHtml(game.name)}</h3>
+            <p class="subtle">${game.groups.length} groups · ${game.tasks.length} tasks</p>
+          </div>
+          <div class="badge-row">
+            <button class="entity-link ${state.view.mode === "focused" && state.view.gameId === game.id ? "active" : ""}" type="button" data-focus-game="${escapeHtml(game.id)}">Focus</button>
+            <button class="entity-link" type="button" data-export-game="${escapeHtml(game.id)}">Export</button>
+            <button class="entity-link" type="button" data-edit-game="${escapeHtml(game.id)}">Edit</button>
+          </div>
+        </div>
+        <div class="subtle">Daily ${escapeHtml(game.effectiveResetSettings.dailyTime)} · Weekly ${dayName(game.effectiveResetSettings.weeklyDay)} ${escapeHtml(game.effectiveResetSettings.weeklyTime)}</div>
+        <div class="badge-row" style="margin-top: 12px;">
+          ${game.groups.map((group) => `<button class="entity-link" type="button" data-edit-group="${escapeHtml(group.id)}">${escapeHtml(group.name)}</button>`).join("")}
+        </div>
+      </article>
+    `).join("");
+
+    elements.gamesList.querySelectorAll("[data-focus-game]").forEach((button) => {
+      button.addEventListener("click", () => setView("focused", button.dataset.focusGame));
+    });
+    elements.gamesList.querySelectorAll("[data-edit-game]").forEach((button) => {
+      button.addEventListener("click", () => openEditor({ mode: "edit", entityType: "game", id: button.dataset.editGame }));
+    });
+    elements.gamesList.querySelectorAll("[data-export-game]").forEach((button) => {
+      button.addEventListener("click", () => exportGameJson(button.dataset.exportGame));
+    });
+    elements.gamesList.querySelectorAll("[data-edit-group]").forEach((button) => {
+      button.addEventListener("click", () => openEditor({ mode: "edit", entityType: "group", id: button.dataset.editGroup }));
+    });
+  }
+
+  function renderGroupSection(group) {
+    const isCollapsed = Boolean(state.collapsedGroups[group.groupKey]);
+    const resetLabel = group.isVirtual
+      ? "Uses game reset"
+      : group.resetOverrideEnabled
+      ? `Custom reset / Daily ${group.effectiveResetSettings.dailyTime} / Weekly ${dayName(group.effectiveResetSettings.weeklyDay)} ${group.effectiveResetSettings.weeklyTime}`
+      : "Uses game reset";
+    const groupCountdown = renderGroupCountdown(group.summary, group.tasks);
+    const eventCount = group.tasks.filter((task) => task.type === "event").length;
+    const eventLabel = eventCount === group.tasks.length && eventCount > 0
+      ? '<span class="badge event-badge">Event Group</span>'
+      : eventCount > 0
+      ? `<span class="badge event-badge">${eventCount} event${eventCount === 1 ? "" : "s"}</span>`
+      : "";
+
+    return `
+      <section class="group-section ${group.isExpired ? "expired" : ""} ${eventCount ? "has-events" : ""}">
+        <div class="group-header">
+          <div class="group-title">
+            <div class="group-title-row">
+              <button class="ghost-button group-toggle" type="button" data-toggle-group="${escapeHtml(group.groupKey)}">${isCollapsed ? "Show" : "Hide"}</button>
+              <h3>${escapeHtml(group.name)}</h3>
+              <div class="badge-row">
+                ${eventLabel}
+                <span class="badge">${group.summary.available} open</span>
+                <span class="badge">${group.summary.completed} done</span>
+                ${group.summary.urgent ? `<span class="badge soon">${group.summary.urgent} urgent</span>` : ""}
+                ${group.summary.expired ? `<span class="badge expired">${group.summary.expired} expired</span>` : ""}
+              </div>
+            </div>
+            <p class="subtle">${escapeHtml(group.gameName)} / ${escapeHtml(resetLabel)}${group.expiresAt ? ` / Expires ${escapeHtml(formatDateTime(group.expiresAt))}` : ""}</p>
+            ${group.notes ? `<p class="subtle group-notes">${escapeHtml(group.notes)}</p>` : ""}
+            ${groupCountdown}
+          </div>
+          <div class="group-actions">
+            <button class="task-action" type="button" data-focus-group="${escapeHtml(group.groupKey)}" data-game-id="${escapeHtml(group.gameId)}">Focus</button>
+            ${state.view.groupKey === group.groupKey ? `<button class="task-action" type="button" data-clear-group-focus="true" data-game-id="${escapeHtml(group.gameId)}">Back</button>` : ""}
+            <button class="task-action" type="button" data-group-add-task="${escapeHtml(group.groupKey)}" data-game-id="${escapeHtml(group.gameId)}">Add task</button>
+            <button class="task-action" type="button" data-group-complete="${escapeHtml(group.groupKey)}">Complete open</button>
+            <button class="task-action" type="button" data-group-export="${escapeHtml(group.groupKey)}">Export</button>
+            ${group.isVirtual ? "" : `<button class="task-action" type="button" data-edit-group="${escapeHtml(group.id)}">Edit group</button>`}
+          </div>
+        </div>
+        ${isCollapsed ? "" : `<div class="group-task-list">${group.tasks.map(renderTaskCard).join("")}</div>`}
+      </section>
+    `;
+  }
+
+  function renderTaskCard(task) {
+    const badges = [
+      `<span class="badge ${escapeHtml(task.status)}">${escapeHtml(capitalize(task.status))}</span>`,
+      `<span class="badge ${task.type === "event" ? "event-badge" : ""}">${escapeHtml(task.type === "event" ? "Event" : task.type)}</span>`,
+      `<span class="badge">P${escapeHtml(String(task.priority || 3))}</span>`,
+    ];
+    if (task.expiringSoon) {
+      badges.push('<span class="badge soon">Soon</span>');
+    }
+
+    return `
+      <article class="task-card ${escapeHtml(task.status)} ${task.type === "event" ? "event-task" : ""}">
+        <div class="task-row">
+          <div class="task-main">
+            <div class="task-head">
+              <div class="task-title-block">
+                <h3>${escapeHtml(task.name)}</h3>
+                <p class="subtle">${escapeHtml(task.gameName)} / ${escapeHtml(task.groupName)}</p>
+              </div>
+              <div class="badge-row">${badges.join("")}</div>
+            </div>
+            <div class="task-meta">
+              <div class="subtle">${escapeHtml(formatTiming(task))}</div>
+              <div class="subtle">Reset: ${escapeHtml(task.inheritedFrom)}${task.nextResetAt ? ` / ${escapeHtml(formatDateTime(task.nextResetAt))}` : ""}${task.expirationDate ? ` / Expires ${escapeHtml(formatDateTime(task.expirationDate))}` : ""}</div>
+              ${renderTaskCountdown(task)}
+              ${task.notes ? `<div class="task-notes subtle">${escapeHtml(task.notes)}</div>` : ""}
+            </div>
+          </div>
+          <div class="task-actions">
+            <button class="task-action ${task.canComplete ? "complete" : ""}" type="button" data-complete-id="${escapeHtml(task.id)}" ${task.canComplete ? "" : "disabled"}>${task.status === "completed" && (task.type === "daily" || task.type === "weekly") ? "Done" : task.completedAt ? "Done" : "Complete"}</button>
+            <button class="task-action" type="button" data-edit-task="${escapeHtml(task.id)}">Edit</button>
+          </div>
+        </div>
+      </article>
+    `;
+  }
+
+  function renderEditor() {
+    if (!state.editor) {
+      elements.editorHost.innerHTML = '<p class="editor-empty muted">Select a game, group, or task to edit it here, or create a new one.</p>';
+      return;
+    }
+
+    const template = elements.editorTemplate.content.cloneNode(true);
+    const form = template.getElementById("entityForm");
+    const entity = getEditorEntity();
+    const isGame = state.editor.entityType === "game";
+    const isTask = state.editor.entityType === "task";
+    const parentSection = template.querySelector('[data-role="parent-fields"]');
+    const targetGroupSelect = form.elements.targetGroupId;
+    const availableGroups = getAvailableGroupsForEditor();
+    const resetFieldsSection = template.querySelector('[data-role="reset-fields"]');
+
+    form.elements.id.value = entity.id || "";
+    form.elements.entityType.value = state.editor.entityType;
+    form.elements.parentType.value = entity.parentType || "";
+    form.elements.parentId.value = entity.parentId || "";
+    form.elements.name.value = entity.name || "";
+    form.elements.notes.value = entity.notes || "";
+    form.elements.priority.value = String(entity.priority || 3);
+    form.elements.taskType.value = entity.type || "daily";
+    form.elements.resetEnabled.checked = Boolean(entity.resetOverrideEnabled || isGame);
+    form.elements.dailyTime.value = entity.resetSettings ? entity.resetSettings.dailyTime || "" : "";
+    form.elements.weeklyDay.value = String(entity.resetSettings && Number.isInteger(Number(entity.resetSettings.weeklyDay)) ? Number(entity.resetSettings.weeklyDay) : 1);
+    form.elements.weeklyTime.value = entity.resetSettings ? entity.resetSettings.weeklyTime || "" : "";
+    form.elements.expiresAt.value = entity.expiresAt ? toDateTimeLocalValue(entity.expiresAt) : "";
+
+    targetGroupSelect.innerHTML = availableGroups.length
+      ? availableGroups.map((group) => `<option value="${escapeHtml(group.id)}">${escapeHtml(group.gameName)} / ${escapeHtml(group.name)}</option>`).join("")
+      : '<option value="">No groups yet</option>';
+    targetGroupSelect.value = entity.parentId || (availableGroups[0] ? availableGroups[0].id : "");
+
+    parentSection.hidden = !isTask;
+    template.querySelector('[data-role="task-fields"]').hidden = !isTask;
+    if (isGame) {
+      form.elements.resetEnabled.closest("label").hidden = true;
+    }
+    if (!isTask) {
+      form.elements.taskType.closest("label").hidden = true;
+    }
+    if (state.editor.mode === "create") {
+      template.querySelector('[data-action="delete"]').hidden = true;
+    }
+    if (isTask && !availableGroups.length) {
+      form.querySelector('button[type="submit"]').disabled = true;
+    }
+
+    if (!isGame) {
+      form.elements.resetEnabled.addEventListener("change", () => syncResetFieldState(form, resetFieldsSection, isGame));
+    }
+    syncResetFieldState(form, resetFieldsSection, isGame);
+
+    form.addEventListener("submit", handleEditorSubmit);
+    template.querySelector('[data-action="cancel"]').addEventListener("click", closeEditor);
+    template.querySelector('[data-action="delete"]').addEventListener("click", handleDeleteEntity);
+
+    elements.editorHost.innerHTML = "";
+    elements.editorHost.appendChild(template);
+  }
+
+  function syncResetFieldState(form, resetFieldsSection, isGame) {
+    const enabled = isGame || form.elements.resetEnabled.checked;
+    resetFieldsSection.classList.toggle("is-disabled", !enabled);
+    ["dailyTime", "weeklyDay", "weeklyTime"].forEach((name) => {
+      form.elements[name].disabled = !enabled;
+    });
+  }
+
+  function getEditorEntity() {
+    if (!state.editor) {
+      return {};
+    }
+
+    if (state.editor.mode === "create") {
+      const base = {
+        parentType: state.editor.parentType,
+        parentId: state.editor.parentId,
+        priority: 3,
+        type: "daily",
+        resetOverrideEnabled: state.editor.entityType === "game",
+        resetSettings: createDefaultResetSettings(),
+      };
+
+      if (state.editor.entityType === "task" && state.editor.parentType === "game") {
+        const game = state.data.games.find((item) => item.id === state.editor.parentId);
+        if (game && game.groups[0]) {
+          base.parentType = "group";
+          base.parentId = game.groups[0].id;
+        }
+      }
+
+      return base;
+    }
+
+    const found = findEntityById(state.editor.entityType, state.editor.id);
+    if (!found) {
+      return {};
+    }
+    if (state.editor.entityType === "task") {
+      return {
+        ...found.entity,
+        parentType: "group",
+        parentId: found.parent.id,
+      };
+    }
+    return found.entity;
+  }
+
+  function openEditor(config) {
+    state.editor = config;
+    renderEditor();
+  }
+
+  function closeEditor() {
+    state.editor = null;
+    renderEditor();
+  }
+
+  function handleEditorSubmit(event) {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const formData = new FormData(form);
+    const entityType = String(formData.get("entityType"));
+    const resetOverrideEnabled = entityType === "game" ? true : formData.get("resetEnabled") === "on";
+    const existing = formData.get("id") ? findEntityById(entityType, String(formData.get("id"))) : null;
+
+    const payload = {
+      id: String(formData.get("id") || crypto.randomUUID()),
+      name: String(formData.get("name") || "").trim(),
+      notes: String(formData.get("notes") || "").trim(),
+      priority: Number(formData.get("priority") || 3),
+      expiresAt: formData.get("expiresAt") ? new Date(String(formData.get("expiresAt"))).toISOString() : null,
+      resetOverrideEnabled,
+      resetSettings: {
+        dailyTime: String(formData.get("dailyTime") || "") || null,
+        weeklyDay: Number(formData.get("weeklyDay") || 1),
+        weeklyTime: String(formData.get("weeklyTime") || "") || null,
+      },
+    };
+
+    if (!payload.name) {
+      return;
+    }
+
+    if (entityType === "task") {
+      payload.type = String(formData.get("taskType") || "daily");
+      payload.completedAt = existing && existing.entity.completedAt ? existing.entity.completedAt : null;
+    }
+
+    if (state.editor.mode === "create") {
+      createEntity(entityType, payload, {
+        parentType: entityType === "task" ? "group" : String(formData.get("parentType") || ""),
+        parentId: entityType === "task" ? String(formData.get("targetGroupId") || "") : String(formData.get("parentId") || ""),
+      });
+    } else {
+      updateEntity(entityType, payload);
+      if (entityType === "task") {
+        moveTaskToGroup(payload.id, String(formData.get("targetGroupId") || ""));
+      }
+    }
+
+    saveState();
+    closeEditor();
+    render();
+  }
+
+  function handleDeleteEntity() {
+    if (!state.editor || state.editor.mode !== "edit") {
+      return;
+    }
+
+    deleteEntity(state.editor.entityType, state.editor.id);
+    saveState();
+    closeEditor();
+    render();
+  }
+
+  function createEntity(entityType, payload, parentRef) {
+    if (entityType === "game") {
+      state.data.games.push({
+        id: payload.id,
+        name: payload.name,
+        notes: payload.notes,
+        priority: payload.priority,
+        expiresAt: payload.expiresAt,
+        resetSettings: payload.resetSettings,
+        groups: [],
+      });
+      return;
+    }
+
+    if (entityType === "group") {
+      const game = state.data.games.find((item) => item.id === parentRef.parentId);
+      if (!game) {
+        return;
+      }
+      game.groups.push({
+        id: payload.id,
+        name: payload.name,
+        notes: payload.notes,
+        priority: payload.priority,
+        expiresAt: payload.expiresAt,
+        resetOverrideEnabled: payload.resetOverrideEnabled,
+        resetSettings: payload.resetSettings,
+        tasks: [],
+      });
+      return;
+    }
+
+    const group = findTaskParent(parentRef.parentId);
+    if (!group) {
+      return;
+    }
+    group.tasks.push({
+      id: payload.id,
+      name: payload.name,
+      notes: payload.notes,
+      priority: payload.priority,
+      type: payload.type,
+      completedAt: payload.completedAt,
+      expiresAt: payload.expiresAt,
+      resetOverrideEnabled: payload.resetOverrideEnabled,
+      resetSettings: payload.resetSettings,
+    });
+  }
+
+  function updateEntity(entityType, payload) {
+    const found = findEntityById(entityType, payload.id);
+    if (!found) {
+      return;
+    }
+    Object.assign(found.entity, payload);
+  }
+
+  function moveTaskToGroup(taskId, targetGroupId) {
+    const found = findEntityById("task", taskId);
+    if (!found || !targetGroupId || found.parent.id === targetGroupId) {
+      return;
+    }
+
+    const targetGroup = findTaskParent(targetGroupId);
+    if (!targetGroup) {
+      return;
+    }
+
+    found.parent.tasks = found.parent.tasks.filter((task) => task.id !== taskId);
+    targetGroup.tasks.push(found.entity);
+  }
+
+  function deleteEntity(entityType, id) {
+    if (entityType === "game") {
+      state.data.games = state.data.games.filter((game) => game.id !== id);
+      if (state.view.gameId === id) {
+        state.view.mode = "global";
+        state.view.gameId = null;
+      }
+      return;
+    }
+
+    if (entityType === "group") {
+      state.data.games.forEach((game) => {
+        game.groups = game.groups.filter((group) => group.id !== id);
+      });
+      return;
+    }
+
+    state.data.games.forEach((game) => {
+      game.groups.forEach((group) => {
+        group.tasks = group.tasks.filter((task) => task.id !== id);
+      });
+    });
+  }
+
+  function completeTask(taskId) {
+    const found = findEntityById("task", taskId);
+    if (!found) {
+      return;
+    }
+
+    if (found.entity.completedAt && (found.entity.type === "one-time" || found.entity.type === "event")) {
+      return;
+    }
+
+    found.entity.completedAt = new Date().toISOString();
+    saveState();
+    render();
+  }
+
+  function findTaskParent(groupId) {
+    for (const game of state.data.games) {
+      const group = game.groups.find((item) => item.id === groupId);
+      if (group) {
+        return group;
+      }
+    }
+    return null;
+  }
+
+  function findEntityById(entityType, id) {
+    if (entityType === "game") {
+      const game = state.data.games.find((item) => item.id === id);
+      return game ? { entity: game } : null;
+    }
+
+    for (const game of state.data.games) {
+      for (const group of game.groups) {
+        if (entityType === "group" && group.id === id) {
+          return { entity: group, parent: game };
+        }
+        for (const task of group.tasks) {
+          if (entityType === "task" && task.id === id) {
+            return { entity: task, parent: group, grandparent: game };
+          }
+        }
+      }
+    }
+
+    return null;
+  }
+
+  function getAvailableGroupsForEditor() {
+    const groups = [];
+    state.data.games.forEach((game) => {
+      game.groups.forEach((group) => {
+        groups.push({
+          id: group.id,
+          name: group.name,
+          gameId: game.id,
+          gameName: game.name,
+        });
+      });
+    });
+    return groups;
+  }
+
+  function exportJson() {
+    const blob = new Blob([JSON.stringify(state.data, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = CONFIG.exportConfig.trackerFilename;
+    anchor.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function exportGameJson(gameId) {
+    const game = state.data.games.find((item) => item.id === gameId);
+    if (!game) {
+      return;
+    }
+
+    const fileName = `${slugify(game.name || "game")}.json`;
+    downloadJson(game, fileName);
+  }
+
+  function downloadJson(data, fileName) {
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = fileName;
+    anchor.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function importJson(event) {
+    const [file] = event.target.files || [];
+    if (!file) {
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const parsed = JSON.parse(String(reader.result || ""));
+        const importedGames = extractImportedGames(parsed);
+        if (!importedGames.length) {
+          throw new Error("Invalid tracker data");
+        }
+        const importMode = elements.importMode.value || "merge";
+        let importedCount = 0;
+
+        if (importMode === "replace") {
+          const shouldReplace = window.confirm(CONFIG.importConfig.replaceConfirmMessage);
+          if (!shouldReplace) {
+            return;
+          }
+          const importedIds = new Set();
+          state.data = {
+            games: importedGames.map((game) => prepareImportedGame(game, importedIds)),
+          };
+          importedCount = state.data.games.length;
+        } else {
+          importedCount = mergeImportedGames(importedGames);
+        }
+
+        saveState();
+        render();
+        window.alert(`${importMode === "replace" ? CONFIG.importConfig.replaceSuccessPrefix : CONFIG.importConfig.mergeSuccessPrefix} ${importedCount} game${importedCount === 1 ? "" : "s"}.`);
+      } catch (error) {
+        window.alert(CONFIG.importConfig.invalidFileMessage);
+      } finally {
+        elements.importInput.value = "";
+      }
+    };
+    reader.readAsText(file);
+  }
+
+  function extractImportedGames(parsed) {
+    if (!parsed || typeof parsed !== "object") {
+      return [];
+    }
+    if (Array.isArray(parsed.games)) {
+      return parsed.games;
+    }
+    if (typeof parsed.name === "string" && parsed.resetSettings && !Array.isArray(parsed)) {
+      return [parsed];
+    }
+    return [];
+  }
+
+  function mergeImportedGames(importedGames) {
+    const existingIds = collectExistingIds(state.data);
+    const preparedGames = importedGames.map((game) => prepareImportedGame(game, existingIds));
+    state.data.games.push(...preparedGames);
+    return preparedGames.length;
+  }
+
+  function prepareImportedGame(game, existingIds) {
+    const clone = JSON.parse(JSON.stringify(game));
+    clone.groups = Array.isArray(clone.groups) ? clone.groups : [];
+    clone.id = ensureUniqueId(clone.id || "game-import", existingIds);
+    existingIds.add(clone.id);
+
+    clone.groups = clone.groups.map((group) => {
+      const preparedGroup = {
+        ...group,
+        tasks: Array.isArray(group.tasks) ? group.tasks : [],
+      };
+      preparedGroup.id = ensureUniqueId(preparedGroup.id || `${clone.id}-group`, existingIds);
+      existingIds.add(preparedGroup.id);
+      preparedGroup.tasks = preparedGroup.tasks.map((task) => {
+        const preparedTask = { ...task };
+        preparedTask.id = ensureUniqueId(preparedTask.id || `${preparedGroup.id}-task`, existingIds);
+        existingIds.add(preparedTask.id);
+        return preparedTask;
+      });
+      return preparedGroup;
+    });
+
+    return clone;
+  }
+
+  function collectExistingIds(data) {
+    const ids = new Set();
+    data.games.forEach((game) => {
+      ids.add(game.id);
+      (game.groups || []).forEach((group) => {
+        ids.add(group.id);
+        (group.tasks || []).forEach((task) => {
+          ids.add(task.id);
+        });
+      });
+    });
+    return ids;
+  }
+
+  function ensureUniqueId(baseId, usedIds) {
+    let candidate = String(baseId);
+    if (!usedIds.has(candidate)) {
+      return candidate;
+    }
+
+    let index = 2;
+    while (usedIds.has(`${candidate}-${index}`)) {
+      index += 1;
+    }
+    return `${candidate}-${index}`;
+  }
+
+  function slugify(value) {
+    return String(value)
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "") || "game";
+  }
+
+  function renderGamesList(games) {
+    elements.gamesList.innerHTML = games.map((game) => `
+      <article class="game-card">
+        <div class="entity-row">
+          <div>
+            <h3>${escapeHtml(game.name)}</h3>
+            <p class="subtle">${game.groups.filter((group) => !group.isVirtual).length} groups · ${game.tasks.length} tasks</p>
+          </div>
+          <div class="badge-row">
+            <button class="entity-link ${state.view.mode === "focused" && state.view.gameId === game.id ? "active" : ""}" type="button" data-focus-game="${escapeHtml(game.id)}">Focus</button>
+            <button class="entity-link" type="button" data-export-game="${escapeHtml(game.id)}">Export</button>
+            <button class="entity-link" type="button" data-edit-game="${escapeHtml(game.id)}">Edit</button>
+          </div>
+        </div>
+        <div class="subtle">Daily ${escapeHtml(game.effectiveResetSettings.dailyTime)} · Weekly ${dayName(game.effectiveResetSettings.weeklyDay)} ${escapeHtml(game.effectiveResetSettings.weeklyTime)}</div>
+        <div class="badge-row game-group-links">
+          ${game.groups.map((group) => `<button class="entity-link ${state.view.groupKey === group.groupKey ? "active" : ""}" type="button" data-focus-group-card="${escapeHtml(group.groupKey)}" data-game-id="${escapeHtml(game.id)}">${escapeHtml(group.name)}</button>`).join("")}
+        </div>
+      </article>
+    `).join("");
+
+    elements.gamesList.querySelectorAll("[data-focus-game]").forEach((button) => {
+      button.addEventListener("click", () => setView("focused", button.dataset.focusGame));
+    });
+    elements.gamesList.querySelectorAll("[data-edit-game]").forEach((button) => {
+      button.addEventListener("click", () => openEditor({ mode: "edit", entityType: "game", id: button.dataset.editGame }));
+    });
+    elements.gamesList.querySelectorAll("[data-export-game]").forEach((button) => {
+      button.addEventListener("click", () => exportGameJson(button.dataset.exportGame));
+    });
+    elements.gamesList.querySelectorAll("[data-focus-group-card]").forEach((button) => {
+      button.addEventListener("click", () => setView("focused", button.dataset.gameId, button.dataset.focusGroupCard));
+    });
+  }
+
+  function renderEditor() {
+    if (!state.editor) {
+      elements.editorHost.innerHTML = '<p class="editor-empty muted">Select a game, group, or task to edit it here, or create a new one.</p>';
+      return;
+    }
+
+    const template = elements.editorTemplate.content.cloneNode(true);
+    const form = template.getElementById("entityForm");
+    const entity = getEditorEntity();
+    const isGame = state.editor.entityType === "game";
+    const isTask = state.editor.entityType === "task";
+    const parentSection = template.querySelector('[data-role="parent-fields"]');
+    const targetGameSelect = form.elements.targetGameId;
+    const targetGroupSelect = form.elements.targetGroupId;
+    const availableGames = getAvailableGamesForEditor();
+    const resetFieldsSection = template.querySelector('[data-role="reset-fields"]');
+
+    form.elements.id.value = entity.id || "";
+    form.elements.entityType.value = state.editor.entityType;
+    form.elements.parentType.value = entity.parentType || "";
+    form.elements.parentId.value = entity.parentId || "";
+    form.elements.name.value = entity.name || "";
+    form.elements.notes.value = entity.notes || "";
+    form.elements.priority.value = String(entity.priority || 3);
+    form.elements.taskType.value = entity.type || "daily";
+    form.elements.resetEnabled.checked = Boolean(entity.resetOverrideEnabled || isGame);
+    form.elements.dailyTime.value = entity.resetSettings ? entity.resetSettings.dailyTime || "" : "";
+    form.elements.weeklyDay.value = String(entity.resetSettings && Number.isInteger(Number(entity.resetSettings.weeklyDay)) ? Number(entity.resetSettings.weeklyDay) : 1);
+    form.elements.weeklyTime.value = entity.resetSettings ? entity.resetSettings.weeklyTime || "" : "";
+    form.elements.expiresAt.value = entity.expiresAt ? toDateTimeLocalValue(entity.expiresAt) : "";
+
+    targetGameSelect.innerHTML = availableGames.length
+      ? availableGames.map((game) => `<option value="${escapeHtml(game.id)}">${escapeHtml(game.name)}</option>`).join("")
+      : '<option value="">No games yet</option>';
+    targetGameSelect.value = entity.targetGameId || state.editor.parentId || (availableGames[0] ? availableGames[0].id : "");
+
+    syncGroupOptions(form, entity.targetGroupId || entity.parentId || "", entity.groupKey || state.editor.groupKey || null);
+
+    parentSection.hidden = !isTask;
+    template.querySelector('[data-role="task-fields"]').hidden = !isTask;
+    if (isGame) {
+      form.elements.resetEnabled.closest("label").hidden = true;
+    }
+    if (!isTask) {
+      form.elements.taskType.closest("label").hidden = true;
+    }
+    if (state.editor.mode === "create") {
+      template.querySelector('[data-action="delete"]').hidden = true;
+    }
+    if (isTask && !availableGames.length) {
+      form.querySelector('button[type="submit"]').disabled = true;
+    }
+
+    targetGameSelect.addEventListener("change", () => syncGroupOptions(form, "", null));
+    if (!isGame) {
+      form.elements.resetEnabled.addEventListener("change", () => syncResetFieldState(form, resetFieldsSection, isGame));
+    }
+    syncResetFieldState(form, resetFieldsSection, isGame);
+
+    form.addEventListener("submit", handleEditorSubmit);
+    template.querySelector('[data-action="cancel"]').addEventListener("click", closeEditor);
+    template.querySelector('[data-action="delete"]').addEventListener("click", handleDeleteEntity);
+
+    elements.editorHost.innerHTML = "";
+    elements.editorHost.appendChild(template);
+  }
+
+  function syncGroupOptions(form, selectedGroupId, preferredGroupKey) {
+    const gameId = form.elements.targetGameId.value;
+    const groups = getAvailableGroupsForGame(gameId);
+    const options = ['<option value="">No group (attach directly to game)</option>']
+      .concat(groups.map((group) => `<option value="${escapeHtml(group.id)}">${escapeHtml(group.name)}</option>`))
+      .join("");
+    form.elements.targetGroupId.innerHTML = options;
+
+    const preferred = preferredGroupKey
+      ? groups.find((group) => group.groupKey === preferredGroupKey)
+      : null;
+    form.elements.targetGroupId.value = selectedGroupId || (preferred ? preferred.id : "");
+  }
+
+  function getEditorEntity() {
+    if (!state.editor) {
+      return {};
+    }
+
+    if (state.editor.mode === "create") {
+      return {
+        parentType: state.editor.parentType,
+        parentId: state.editor.parentId,
+        targetGameId: state.editor.parentId,
+        targetGroupId: resolveGroupIdFromKey(state.editor.groupKey),
+        groupKey: state.editor.groupKey || null,
+        priority: 3,
+        type: "daily",
+        resetOverrideEnabled: state.editor.entityType === "game",
+        resetSettings: createDefaultResetSettings(),
+      };
+    }
+
+    const found = findEntityById(state.editor.entityType, state.editor.id);
+    if (!found) {
+      return {};
+    }
+    if (state.editor.entityType === "task") {
+      return {
+        ...found.entity,
+        parentType: found.parentType,
+        parentId: found.parent ? found.parent.id : found.game.id,
+        targetGameId: found.game.id,
+        targetGroupId: found.parentType === "group" ? found.parent.id : "",
+        groupKey: found.parentType === "group" ? found.parent.id : `${found.game.id}::ungrouped`,
+      };
+    }
+    return found.entity;
+  }
+
+  function handleEditorSubmit(event) {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const formData = new FormData(form);
+    const entityType = String(formData.get("entityType"));
+    const resetOverrideEnabled = entityType === "game" ? true : formData.get("resetEnabled") === "on";
+    const existing = formData.get("id") ? findEntityById(entityType, String(formData.get("id"))) : null;
+
+    const payload = {
+      id: String(formData.get("id") || crypto.randomUUID()),
+      name: String(formData.get("name") || "").trim(),
+      notes: String(formData.get("notes") || "").trim(),
+      priority: Number(formData.get("priority") || 3),
+      expiresAt: formData.get("expiresAt") ? new Date(String(formData.get("expiresAt"))).toISOString() : null,
+      resetOverrideEnabled,
+      resetSettings: {
+        dailyTime: String(formData.get("dailyTime") || "") || null,
+        weeklyDay: Number(formData.get("weeklyDay") || 1),
+        weeklyTime: String(formData.get("weeklyTime") || "") || null,
+      },
+    };
+
+    if (!payload.name) {
+      return;
+    }
+
+    if (entityType === "task") {
+      payload.type = String(formData.get("taskType") || "daily");
+      payload.completedAt = existing && existing.entity.completedAt ? existing.entity.completedAt : null;
+      payload.targetGameId = String(formData.get("targetGameId") || "");
+      payload.targetGroupId = String(formData.get("targetGroupId") || "");
+    }
+
+    if (state.editor.mode === "create") {
+      createEntity(entityType, payload, {
+        parentType: entityType === "task" ? (payload.targetGroupId ? "group" : "game") : String(formData.get("parentType") || ""),
+        parentId: entityType === "task" ? (payload.targetGroupId || payload.targetGameId) : String(formData.get("parentId") || ""),
+      });
+    } else {
+      updateEntity(entityType, payload);
+      if (entityType === "task") {
+        moveTaskToContainer(payload.id, payload.targetGameId, payload.targetGroupId);
+      }
+    }
+
+    saveState();
+    closeEditor();
+    render();
+  }
+
+  function createEntity(entityType, payload, parentRef) {
+    if (entityType === "game") {
+      state.data.games.push({
+        id: payload.id,
+        name: payload.name,
+        notes: payload.notes,
+        priority: payload.priority,
+        expiresAt: payload.expiresAt,
+        resetSettings: payload.resetSettings,
+        groups: [],
+        tasks: [],
+      });
+      return;
+    }
+
+    if (entityType === "group") {
+      const game = state.data.games.find((item) => item.id === parentRef.parentId);
+      if (!game) {
+        return;
+      }
+      game.groups = Array.isArray(game.groups) ? game.groups : [];
+      game.groups.push({
+        id: payload.id,
+        name: payload.name,
+        notes: payload.notes,
+        priority: payload.priority,
+        expiresAt: payload.expiresAt,
+        resetOverrideEnabled: payload.resetOverrideEnabled,
+        resetSettings: payload.resetSettings,
+        tasks: [],
+      });
+      return;
+    }
+
+    const taskRecord = {
+      id: payload.id,
+      name: payload.name,
+      notes: payload.notes,
+      priority: payload.priority,
+      type: payload.type,
+      completedAt: payload.completedAt,
+      expiresAt: payload.expiresAt,
+      resetOverrideEnabled: payload.resetOverrideEnabled,
+      resetSettings: payload.resetSettings,
+    };
+
+    if (parentRef.parentType === "group") {
+      const group = findTaskParent(parentRef.parentId);
+      if (!group) {
+        return;
+      }
+      group.tasks.push(taskRecord);
+      return;
+    }
+
+    const game = state.data.games.find((item) => item.id === parentRef.parentId);
+    if (!game) {
+      return;
+    }
+    game.tasks = Array.isArray(game.tasks) ? game.tasks : [];
+    game.tasks.push(taskRecord);
+  }
+
+  function updateEntity(entityType, payload) {
+    const found = findEntityById(entityType, payload.id);
+    if (!found) {
+      return;
+    }
+
+    const nextValue = { ...payload };
+    delete nextValue.targetGameId;
+    delete nextValue.targetGroupId;
+    Object.assign(found.entity, nextValue);
+  }
+
+  function moveTaskToContainer(taskId, targetGameId, targetGroupId) {
+    const found = findEntityById("task", taskId);
+    if (!found) {
+      return;
+    }
+
+    const destination = getTaskContainer(targetGameId, targetGroupId);
+    if (!destination) {
+      return;
+    }
+
+    if (found.container === destination.container) {
+      return;
+    }
+
+    found.container.tasks = found.container.tasks.filter((task) => task.id !== taskId);
+    destination.container.tasks.push(found.entity);
+  }
+
+  function deleteEntity(entityType, id) {
+    if (entityType === "game") {
+      state.data.games = state.data.games.filter((game) => game.id !== id);
+      if (state.view.gameId === id) {
+        state.view.mode = "global";
+        state.view.gameId = null;
+        state.view.groupKey = null;
+      }
+      return;
+    }
+
+    if (entityType === "group") {
+      state.data.games.forEach((game) => {
+        game.groups = (game.groups || []).filter((group) => group.id !== id);
+      });
+      return;
+    }
+
+    state.data.games.forEach((game) => {
+      game.tasks = (game.tasks || []).filter((task) => task.id !== id);
+      (game.groups || []).forEach((group) => {
+        group.tasks = (group.tasks || []).filter((task) => task.id !== id);
+      });
+    });
+  }
+
+  function completeTask(taskId) {
+    const found = findEntityById("task", taskId);
+    if (!found) {
+      return;
+    }
+    if (found.entity.completedAt && (found.entity.type === "one-time" || found.entity.type === "event")) {
+      return;
+    }
+    found.entity.completedAt = new Date().toISOString();
+    saveState();
+    render();
+  }
+
+  function completeGroupAvailableTasks(groupKey) {
+    const model = deriveModel();
+    const section = model.groupSections.find((group) => group.groupKey === groupKey);
+    if (!section) {
+      return;
+    }
+    section.tasks
+      .filter((task) => task.canComplete && task.status === "available")
+      .forEach((task) => {
+        const found = findEntityById("task", task.id);
+        if (found) {
+          found.entity.completedAt = new Date().toISOString();
+        }
+      });
+    saveState();
+    render();
+  }
+
+  function collapseAllGroups(groupSections) {
+    groupSections.forEach((group) => {
+      state.collapsedGroups[group.groupKey] = true;
+    });
+    render();
+  }
+
+  function expandAllGroups() {
+    state.collapsedGroups = {};
+    render();
+  }
+
+  function exportGroupJson(groupKey) {
+    const model = deriveModel();
+    const section = model.games
+      .flatMap((game) => game.groups)
+      .find((group) => group.groupKey === groupKey);
+    if (!section) {
+      return;
+    }
+
+    const payload = {
+      game: {
+        id: section.gameId,
+        name: section.gameName,
+      },
+      group: {
+        id: section.id,
+        name: section.name,
+        notes: section.notes,
+        priority: section.priority,
+        expiresAt: section.expiresAt,
+        resetOverrideEnabled: section.resetOverrideEnabled,
+        resetSettings: section.resetSettings,
+        tasks: section.tasks.map((task) => {
+          const found = findEntityById("task", task.id);
+          return found ? found.entity : task;
+        }),
+      },
+    };
+
+    downloadJson(payload, `${slugify(section.gameName)}-${slugify(section.name)}-group.json`);
+  }
+
+  function findTaskParent(groupId) {
+    for (const game of state.data.games) {
+      const group = (game.groups || []).find((item) => item.id === groupId);
+      if (group) {
+        return group;
+      }
+    }
+    return null;
+  }
+
+  function findEntityById(entityType, id) {
+    if (entityType === "game") {
+      const game = state.data.games.find((item) => item.id === id);
+      return game ? { entity: game } : null;
+    }
+
+    for (const game of state.data.games) {
+      if (entityType === "task") {
+        for (const task of game.tasks || []) {
+          if (task.id === id) {
+            return {
+              entity: task,
+              container: game,
+              parent: null,
+              parentType: "game",
+              game,
+            };
+          }
+        }
+      }
+
+      for (const group of game.groups || []) {
+        if (entityType === "group" && group.id === id) {
+          return { entity: group, parent: game };
+        }
+        if (entityType === "task") {
+          for (const task of group.tasks || []) {
+            if (task.id === id) {
+              return {
+                entity: task,
+                container: group,
+                parent: group,
+                parentType: "group",
+                game,
+              };
+            }
+          }
+        }
+      }
+    }
+
+    return null;
+  }
+
+  function getAvailableGamesForEditor() {
+    return state.data.games.map((game) => ({ id: game.id, name: game.name }));
+  }
+
+  function getAvailableGroupsForEditor() {
+    return state.data.games.flatMap((game) => getAvailableGroupsForGame(game.id));
+  }
+
+  function getAvailableGroupsForGame(gameId) {
+    const game = state.data.games.find((item) => item.id === gameId);
+    if (!game) {
+      return [];
+    }
+    return (game.groups || []).map((group) => ({
+      id: group.id,
+      name: group.name,
+      groupKey: group.id,
+      gameId: game.id,
+      gameName: game.name,
+    }));
+  }
+
+  function resolveGroupIdFromKey(groupKey) {
+    if (!groupKey || groupKey.endsWith("::ungrouped")) {
+      return "";
+    }
+    const group = getAvailableGroupsForEditor().find((item) => item.groupKey === groupKey);
+    return group ? group.id : "";
+  }
+
+  function getTaskContainer(gameId, groupId) {
+    const game = state.data.games.find((item) => item.id === gameId);
+    if (!game) {
+      return null;
+    }
+
+    if (groupId) {
+      const group = (game.groups || []).find((item) => item.id === groupId);
+      return group ? { container: group, game } : null;
+    }
+
+    game.tasks = Array.isArray(game.tasks) ? game.tasks : [];
+    return {
+      container: game,
+      game,
+    };
+  }
+
+  function prepareImportedGame(game, existingIds) {
+    const clone = JSON.parse(JSON.stringify(game));
+    clone.groups = Array.isArray(clone.groups) ? clone.groups : [];
+    clone.tasks = Array.isArray(clone.tasks) ? clone.tasks : [];
+    clone.id = ensureUniqueId(clone.id || "game-import", existingIds);
+    existingIds.add(clone.id);
+
+    clone.tasks = clone.tasks.map((task) => {
+      const preparedTask = { ...task };
+      preparedTask.id = ensureUniqueId(preparedTask.id || `${clone.id}-task`, existingIds);
+      existingIds.add(preparedTask.id);
+      return preparedTask;
+    });
+
+    clone.groups = clone.groups.map((group) => {
+      const preparedGroup = {
+        ...group,
+        tasks: Array.isArray(group.tasks) ? group.tasks : [],
+      };
+      preparedGroup.id = ensureUniqueId(preparedGroup.id || `${clone.id}-group`, existingIds);
+      existingIds.add(preparedGroup.id);
+      preparedGroup.tasks = preparedGroup.tasks.map((task) => {
+        const preparedTask = { ...task };
+        preparedTask.id = ensureUniqueId(preparedTask.id || `${preparedGroup.id}-task`, existingIds);
+        existingIds.add(preparedTask.id);
+        return preparedTask;
+      });
+      return preparedGroup;
+    });
+
+    return clone;
+  }
+
+  function collectExistingIds(data) {
+    const ids = new Set();
+    data.games.forEach((game) => {
+      ids.add(game.id);
+      (game.tasks || []).forEach((task) => {
+        ids.add(task.id);
+      });
+      (game.groups || []).forEach((group) => {
+        ids.add(group.id);
+        (group.tasks || []).forEach((task) => {
+          ids.add(task.id);
+        });
+      });
+    });
+    return ids;
+  }
+
+  function restoreDemoData() {
+    state.data = CONFIG.buildDemoData();
+    saveState();
+    render();
+  }
+
+  function dayName(dayNumber) {
+    return ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"][dayNumber] || "Monday";
+  }
+
+  function formatDateTime(value) {
+    const date = value instanceof Date ? value : new Date(value);
+    return new Intl.DateTimeFormat(undefined, {
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    }).format(date);
+  }
+
+  function formatCountdown(diffMs) {
+    if (diffMs <= 0) {
+      return "now";
+    }
+
+    const totalMinutes = Math.floor(diffMs / (60 * 1000));
+    const days = Math.floor(totalMinutes / (60 * 24));
+    const hours = Math.floor((totalMinutes % (60 * 24)) / 60);
+    const minutes = totalMinutes % 60;
+
+    if (days > 0) {
+      return `${days}d ${hours}h`;
+    }
+    if (hours > 0) {
+      return `${hours}h ${minutes}m`;
+    }
+    return `${minutes}m`;
+  }
+
+  function toDateTimeLocalValue(isoString) {
+    const date = new Date(isoString);
+    const offset = date.getTimezoneOffset();
+    return new Date(date.getTime() - offset * 60 * 1000).toISOString().slice(0, 16);
+  }
+
+  function capitalize(value) {
+    return value.charAt(0).toUpperCase() + value.slice(1);
+  }
+
+  function escapeHtml(value) {
+    return String(value)
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#39;");
+  }
+
+  function createDemoData() {
+    return CONFIG.buildDemoData();
+  }
+})();
