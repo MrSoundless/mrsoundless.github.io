@@ -42,6 +42,7 @@
   const state = {
     data: loadState(),
     filters: createDefaultFilters(),
+    theme: uiPrefs.theme || "light",
     view: {
       mode: "global",
       gameId: null,
@@ -68,6 +69,7 @@
     hideExpired: document.getElementById("hideExpired"),
     sortBy: document.getElementById("sortBy"),
     resetFiltersButton: document.getElementById("resetFiltersButton"),
+    themeToggleButton: document.getElementById("themeToggleButton"),
     addGameButton: document.getElementById("addGameButton"),
     exportButton: document.getElementById("exportButton"),
     googleDriveStatus: document.getElementById("googleDriveStatus"),
@@ -79,6 +81,7 @@
     importMode: document.getElementById("importMode"),
     resetDemoButton: document.getElementById("resetDemoButton"),
     resetProgressButton: document.getElementById("resetProgressButton"),
+    hero: document.querySelector(".hero"),
     heroTitle: document.getElementById("heroTitle"),
     heroSubtitle: document.getElementById("heroSubtitle"),
     heroStats: document.getElementById("heroStats"),
@@ -106,6 +109,7 @@
 
   bindEvents();
   initializeIntegrations();
+  applyTheme();
   render();
   setInterval(render, CONFIG.refreshIntervalMs);
 
@@ -128,9 +132,23 @@
 
   function saveUiPrefs() {
     localStorage.setItem(CONFIG.uiPrefsKey, JSON.stringify({
+      theme: state.theme,
       collapsedGroups: state.collapsedGroups,
       collapsedPanels: state.collapsedPanels,
     }));
+  }
+
+  function applyTheme() {
+    document.body.dataset.theme = state.theme;
+    if (elements.themeToggleButton) {
+      elements.themeToggleButton.textContent = state.theme === "dark" ? "Light mode" : "Dark mode";
+    }
+  }
+
+  function toggleTheme() {
+    state.theme = state.theme === "dark" ? "light" : "dark";
+    applyTheme();
+    saveUiPrefs();
   }
 
   function openConfirmation(options) {
@@ -178,6 +196,7 @@
     elements.filtersForm.addEventListener("input", syncFiltersFromForm);
     elements.filtersForm.addEventListener("change", syncFiltersFromForm);
     elements.resetFiltersButton.addEventListener("click", resetFilters);
+    elements.themeToggleButton.addEventListener("click", toggleTheme);
     elements.addGameButton.addEventListener("click", () => openEditor({ mode: "create", entityType: "game", parentType: null, parentId: null }));
     elements.exportButton.addEventListener("click", exportJson);
     elements.googleConnectButton.addEventListener("click", connectGoogleDrive);
@@ -878,6 +897,44 @@
     return a.name.localeCompare(b.name);
   }
 
+  function hashString(value) {
+    return Array.from(String(value || "")).reduce((hash, char) => ((hash * 31) + char.charCodeAt(0)) >>> 0, 7);
+  }
+
+  function getGameAccent(gameKey) {
+    const hue = hashString(gameKey) % 360;
+    return {
+      hue,
+      strong: `hsl(${hue} 62% 44%)`,
+      soft: `hsl(${hue} 72% 92%)`,
+      darkSoft: `hsl(${hue} 34% 18%)`,
+    };
+  }
+
+  function gameAccentStyle(gameKey) {
+    const accent = getGameAccent(gameKey);
+    const soft = state.theme === "dark" ? accent.darkSoft : accent.soft;
+    return `--game-accent:${accent.strong};--game-accent-soft:${soft};`;
+  }
+
+  function applyHeroAccent(focusedGame) {
+    if (!elements.hero) {
+      return;
+    }
+    if (!focusedGame) {
+      elements.hero.style.removeProperty("--game-accent");
+      elements.hero.style.removeProperty("--game-accent-soft");
+      elements.hero.classList.remove("accented-hero");
+      return;
+    }
+
+    const accent = getGameAccent(focusedGame.id || focusedGame.name);
+    const soft = state.theme === "dark" ? accent.darkSoft : accent.soft;
+    elements.hero.style.setProperty("--game-accent", accent.strong);
+    elements.hero.style.setProperty("--game-accent-soft", soft);
+    elements.hero.classList.add("accented-hero");
+  }
+
   function renderHero(model) {
     const focusedGame = state.view.mode === "focused"
       ? model.games.find((game) => game.id === state.view.gameId)
@@ -895,6 +952,7 @@
       ? "Focused game view with the same reset-aware tracking rules."
       : "All games, groups, and tasks in one place.";
     elements.listTitle.textContent = focusedGroup ? `${focusedGroup.name} tasks` : focusedGame ? `${focusedGame.name} groups` : "Groups";
+    applyHeroAccent(focusedGame);
     elements.heroStats.innerHTML = [
       statMarkup("Visible", model.stats.total),
       statMarkup("Available", model.stats.available),
@@ -1187,7 +1245,7 @@
       : "";
 
     return `
-      <section class="group-section ${group.isExpired ? "expired" : ""} ${eventCount ? "has-events" : ""} ${group.isDisabled ? "disabled-item" : ""}">
+      <section class="group-section ${group.isExpired ? "expired" : ""} ${eventCount ? "has-events" : ""} ${group.isDisabled ? "disabled-item" : ""}" style="${gameAccentStyle(group.gameId || group.gameName)}">
         <div class="group-header">
           <div class="group-title">
             <div class="group-title-row">
@@ -1235,7 +1293,7 @@
     }
 
     return `
-      <article class="task-card ${escapeHtml(task.status)} ${task.type === "event" ? "event-task" : ""} ${task.isDisabled ? "disabled-item" : ""}">
+      <article class="task-card ${escapeHtml(task.status)} ${task.type === "event" ? "event-task" : ""} ${task.isDisabled ? "disabled-item" : ""}" style="${gameAccentStyle(task.gameId || task.gameName)}">
         <div class="task-row">
           <div class="task-main">
             <div class="task-head">
@@ -1809,7 +1867,7 @@
         : "No groups yet";
 
       return `
-        <article class="game-card">
+        <article class="game-card" style="${gameAccentStyle(game.id || game.name)}">
           <div class="entity-row">
             <div class="game-card-main">
               <h3>${escapeHtml(game.name)}</h3>
