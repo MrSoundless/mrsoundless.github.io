@@ -1,30 +1,69 @@
+function normalizeAnalyticsMeasurementId(measurementId) {
+	if (typeof measurementId !== 'string')
+		return '';
+	return measurementId.trim().toUpperCase();
+}
+function initializeAnalytics() {
+	if (!GA_MEASUREMENT_ID || !/^G-[A-Z0-9]+$/.test(GA_MEASUREMENT_ID))
+		return;
+	window.dataLayer = window.dataLayer || [];
+	window.gtag = window.gtag || function() {
+		window.dataLayer.push(arguments);
+	};
+	window.gtag('js', new Date());
+	window.gtag('config', GA_MEASUREMENT_ID, {
+		send_page_view: true
+	});
+	var script = document.createElement('script');
+	script.async = true;
+	script.src = 'https://www.googletagmanager.com/gtag/js?id=' + encodeURIComponent(GA_MEASUREMENT_ID);
+	document.head.appendChild(script);
+	analyticsReady = true;
+}
+function trackAnalyticsEvent(name, params) {
+	if (!analyticsReady || typeof window.gtag !== 'function')
+		return;
+	window.gtag('event', name, params || {});
+}
+
 var allItems = [];
 var saveData = [];
 var googleAccessToken = null;
 var googleTokenExpiresAt = 0;
 var googleSyncTimer = null;
 var googlePendingStatus = null;
+var APP_CONFIG = window.WARFRAME_CONFIG;
+if (!APP_CONFIG)
+	throw new Error('WARFRAME_CONFIG is missing. Load js/config.js before js/main.js.');
 
-var STORAGE_KEY = 'warframe-collections';
-var GOOGLE_CLIENT_ID = '150540724213-2m1iccsvmekkv7dj6onvbrb11j33tao1.apps.googleusercontent.com';
-var GOOGLE_AUTO_SYNC_KEY = 'warframe-google-auto-sync';
-var GOOGLE_CONNECTED_KEY = 'warframe-google-connected';
-var GOOGLE_LAST_SYNC_KEY = 'warframe-google-last-sync';
-var GOOGLE_TOKEN_KEY = 'warframe-google-access-token';
-var GOOGLE_TOKEN_EXPIRY_KEY = 'warframe-google-token-expiry';
-var GOOGLE_OAUTH_STATE_KEY = 'warframe-google-oauth-state';
-var GOOGLE_DATA_FILE = 'warframe-collections.json';
-var GOOGLE_SCOPE = 'https://www.googleapis.com/auth/drive.appdata';
+var ANALYTICS_CONFIG = APP_CONFIG.analytics || {};
+var STORAGE_CONFIG = APP_CONFIG.storage || {};
+var GOOGLE_CONFIG = APP_CONFIG.google || {};
+var GA_MEASUREMENT_ID = normalizeAnalyticsMeasurementId(ANALYTICS_CONFIG.measurementId);
+var analyticsReady = false;
+
+var STORAGE_KEY = STORAGE_CONFIG.saveDataKey;
+var GOOGLE_CLIENT_ID = GOOGLE_CONFIG.clientId;
+var GOOGLE_AUTO_SYNC_KEY = GOOGLE_CONFIG.autoSyncKey;
+var GOOGLE_CONNECTED_KEY = GOOGLE_CONFIG.connectedKey;
+var GOOGLE_LAST_SYNC_KEY = GOOGLE_CONFIG.lastSyncKey;
+var GOOGLE_TOKEN_KEY = GOOGLE_CONFIG.accessTokenKey;
+var GOOGLE_TOKEN_EXPIRY_KEY = GOOGLE_CONFIG.tokenExpiryKey;
+var GOOGLE_OAUTH_STATE_KEY = GOOGLE_CONFIG.oauthStateKey;
+var GOOGLE_DATA_FILE = GOOGLE_CONFIG.dataFile;
+var GOOGLE_SCOPE = GOOGLE_CONFIG.scope;
 
 loadSavedData();
 parseGoogleAuthRedirect();
 restorePersistedGoogleSession();
+initializeAnalytics();
 
 $(document).ready(function() {
 	$('#search').on('input', search);
 	$(document).on('change', 'input[type=checkbox]', handleCheckboxChanged);
 	$('#import-field').on('change', updateImportLabel);
 	$('#export-button').click(function() {
+		trackAnalyticsEvent('export_save_file');
 		downloadObjectAsJson(saveData, 'warframe-collections');
 	});
 	$('#import-button').click(function() {
@@ -488,6 +527,7 @@ function handleFileSelect() {
 }
 
 function receiveImportedText(text) {
+	trackAnalyticsEvent('import_save_file');
 	try {
 		saveData = JSON.parse(text);
 		if (!Array.isArray(saveData))
@@ -562,6 +602,7 @@ function initializeGoogleSyncUi() {
 }
 
 function connectGoogleAccount() {
+	trackAnalyticsEvent('google_connect_started');
 	if (!GOOGLE_CLIENT_ID || GOOGLE_CLIENT_ID.indexOf('YOUR_GOOGLE_WEB_CLIENT_ID') === 0) {
 		updateGoogleStatus('Google setup needed', 'Add your Google OAuth web client ID in js/main.js before using cloud sync.', 'warning');
 		return;
@@ -572,6 +613,7 @@ function connectGoogleAccount() {
 }
 
 function disconnectGoogleAccount() {
+	trackAnalyticsEvent('google_disconnected');
 	if (googleAccessToken)
 		revokeGoogleToken(googleAccessToken);
 
@@ -765,6 +807,7 @@ function scheduleGoogleAutoSync() {
 }
 
 function pushSaveDataToGoogle(showAlerts) {
+	trackAnalyticsEvent('google_upload_started', { manual: !!showAlerts });
 	var token;
 	try {
 		token = getValidGoogleAccessToken();
@@ -791,6 +834,7 @@ function pushSaveDataToGoogle(showAlerts) {
 }
 
 function pullSaveDataFromGoogle() {
+	trackAnalyticsEvent('google_download_started');
 	var token;
 	try {
 		token = getValidGoogleAccessToken();
@@ -942,6 +986,10 @@ function getGoogleErrorMessage(data) {
 	}
 	return 'Google Drive request failed.';
 }
+
+
+
+
 
 
 
