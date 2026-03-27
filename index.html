@@ -1,20 +1,182 @@
-<html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>mrsoundless.github.io</title>
+    <style>
+        :root {
+            color-scheme: light;
+            --bg: #f4efe7;
+            --panel: #fffaf3;
+            --text: #1f2933;
+            --muted: #5b6977;
+            --border: #d9cdbd;
+            --accent: #1f6f78;
+            --outdated: #9f3a38;
+            --wip: #9a6a00;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            padding: 32px 20px;
+            font-family: Georgia, "Times New Roman", serif;
+            background:
+                radial-gradient(circle at top, #fffdf8 0%, transparent 35%),
+                linear-gradient(180deg, #efe6d8 0%, var(--bg) 100%);
+            color: var(--text);
+        }
+
+        main {
+            max-width: 820px;
+            margin: 0 auto;
+            padding: 28px;
+            background: color-mix(in srgb, var(--panel) 92%, white 8%);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            box-shadow: 0 18px 50px rgba(31, 41, 51, 0.08);
+        }
+
+        h1 {
+            margin: 0 0 8px;
+            font-size: clamp(2rem, 4vw, 3rem);
+        }
+
+        p {
+            margin: 0 0 24px;
+            color: var(--muted);
+            line-height: 1.5;
+        }
+
+        ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: grid;
+            gap: 14px;
+        }
+
+        li {
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.7);
+        }
+
+        a {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            padding: 18px 20px;
+            color: inherit;
+            text-decoration: none;
+        }
+
+        a:hover,
+        a:focus-visible {
+            background: rgba(31, 111, 120, 0.08);
+            outline: none;
+        }
+
+        .app-name {
+            font-size: 1.15rem;
+            font-weight: 700;
+        }
+
+        .app-path {
+            display: block;
+            margin-top: 4px;
+            color: var(--muted);
+            font-size: 0.95rem;
+        }
+
+        .status {
+            flex-shrink: 0;
+            padding: 6px 10px;
+            border-radius: 999px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            border: 1px solid currentColor;
+        }
+
+        .status-outdated {
+            color: var(--outdated);
+        }
+
+        .status-wip {
+            color: var(--wip);
+        }
+
+        .status-active {
+            color: var(--accent);
+        }
+
+        @media (max-width: 640px) {
+            a {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+    </style>
+</head>
 <body>
-
-    <h1>Warframe Tools</h1>
-    <ul>
-        <li><a href="warframe/mastery-tracker/index.html">Mastery Tracker</a></h1></li>
-    </ul>
-    
-    <h1>OUTDATED - Destiny 2 Tools</h1>
-    <ul>
-        <li><a href="destiny2/mod-collection/index.html">Mod collection</a></li>
-    </ul>
-
-    <h1>OUTDATED - New World Tools</h1>
-    <ul>
-        <li><a href="new-world/xp-calculator/index.html">XP Calculator</a></li>
-    </ul>
-
+    <main>
+        <h1>Application Index</h1>
+        <p>Quick links to all sub applications hosted in this repository.</p>
+        <ul>
+            <li>
+                <a href="warframe/mastery-tracker/index.html">
+                    <span>
+                        <span class="app-name">Warframe Mastery Tracker</span>
+                        <span class="app-path">warframe/mastery-tracker</span>
+                    </span>
+                    <span class="status status-active">Active</span>
+                </a>
+            </li>
+            <li>
+                <a href="destiny2/mod-collection/index.html">
+                    <span>
+                        <span class="app-name">Destiny 2 Mod Collection</span>
+                        <span class="app-path">destiny2/mod-collection</span>
+                    </span>
+                    <span class="status status-outdated">Outdated</span>
+                </a>
+            </li>
+            <li>
+                <a href="new-world/xp-calculator/index.html">
+                    <span>
+                        <span class="app-name">New World XP Calculator</span>
+                        <span class="app-path">new-world/xp-calculator</span>
+                    </span>
+                    <span class="status status-outdated">Outdated</span>
+                </a>
+            </li>
+            <li>
+                <a href="endfield-tracker/index.html">
+                    <span>
+                        <span class="app-name">Arknights Endfield Tracker</span>
+                        <span class="app-path">endfield-tracker</span>
+                    </span>
+                    <span class="status status-wip">WIP</span>
+                </a>
+            </li>
+            <li>
+                <a href="game-reset-tracker/index.html">
+                    <span>
+                        <span class="app-name">Game Reset Tracker</span>
+                        <span class="app-path">game-reset-tracker</span>
+                    </span>
+                    <span class="status status-active">Active</span>
+                </a>
+            </li>
+        </ul>
+    </main>
 </body>
 </html>

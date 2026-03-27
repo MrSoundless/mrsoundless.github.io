@@ -1,6 +1,7 @@
 (function () {
   const CONFIG = window.GAME_RESET_TRACKER_CONFIG || {
     storageKey: "game-reset-tracker-state-v1",
+    uiPrefsKey: "game-reset-tracker-ui-prefs-v1",
     refreshIntervalMs: 60 * 1000,
     expiringSoonHours: 48,
     urgencyWindowsHours: {
@@ -35,6 +36,8 @@
     },
   };
 
+  const uiPrefs = loadUiPrefs();
+
   const state = {
     data: loadState(),
     filters: createDefaultFilters(),
@@ -44,11 +47,16 @@
       groupKey: null,
     },
     editor: null,
-    collapsedGroups: {},
+    collapsedGroups: uiPrefs.collapsedGroups || {},
+    collapsedPanels: {
+      filters: false,
+      data: false,
+      games: false,
+      ...((uiPrefs && uiPrefs.collapsedPanels) || {}),
+    },
   };
 
   const elements = {
-    viewToggle: document.getElementById("viewToggle"),
     filtersForm: document.getElementById("filtersForm"),
     filterGame: document.getElementById("filterGame"),
     filterType: document.getElementById("filterType"),
@@ -60,6 +68,11 @@
     resetFiltersButton: document.getElementById("resetFiltersButton"),
     addGameButton: document.getElementById("addGameButton"),
     exportButton: document.getElementById("exportButton"),
+    googleDriveStatus: document.getElementById("googleDriveStatus"),
+    googleConnectButton: document.getElementById("googleConnectButton"),
+    googleSaveButton: document.getElementById("googleSaveButton"),
+    googleLoadButton: document.getElementById("googleLoadButton"),
+    googleDisconnectButton: document.getElementById("googleDisconnectButton"),
     importInput: document.getElementById("importInput"),
     importMode: document.getElementById("importMode"),
     resetDemoButton: document.getElementById("resetDemoButton"),
@@ -72,10 +85,24 @@
     taskList: document.getElementById("taskList"),
     gamesList: document.getElementById("gamesList"),
     editorHost: document.getElementById("editorHost"),
+    editorPanel: document.getElementById("editorPanel"),
     editorTemplate: document.getElementById("editorTemplate"),
+    confirmModal: document.getElementById("confirmModal"),
+    confirmTitle: document.getElementById("confirmTitle"),
+    confirmMessage: document.getElementById("confirmMessage"),
+    confirmCancelButton: document.getElementById("confirmCancelButton"),
+    confirmAcceptButton: document.getElementById("confirmAcceptButton"),
+  };
+
+  let confirmationState = null;
+  const googleDriveState = {
+    accessToken: null,
+    tokenClient: null,
+    initialized: false,
   };
 
   bindEvents();
+  initializeIntegrations();
   render();
   setInterval(render, CONFIG.refreshIntervalMs);
 
@@ -87,14 +114,324 @@
     return { ...CONFIG.defaultResetSettings };
   }
 
+  function loadUiPrefs() {
+    try {
+      const raw = localStorage.getItem(CONFIG.uiPrefsKey);
+      return raw ? JSON.parse(raw) : {};
+    } catch (error) {
+      return {};
+    }
+  }
+
+  function saveUiPrefs() {
+    localStorage.setItem(CONFIG.uiPrefsKey, JSON.stringify({
+      collapsedGroups: state.collapsedGroups,
+      collapsedPanels: state.collapsedPanels,
+    }));
+  }
+
+  function openConfirmation(options) {
+    confirmationState = {
+      title: options.title || "Are you sure?",
+      message: options.message || "",
+      confirmLabel: options.confirmLabel || "Confirm",
+      danger: Boolean(options.danger),
+      onConfirm: options.onConfirm,
+    };
+    renderConfirmation();
+  }
+
+  function renderConfirmation() {
+    if (!confirmationState) {
+      elements.confirmModal.hidden = true;
+      return;
+    }
+
+    elements.confirmTitle.textContent = confirmationState.title;
+    elements.confirmMessage.textContent = confirmationState.message;
+    elements.confirmAcceptButton.textContent = confirmationState.confirmLabel;
+    elements.confirmAcceptButton.classList.toggle("danger", confirmationState.danger);
+    elements.confirmModal.hidden = false;
+  }
+
+  function closeConfirmation() {
+    confirmationState = null;
+    elements.confirmAcceptButton.classList.remove("danger");
+    elements.confirmModal.hidden = true;
+  }
+
+  function confirmCurrentAction() {
+    if (!confirmationState) {
+      return;
+    }
+    const action = confirmationState.onConfirm;
+    closeConfirmation();
+    if (typeof action === "function") {
+      action();
+    }
+  }
+
   function bindEvents() {
     elements.filtersForm.addEventListener("input", syncFiltersFromForm);
     elements.filtersForm.addEventListener("change", syncFiltersFromForm);
     elements.resetFiltersButton.addEventListener("click", resetFilters);
     elements.addGameButton.addEventListener("click", () => openEditor({ mode: "create", entityType: "game", parentType: null, parentId: null }));
     elements.exportButton.addEventListener("click", exportJson);
+    elements.googleConnectButton.addEventListener("click", connectGoogleDrive);
+    elements.googleSaveButton.addEventListener("click", saveBackupToGoogleDrive);
+    elements.googleLoadButton.addEventListener("click", loadBackupFromGoogleDrive);
+    elements.googleDisconnectButton.addEventListener("click", disconnectGoogleDrive);
     elements.importInput.addEventListener("change", importJson);
-    elements.resetDemoButton.addEventListener("click", restoreDemoData);
+    elements.resetDemoButton.addEventListener("click", requestRestoreDemo);
+    bindPanelToggles();
+    bindConfirmationModal();
+  }
+
+  function initializeIntegrations() {
+    initializeGoogleDriveIntegration();
+    initializeClarity();
+  }
+
+  function bindConfirmationModal() {
+    elements.confirmCancelButton.addEventListener("click", closeConfirmation);
+    elements.confirmAcceptButton.addEventListener("click", confirmCurrentAction);
+    elements.confirmModal.addEventListener("click", (event) => {
+      if (event.target === elements.confirmModal) {
+        closeConfirmation();
+      }
+    });
+  }
+
+  function initializeGoogleDriveIntegration() {
+    if (!CONFIG.googleDrive || !CONFIG.googleDrive.clientId || !window.google || !window.google.accounts || !window.google.accounts.oauth2) {
+      updateGoogleDriveStatus("Google Drive sync is unavailable until a Google client ID is configured.");
+      setGoogleDriveButtonsDisabled(true);
+      return;
+    }
+
+    googleDriveState.tokenClient = window.google.accounts.oauth2.initTokenClient({
+      client_id: CONFIG.googleDrive.clientId,
+      scope: CONFIG.googleDrive.scope,
+      callback: () => {},
+    });
+    googleDriveState.initialized = true;
+    updateGoogleDriveStatus("Google Drive sync is ready. Connect to save or load your tracker backup.");
+    setGoogleDriveButtonsDisabled(false);
+  }
+
+  function initializeClarity() {
+    const projectId = CONFIG.clarity && CONFIG.clarity.projectId;
+    if (!projectId) {
+      return;
+    }
+
+    (function (c, l, a, r, i, t, y) {
+      c[a] = c[a] || function () { (c[a].q = c[a].q || []).push(arguments); };
+      t = l.createElement(r);
+      t.async = 1;
+      t.src = "https://www.clarity.ms/tag/" + i;
+      y = l.getElementsByTagName(r)[0];
+      y.parentNode.insertBefore(t, y);
+    })(window, document, "clarity", "script", projectId);
+  }
+
+  function updateGoogleDriveStatus(message) {
+    elements.googleDriveStatus.textContent = message;
+  }
+
+  function setGoogleDriveButtonsDisabled(disabled) {
+    elements.googleConnectButton.disabled = disabled;
+    elements.googleSaveButton.disabled = disabled;
+    elements.googleLoadButton.disabled = disabled;
+    elements.googleDisconnectButton.disabled = disabled;
+  }
+
+  function connectGoogleDrive() {
+    if (!googleDriveState.initialized) {
+      updateGoogleDriveStatus("Google Drive sync is unavailable until a Google client ID is configured.");
+      return;
+    }
+
+    googleDriveState.tokenClient.callback = (response) => {
+      if (response && response.access_token) {
+        googleDriveState.accessToken = response.access_token;
+        updateGoogleDriveStatus("Connected to Google Drive. You can now save or load your tracker backup.");
+      }
+    };
+
+    googleDriveState.tokenClient.requestAccessToken({ prompt: googleDriveState.accessToken ? "" : "consent" });
+  }
+
+  function disconnectGoogleDrive() {
+    googleDriveState.accessToken = null;
+    updateGoogleDriveStatus("Disconnected from Google Drive.");
+  }
+
+  async function saveBackupToGoogleDrive() {
+    const token = await ensureGoogleDriveToken();
+    if (!token) {
+      return;
+    }
+
+    try {
+      const existingFileId = await findGoogleDriveBackupFileId(token);
+      const payload = JSON.stringify({
+        savedAt: new Date().toISOString(),
+        data: state.data,
+        uiPrefs: {
+          collapsedGroups: state.collapsedGroups,
+          collapsedPanels: state.collapsedPanels,
+        },
+      }, null, 2);
+      const metadata = {
+        name: CONFIG.googleDrive.backupFileName,
+        parents: ["appDataFolder"],
+      };
+
+      const form = new FormData();
+      form.append("metadata", new Blob([JSON.stringify(metadata)], { type: "application/json" }));
+      form.append("file", new Blob([payload], { type: "application/json" }));
+
+      const url = existingFileId
+        ? `https://www.googleapis.com/upload/drive/v3/files/${existingFileId}?uploadType=multipart`
+        : "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart";
+      const method = existingFileId ? "PATCH" : "POST";
+
+      const response = await fetch(url, {
+        method,
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: form,
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to save backup");
+      }
+
+      updateGoogleDriveStatus("Tracker backup saved to Google Drive.");
+    } catch (error) {
+      updateGoogleDriveStatus("Google Drive save failed. Check your client ID and Drive permissions.");
+    }
+  }
+
+  async function loadBackupFromGoogleDrive() {
+    const token = await ensureGoogleDriveToken();
+    if (!token) {
+      return;
+    }
+
+    try {
+      const existingFileId = await findGoogleDriveBackupFileId(token);
+      if (!existingFileId) {
+        updateGoogleDriveStatus("No Google Drive backup was found for this app yet.");
+        return;
+      }
+
+      openConfirmation({
+        title: "Load backup from Drive",
+        message: "Replace your current local tracker with the backup stored in Google Drive?",
+        confirmLabel: "Load backup",
+        danger: true,
+        onConfirm: async () => {
+          try {
+            const response = await fetch(`https://www.googleapis.com/drive/v3/files/${existingFileId}?alt=media`, {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            });
+            if (!response.ok) {
+              throw new Error("Failed to load backup");
+            }
+            const backup = await response.json();
+            if (!backup || !backup.data || !Array.isArray(backup.data.games)) {
+              throw new Error("Invalid backup format");
+            }
+
+            state.data = backup.data;
+            state.collapsedGroups = backup.uiPrefs && backup.uiPrefs.collapsedGroups ? backup.uiPrefs.collapsedGroups : state.collapsedGroups;
+            state.collapsedPanels = backup.uiPrefs && backup.uiPrefs.collapsedPanels
+              ? { ...state.collapsedPanels, ...backup.uiPrefs.collapsedPanels }
+              : state.collapsedPanels;
+            saveState();
+            saveUiPrefs();
+            applyPanelCollapseState();
+            render();
+            updateGoogleDriveStatus("Loaded tracker backup from Google Drive.");
+          } catch (error) {
+            updateGoogleDriveStatus("Google Drive load failed. The stored backup could not be applied.");
+          }
+        },
+      });
+    } catch (error) {
+      updateGoogleDriveStatus("Google Drive load failed. Check your client ID and Drive permissions.");
+    }
+  }
+
+  async function ensureGoogleDriveToken() {
+    if (googleDriveState.accessToken) {
+      return googleDriveState.accessToken;
+    }
+
+    if (!googleDriveState.initialized) {
+      updateGoogleDriveStatus("Google Drive sync is unavailable until a Google client ID is configured.");
+      return null;
+    }
+
+    return new Promise((resolve) => {
+      googleDriveState.tokenClient.callback = (response) => {
+        if (response && response.access_token) {
+          googleDriveState.accessToken = response.access_token;
+          updateGoogleDriveStatus("Connected to Google Drive.");
+          resolve(response.access_token);
+          return;
+        }
+        resolve(null);
+      };
+      googleDriveState.tokenClient.requestAccessToken({ prompt: "consent" });
+    });
+  }
+
+  async function findGoogleDriveBackupFileId(token) {
+    const query = encodeURIComponent(`name='${CONFIG.googleDrive.backupFileName}' and 'appDataFolder' in parents and trashed=false`);
+    const response = await fetch(`https://www.googleapis.com/drive/v3/files?q=${query}&spaces=appDataFolder&fields=files(id,name)`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    if (!response.ok) {
+      throw new Error("Failed to query backup file");
+    }
+    const payload = await response.json();
+    return payload.files && payload.files[0] ? payload.files[0].id : null;
+  }
+
+  function bindPanelToggles() {
+    document.querySelectorAll("[data-toggle-panel]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const key = button.dataset.togglePanel;
+        state.collapsedPanels[key] = !state.collapsedPanels[key];
+        saveUiPrefs();
+        applyPanelCollapseState();
+      });
+    });
+    applyPanelCollapseState();
+  }
+
+  function applyPanelCollapseState() {
+    document.querySelectorAll("[data-panel]").forEach((panel) => {
+      const key = panel.dataset.panel;
+      const collapsed = Boolean(state.collapsedPanels[key]);
+      panel.classList.toggle("is-collapsed", collapsed);
+      const toggle = panel.querySelector("[data-toggle-panel]");
+      if (toggle) {
+        toggle.setAttribute("aria-expanded", collapsed ? "false" : "true");
+        const text = toggle.querySelector(".panel-chevron");
+        if (text) {
+          text.textContent = collapsed ? "Show" : "Hide";
+        }
+      }
+    });
   }
 
   function loadState() {
@@ -149,7 +486,6 @@
   function render() {
     const model = deriveModel();
     syncFilterControls(model.games);
-    renderViewToggle(model.games);
     renderHero(model);
     renderContextActions(model);
     renderTaskList(model);
@@ -527,24 +863,6 @@
     return a.name.localeCompare(b.name);
   }
 
-  function renderViewToggle(games) {
-    const buttons = [`<button class="chip-button ${state.view.mode === "global" ? "active" : ""}" data-action="global" type="button">Global</button>`];
-    games.forEach((game) => {
-      buttons.push(`<button class="chip-button ${state.view.mode === "focused" && state.view.gameId === game.id ? "active" : ""}" data-action="focused" data-game-id="${escapeHtml(game.id)}" type="button">${escapeHtml(game.name)}</button>`);
-    });
-    elements.viewToggle.innerHTML = buttons.join("");
-
-    elements.viewToggle.querySelectorAll("button").forEach((button) => {
-      button.addEventListener("click", () => {
-        if (button.dataset.action === "global") {
-          setView("global", null);
-          return;
-        }
-        setView("focused", button.dataset.gameId);
-      });
-    });
-  }
-
   function renderHero(model) {
     const focusedGame = state.view.mode === "focused"
       ? model.games.find((game) => game.id === state.view.gameId)
@@ -645,10 +963,14 @@
     elements.taskList.querySelectorAll("[data-edit-task]").forEach((button) => {
       button.addEventListener("click", () => openEditor({ mode: "edit", entityType: "task", id: button.dataset.editTask }));
     });
+    elements.taskList.querySelectorAll("[data-undo-id]").forEach((button) => {
+      button.addEventListener("click", () => undoTask(button.dataset.undoId));
+    });
     elements.taskList.querySelectorAll("[data-toggle-group]").forEach((button) => {
       button.addEventListener("click", () => {
         const key = button.dataset.toggleGroup;
         state.collapsedGroups[key] = !state.collapsedGroups[key];
+        saveUiPrefs();
         render();
       });
     });
@@ -905,7 +1227,9 @@
             </div>
           </div>
           <div class="task-actions">
-            <button class="task-action ${task.canComplete ? "complete" : ""}" type="button" data-complete-id="${escapeHtml(task.id)}" ${task.canComplete ? "" : "disabled"}>${task.status === "completed" && (task.type === "daily" || task.type === "weekly") ? "Done" : task.completedAt ? "Done" : "Complete"}</button>
+            ${task.status === "completed"
+              ? `<button class="task-action" type="button" data-undo-id="${escapeHtml(task.id)}">Undo</button>`
+              : `<button class="task-action ${task.canComplete ? "complete" : ""}" type="button" data-complete-id="${escapeHtml(task.id)}" ${task.canComplete ? "" : "disabled"}>Complete</button>`}
             <button class="task-action" type="button" data-edit-task="${escapeHtml(task.id)}">Edit</button>
           </div>
         </div>
@@ -976,6 +1300,17 @@
     elements.editorHost.appendChild(template);
   }
 
+  function revealEditor() {
+    elements.editorPanel.classList.add("is-active");
+    window.setTimeout(() => {
+      elements.editorPanel.scrollIntoView({ behavior: "smooth", block: "start" });
+      const firstField = elements.editorHost.querySelector("input[type=\"text\"], select, textarea");
+      if (firstField) {
+        firstField.focus({ preventScroll: true });
+      }
+    }, 0);
+  }
+
   function syncResetFieldState(form, resetFieldsSection, isGame) {
     const enabled = isGame || form.elements.resetEnabled.checked;
     resetFieldsSection.classList.toggle("is-disabled", !enabled);
@@ -1027,11 +1362,13 @@
   function openEditor(config) {
     state.editor = config;
     renderEditor();
+    revealEditor();
   }
 
   function closeEditor() {
     state.editor = null;
     renderEditor();
+    elements.editorPanel.classList.remove("is-active");
   }
 
   function handleEditorSubmit(event) {
@@ -1086,11 +1423,19 @@
     if (!state.editor || state.editor.mode !== "edit") {
       return;
     }
-
-    deleteEntity(state.editor.entityType, state.editor.id);
-    saveState();
-    closeEditor();
-    render();
+    const label = getEntityDisplayName(state.editor.entityType, state.editor.id);
+    openConfirmation({
+      title: `Delete ${state.editor.entityType}`,
+      message: `Delete ${label}? This cannot be undone.`,
+      confirmLabel: "Delete",
+      danger: true,
+      onConfirm: () => {
+        deleteEntity(state.editor.entityType, state.editor.id);
+        saveState();
+        closeEditor();
+        render();
+      },
+    });
   }
 
   function createEntity(entityType, payload, parentRef) {
@@ -1299,15 +1644,23 @@
         let importedCount = 0;
 
         if (importMode === "replace") {
-          const shouldReplace = window.confirm(CONFIG.importConfig.replaceConfirmMessage);
-          if (!shouldReplace) {
-            return;
-          }
-          const importedIds = new Set();
-          state.data = {
-            games: importedGames.map((game) => prepareImportedGame(game, importedIds)),
-          };
-          importedCount = state.data.games.length;
+          openConfirmation({
+            title: "Replace tracker",
+            message: CONFIG.importConfig.replaceConfirmMessage,
+            confirmLabel: "Replace tracker",
+            danger: true,
+            onConfirm: () => {
+              const importedIds = new Set();
+              state.data = {
+                games: importedGames.map((game) => prepareImportedGame(game, importedIds)),
+              };
+              importedCount = state.data.games.length;
+              saveState();
+              render();
+              window.alert(`${CONFIG.importConfig.replaceSuccessPrefix} ${importedCount} game${importedCount === 1 ? "" : "s"}.`);
+            },
+          });
+          return;
         } else {
           importedCount = mergeImportedGames(importedGames);
         }
@@ -1405,7 +1758,21 @@
   }
 
   function renderGamesList(games) {
-    elements.gamesList.innerHTML = games.map((game) => `
+    const globalCard = `
+      <article class="game-card global-games-card">
+        <div class="entity-row">
+          <div>
+            <h3>All games</h3>
+            <p class="subtle">See the full tracker without focusing a single game.</p>
+          </div>
+          <div class="badge-row">
+            <button class="entity-link ${state.view.mode === "global" ? "active" : ""}" type="button" data-show-global="true">Show all</button>
+          </div>
+        </div>
+      </article>
+    `;
+
+    elements.gamesList.innerHTML = globalCard + games.map((game) => `
       <article class="game-card">
         <div class="entity-row">
           <div>
@@ -1425,6 +1792,9 @@
       </article>
     `).join("");
 
+    elements.gamesList.querySelectorAll("[data-show-global]").forEach((button) => {
+      button.addEventListener("click", () => setView("global", null, null));
+    });
     elements.gamesList.querySelectorAll("[data-focus-game]").forEach((button) => {
       button.addEventListener("click", () => setView("focused", button.dataset.focusGame));
     });
@@ -1739,33 +2109,57 @@
     render();
   }
 
+  function undoTask(taskId) {
+    const found = findEntityById("task", taskId);
+    if (!found) {
+      return;
+    }
+    found.entity.completedAt = null;
+    saveState();
+    render();
+  }
+
   function completeGroupAvailableTasks(groupKey) {
     const model = deriveModel();
     const section = model.groupSections.find((group) => group.groupKey === groupKey);
     if (!section) {
       return;
     }
-    section.tasks
-      .filter((task) => task.canComplete && task.status === "available")
-      .forEach((task) => {
-        const found = findEntityById("task", task.id);
-        if (found) {
-          found.entity.completedAt = new Date().toISOString();
-        }
-      });
-    saveState();
-    render();
+    const openCount = section.tasks.filter((task) => task.canComplete && task.status === "available").length;
+    if (!openCount) {
+      return;
+    }
+    openConfirmation({
+      title: "Complete group tasks",
+      message: `Mark ${openCount} open task${openCount === 1 ? "" : "s"} as complete in ${section.name}?`,
+      confirmLabel: "Complete all",
+      danger: false,
+      onConfirm: () => {
+        section.tasks
+          .filter((task) => task.canComplete && task.status === "available")
+          .forEach((task) => {
+            const found = findEntityById("task", task.id);
+            if (found) {
+              found.entity.completedAt = new Date().toISOString();
+            }
+          });
+        saveState();
+        render();
+      },
+    });
   }
 
   function collapseAllGroups(groupSections) {
     groupSections.forEach((group) => {
       state.collapsedGroups[group.groupKey] = true;
     });
+    saveUiPrefs();
     render();
   }
 
   function expandAllGroups() {
     state.collapsedGroups = {};
+    saveUiPrefs();
     render();
   }
 
@@ -1903,6 +2297,14 @@
     };
   }
 
+  function getEntityDisplayName(entityType, id) {
+    const found = findEntityById(entityType, id);
+    if (!found || !found.entity) {
+      return "this item";
+    }
+    return `"${found.entity.name || entityType}"`;
+  }
+
   function prepareImportedGame(game, existingIds) {
     const clone = JSON.parse(JSON.stringify(game));
     clone.groups = Array.isArray(clone.groups) ? clone.groups : [];
@@ -1951,6 +2353,16 @@
       });
     });
     return ids;
+  }
+
+  function requestRestoreDemo() {
+    openConfirmation({
+      title: "Restore demo data",
+      message: "Replace your current tracker with fresh demo data? This will overwrite your local tracker.",
+      confirmLabel: "Restore demo",
+      danger: true,
+      onConfirm: restoreDemoData,
+    });
   }
 
   function restoreDemoData() {
