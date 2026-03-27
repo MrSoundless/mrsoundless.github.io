@@ -5,7 +5,7 @@ function normalizeClarityProjectId(projectId) {
 }
 
 function initializeClarity() {
-	if (!CLARITY_PROJECT_ID)
+	if (!CLARITY_PROJECT_ID || isLocalOrPrivateHost(window.location.hostname))
 		return;
 
 	window.clarity = window.clarity || function() {
@@ -17,6 +17,20 @@ function initializeClarity() {
 	script.src = 'https://www.clarity.ms/tag/' + encodeURIComponent(CLARITY_PROJECT_ID);
 	document.head.appendChild(script);
 	clarityReady = true;
+}
+
+function isLocalOrPrivateHost(hostname) {
+	var normalized = String(hostname || '').toLowerCase();
+	if (!normalized)
+		return true;
+
+	return normalized === 'localhost'
+		|| normalized === '127.0.0.1'
+		|| normalized === '::1'
+		|| normalized.slice(-6) === '.local'
+		|| normalized.indexOf('10.') === 0
+		|| normalized.indexOf('192.168.') === 0
+		|| /^172\.(1[6-9]|2\d|3[0-1])\./.test(normalized);
 }
 
 function trackClarityEvent(name) {

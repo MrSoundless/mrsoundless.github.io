@@ -244,7 +244,7 @@
 
   function initializeClarity() {
     const projectId = CONFIG.clarity && CONFIG.clarity.projectId;
-    if (!projectId) {
+    if (!projectId || isLocalOrPrivateHost(window.location.hostname)) {
       return;
     }
 
@@ -256,6 +256,21 @@
       y = l.getElementsByTagName(r)[0];
       y.parentNode.insertBefore(t, y);
     })(window, document, "clarity", "script", projectId);
+  }
+
+  function isLocalOrPrivateHost(hostname) {
+    const normalized = String(hostname || "").toLowerCase();
+    if (!normalized) {
+      return true;
+    }
+
+    return normalized === "localhost"
+      || normalized === "127.0.0.1"
+      || normalized === "::1"
+      || normalized.endsWith(".local")
+      || normalized.startsWith("10.")
+      || normalized.startsWith("192.168.")
+      || /^172\.(1[6-9]|2\d|3[0-1])\./.test(normalized);
   }
 
   function updateGoogleDriveStatus(message) {
