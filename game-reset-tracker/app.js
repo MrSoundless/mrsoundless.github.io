@@ -42,7 +42,7 @@
 
   const state = {
     data: loadState(),
-    filters: createDefaultFilters(),
+    filters: createDefaultFilters(uiPrefs.filters),
     theme: uiPrefs.theme || "light",
     view: {
       mode: "global",
@@ -121,8 +121,8 @@
   render();
   setInterval(render, CONFIG.refreshIntervalMs);
 
-  function createDefaultFilters() {
-    return { ...CONFIG.defaultFilters };
+  function createDefaultFilters(savedFilters) {
+    return { ...CONFIG.defaultFilters, ...(savedFilters || {}) };
   }
 
   function createDefaultResetSettings() {
@@ -141,6 +141,7 @@
   function saveUiPrefs() {
     localStorage.setItem(CONFIG.uiPrefsKey, JSON.stringify({
       theme: state.theme,
+      filters: state.filters,
       collapsedGroups: state.collapsedGroups,
       collapsedPanels: state.collapsedPanels,
     }));
@@ -240,7 +241,7 @@
       return;
     }
 
-    [elements.editorPanel, elements.gamesPanel].forEach((panel) => {
+    [elements.gamesPanel, elements.editorPanel].forEach((panel) => {
       if (panel && panel.parentElement !== target) {
         target.appendChild(panel);
       }
@@ -354,6 +355,7 @@
         savedAt: new Date().toISOString(),
         data: state.data,
         uiPrefs: {
+          filters: state.filters,
           collapsedGroups: state.collapsedGroups,
           collapsedPanels: state.collapsedPanels,
         },
@@ -424,6 +426,9 @@
             }
 
             state.data = backup.data;
+            state.filters = backup.uiPrefs && backup.uiPrefs.filters
+              ? createDefaultFilters(backup.uiPrefs.filters)
+              : state.filters;
             state.collapsedGroups = backup.uiPrefs && backup.uiPrefs.collapsedGroups ? backup.uiPrefs.collapsedGroups : state.collapsedGroups;
             state.collapsedPanels = backup.uiPrefs && backup.uiPrefs.collapsedPanels
               ? { ...state.collapsedPanels, ...backup.uiPrefs.collapsedPanels }
@@ -533,7 +538,10 @@
 
   function resetFilters() {
     state.filters = createDefaultFilters();
+    state.view.mode = "global";
+    state.view.gameId = null;
     state.view.groupKey = null;
+    saveUiPrefs();
     render();
   }
 
@@ -546,6 +554,7 @@
     state.filters.hideCompleted = elements.hideCompleted.checked;
     state.filters.hideExpired = elements.hideExpired.checked;
     state.filters.sortBy = elements.sortBy.value;
+    saveUiPrefs();
     render();
   }
 
@@ -554,6 +563,7 @@
     state.view.gameId = gameId || null;
     state.view.groupKey = groupKey || null;
     state.filters.gameId = mode === "focused" && gameId ? gameId : "all";
+    saveUiPrefs();
     render();
   }
 
@@ -738,8 +748,6 @@
       : parentResetSettings;
     const derivedType = group && group.isEventGroup
       ? "event"
-      : task.type === "event"
-      ? "one-time"
       : task.type;
     const completedAt = task.completedAt ? new Date(task.completedAt) : null;
     const effectiveExpiresAt = group && group.isEventGroup
@@ -1744,7 +1752,7 @@
     form.elements.name.value = entity.name || "";
     form.elements.notes.value = entity.notes || "";
     form.elements.priority.value = String(entity.priority || 3);
-    form.elements.taskType.value = entity.type === "event" ? "one-time" : entity.type || "daily";
+    form.elements.taskType.value = entity.type || "daily";
     form.elements.isEventGroup.checked = Boolean(entity.isEventGroup);
     form.elements.resetEnabled.checked = Boolean(entity.resetOverrideEnabled || isGame);
     form.elements.dailyTime.value = entity.resetSettings ? entity.resetSettings.dailyTime || "" : "";
@@ -1800,6 +1808,15 @@
       resetFieldsSection,
       expirationFieldsSection,
     }));
+    form.elements.taskType.addEventListener("change", () => syncEditorFormSections(form, {
+      isGame,
+      isGroup,
+      isTask,
+      taskFieldsSection,
+      groupFieldsSection,
+      resetFieldsSection,
+      expirationFieldsSection,
+    }));
     if (!isGame) {
       form.elements.resetEnabled.addEventListener("change", () => syncResetFieldState(form, resetFieldsSection, isGame));
     }
@@ -1841,10 +1858,11 @@
       : null;
     const taskInEventGroup = sections.isTask && selectedGroup && selectedGroup.isEventGroup;
     const groupIsEvent = sections.isGroup && form.elements.isEventGroup.checked;
+    const taskIsEvent = sections.isTask && form.elements.taskType.value === "event";
 
     sections.taskFieldsSection.hidden = !sections.isTask || Boolean(taskInEventGroup);
     sections.groupFieldsSection.hidden = !sections.isGroup;
-    sections.expirationFieldsSection.hidden = !(groupIsEvent);
+    sections.expirationFieldsSection.hidden = !(groupIsEvent || taskIsEvent);
     sections.resetFieldsSection.hidden = groupIsEvent;
 
     syncResetFieldState(form, sections.resetFieldsSection, sections.isGame || groupIsEvent);
@@ -1893,9 +1911,10 @@
     const formData = new FormData(form);
     const entityType = String(formData.get("entityType"));
     const isEventGroup = entityType === "group" && formData.get("isEventGroup") === "on";
+    const isEventTask = entityType === "task" && formData.get("taskType") === "event";
     const resetOverrideEnabled = entityType === "game" ? true : isEventGroup ? false : formData.get("resetEnabled") === "on";
     const existing = formData.get("id") ? findEntityById(entityType, String(formData.get("id"))) : null;
-    const expiresAt = entityType === "group" && isEventGroup && formData.get("expiresAt")
+    const expiresAt = ((entityType === "group" && isEventGroup) || (entityType === "task" && isEventTask)) && formData.get("expiresAt")
       ? new Date(String(formData.get("expiresAt"))).toISOString()
       : null;
 

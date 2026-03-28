@@ -180,13 +180,6 @@
         </div>
 
         <div class="content-column side-column" id="sideColumn">
-          <section class="panel editor-panel" id="editorPanel" hidden>
-            <div class="panel-header">
-              <h2>Editor</h2>
-            </div>
-            <div id="editorHost"></div>
-          </section>
-
           <section class="panel" data-panel="games" id="gamesPanel">
             <div class="panel-header">
               <button class="panel-toggle" type="button" data-toggle-panel="games" aria-expanded="true">
@@ -197,6 +190,13 @@
             <div class="panel-body">
               <div id="gamesList" class="stack-list"></div>
             </div>
+          </section>
+
+          <section class="panel editor-panel" id="editorPanel" hidden>
+            <div class="panel-header">
+              <h2>Editor</h2>
+            </div>
+            <div id="editorHost"></div>
           </section>
         </div>
       </section>
@@ -261,6 +261,7 @@
             <option value="daily">Daily</option>
             <option value="weekly">Weekly</option>
             <option value="one-time">One-time</option>
+            <option value="event">Event</option>
           </select>
         </label>
       </div>
