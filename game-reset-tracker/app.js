@@ -50,6 +50,7 @@
       groupKey: null,
     },
     editor: null,
+    expandedGameGroups: uiPrefs.expandedGameGroups || {},
     collapsedGroups: uiPrefs.collapsedGroups || {},
     collapsedPanels: {
       filters: false,
@@ -142,6 +143,7 @@
     localStorage.setItem(CONFIG.uiPrefsKey, JSON.stringify({
       theme: state.theme,
       filters: state.filters,
+      expandedGameGroups: state.expandedGameGroups,
       collapsedGroups: state.collapsedGroups,
       collapsedPanels: state.collapsedPanels,
     }));
@@ -1677,11 +1679,7 @@
 
     elements.gamesList.innerHTML = globalCard + sortedGames.map((game) => {
       const realGroups = game.groups.filter((group) => !group.isVirtual);
-      const visibleGroups = realGroups.slice(0, 4);
-      const extraGroupCount = Math.max(0, realGroups.length - visibleGroups.length);
-      const groupSummary = realGroups.length
-        ? `${visibleGroups.map((group) => group.name).join(", ")}${extraGroupCount > 0 ? ` +${extraGroupCount} more` : ""}`
-        : "No groups yet";
+      const isExpanded = Boolean(state.expandedGameGroups[game.id]);
 
       return `
         <article class="game-card" style="${gameAccentStyle(game.id || game.name)}">
@@ -1689,7 +1687,6 @@
             <div class="game-card-main">
               <h3>${escapeHtml(game.name)}</h3>
               <p class="subtle game-card-summary">${realGroups.length} groups · ${game.tasks.length} direct tasks · Daily ${escapeHtml(game.effectiveResetSettings.dailyTime)} · Weekly ${dayName(game.effectiveResetSettings.weeklyDay)} ${escapeHtml(game.effectiveResetSettings.weeklyTime)}</p>
-              <div class="subtle game-card-groups">${escapeHtml(groupSummary)}</div>
             </div>
             <div class="badge-row game-card-actions">
               <button class="entity-link ${state.view.mode === "focused" && state.view.gameId === game.id ? "active" : ""}" type="button" data-focus-game="${escapeHtml(game.id)}">Focus</button>
@@ -1697,9 +1694,18 @@
               <button class="entity-link" type="button" data-edit-game="${escapeHtml(game.id)}">Edit</button>
             </div>
           </div>
-          <div class="game-links-row">
-            ${visibleGroups.map((group) => `<button class="entity-link ${state.view.groupKey === group.groupKey ? "active" : ""}" type="button" data-focus-group-card="${escapeHtml(group.groupKey)}" data-game-id="${escapeHtml(game.id)}">${escapeHtml(group.name)}</button>`).join("")}
-          </div>
+          ${realGroups.length
+            ? `<div class="game-links-meta">
+                <button class="ghost-button game-groups-toggle" type="button" data-toggle-game-groups="${escapeHtml(game.id)}" aria-expanded="${isExpanded ? "true" : "false"}">
+                  ${isExpanded ? "Hide groups" : `Show groups (${realGroups.length})`}
+                </button>
+              </div>
+              ${isExpanded
+                ? `<div class="game-links-row">
+                    ${realGroups.map((group) => `<button class="entity-link game-group-link ${state.view.groupKey === group.groupKey ? "active" : ""}" type="button" data-focus-group-card="${escapeHtml(group.groupKey)}" data-game-id="${escapeHtml(game.id)}">${escapeHtml(group.name)}</button>`).join("")}
+                  </div>`
+                : ""}`
+            : ""}
         </article>
       `;
     }).join("");
@@ -1715,6 +1721,14 @@
     });
     elements.gamesList.querySelectorAll("[data-export-game]").forEach((button) => {
       button.addEventListener("click", () => exportGameJson(button.dataset.exportGame));
+    });
+    elements.gamesList.querySelectorAll("[data-toggle-game-groups]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const gameId = button.dataset.toggleGameGroups;
+        state.expandedGameGroups[gameId] = !state.expandedGameGroups[gameId];
+        saveUiPrefs();
+        renderGamesList(games);
+      });
     });
     elements.gamesList.querySelectorAll("[data-focus-group-card]").forEach((button) => {
       button.addEventListener("click", () => setView("focused", button.dataset.gameId, button.dataset.focusGroupCard));

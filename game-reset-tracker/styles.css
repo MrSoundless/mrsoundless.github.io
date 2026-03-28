@@ -603,9 +603,30 @@ body[data-theme="dark"] .task-card.completed:not(.expired) {
   border-top: 1px solid rgba(82, 63, 39, 0.06);
 }
 
+.game-links-meta {
+  margin-top: 8px;
+}
+
+.game-groups-toggle {
+  padding: 6px 10px;
+  font-size: 0.72rem;
+}
+
+.game-group-link {
+  padding: 6px 10px;
+  font-size: 0.72rem;
+  line-height: 1.15;
+}
+
 .game-card .entity-link {
   background: #fffdf8;
   text-align: center;
+}
+
+.game-card-actions .entity-link {
+  padding: 7px 10px;
+  font-size: 0.74rem;
+  line-height: 1.1;
 }
 
 .game-links-row .entity-link.active,
