@@ -424,7 +424,8 @@ function waitForGoogleIdentity(maxAttempts = 20, interval = 500) {
 
       updateGoogleDriveStatus("Tracker backup saved to Google Drive.");
     } catch (error) {
-      updateGoogleDriveStatus("Google Drive save failed. Check your client ID and Drive permissions.");
+      console.error("Google Drive load failed:", error);
+      updateGoogleDriveStatus(`Google Drive load failed: ${error.message}`);
     }
   }
 
@@ -509,15 +510,25 @@ function waitForGoogleIdentity(maxAttempts = 20, interval = 500) {
   }
 
   async function findGoogleDriveBackupFileId(token) {
-    const query = encodeURIComponent(`name='${CONFIG.googleDrive.backupFileName}' and 'appDataFolder' in parents and trashed=false`);
-    const response = await fetch(`https://www.googleapis.com/drive/v3/files?q=${query}&spaces=appDataFolder&fields=files(id,name)`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+    const query = encodeURIComponent(
+      `name='${CONFIG.googleDrive.backupFileName}' and 'appDataFolder' in parents and trashed=false`
+    );
+  
+    const response = await fetch(
+      `https://www.googleapis.com/drive/v3/files?q=${query}&spaces=appDataFolder&fields=files(id,name)`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+  
     if (!response.ok) {
-      throw new Error("Failed to query backup file");
+      const text = await response.text();
+      console.error("Drive list failed:", response.status, text);
+      throw new Error(`Failed to query backup file: ${response.status} ${text}`);
     }
+  
     const payload = await response.json();
     return payload.files && payload.files[0] ? payload.files[0].id : null;
   }
