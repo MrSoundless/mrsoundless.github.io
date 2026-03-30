@@ -1,3 +1,24 @@
+function waitForGoogleIdentity(maxAttempts = 20, interval = 500) {
+  return new Promise((resolve) => {
+    let attempts = 0;
+
+    const timer = setInterval(() => {
+      attempts++;
+
+      if (window.google?.accounts?.oauth2) {
+        clearInterval(timer);
+        resolve(true);
+        return;
+      }
+
+      if (attempts >= maxAttempts) {
+        clearInterval(timer);
+        resolve(false);
+      }
+    }, interval);
+  });
+}
+
 (function () {
   const CONFIG = window.GAME_RESET_TRACKER_CONFIG || {
     storageKey: "game-reset-tracker-state-v1",
@@ -251,7 +272,8 @@
   }
 
   function initializeIntegrations() {
-    initializeGoogleDriveIntegration();
+    const googleLoaded = await waitForGoogleIdentity();
+    initializeGoogleDriveIntegration(googleLoaded);
     initializeClarity();
   }
 
@@ -266,16 +288,28 @@
   }
 
   function initializeGoogleDriveIntegration() {
-    if (!CONFIG.googleDrive || !CONFIG.googleDrive.clientId || !window.google || !window.google.accounts || !window.google.accounts.oauth2) {
+    if (!CONFIG.googleDrive || !CONFIG.googleDrive.clientId) {
       updateGoogleDriveStatus("Google Drive sync is unavailable until a Google client ID is configured.");
       setGoogleDriveButtonsDisabled(true);
+      return;
+    }
+
+    if (!googleLoaded || !window.google?.accounts?.oauth2) {
+      updateGoogleDriveStatus("Google Drive sync is unavailable because the Google sign-in library did not load.");
+      setGoogleDriveButtonsDisabled(true);
+
+      // Retry once after delay
+      setTimeout(() => {
+        initializeGoogleDriveIntegration(true);
+      }, 1500);
+
       return;
     }
 
     googleDriveState.tokenClient = window.google.accounts.oauth2.initTokenClient({
       client_id: CONFIG.googleDrive.clientId,
       scope: CONFIG.googleDrive.scope,
-      callback: () => {},
+      callback: () => { },
     });
     googleDriveState.initialized = true;
     updateGoogleDriveStatus("Google Drive sync is ready. Connect to save or load your tracker backup.");
@@ -1027,8 +1061,8 @@
     elements.heroSubtitle.textContent = focusedGroup
       ? "Focused group view with group summaries, actions, and inherited reset settings."
       : focusedGame
-      ? "Focused game view with the same reset-aware tracking rules."
-      : "All games, groups, and tasks in one place.";
+        ? "Focused game view with the same reset-aware tracking rules."
+        : "All games, groups, and tasks in one place.";
     elements.listTitle.textContent = focusedGroup ? `${focusedGroup.name} tasks` : focusedGame ? `${focusedGame.name} groups` : "Groups";
     applyHeroAccent(focusedGame);
     elements.heroStats.innerHTML = [
@@ -1162,8 +1196,8 @@
     const resetLabel = group.isVirtual
       ? "Uses game reset"
       : group.resetOverrideEnabled
-      ? `Custom reset · Daily ${group.effectiveResetSettings.dailyTime} · Weekly ${dayName(group.effectiveResetSettings.weeklyDay)} ${group.effectiveResetSettings.weeklyTime}`
-      : "Uses game reset";
+        ? `Custom reset · Daily ${group.effectiveResetSettings.dailyTime} · Weekly ${dayName(group.effectiveResetSettings.weeklyDay)} ${group.effectiveResetSettings.weeklyTime}`
+        : "Uses game reset";
 
     return `
       <section class="group-section ${group.isExpired ? "expired" : ""}">
@@ -1312,17 +1346,17 @@
     const resetLabel = group.isVirtual
       ? "Uses game reset"
       : group.isEventGroup
-      ? "Event group"
-      : group.resetOverrideEnabled
-      ? `Custom reset / Daily ${group.effectiveResetSettings.dailyTime} / Weekly ${dayName(group.effectiveResetSettings.weeklyDay)} ${group.effectiveResetSettings.weeklyTime}`
-      : "Uses game reset";
+        ? "Event group"
+        : group.resetOverrideEnabled
+          ? `Custom reset / Daily ${group.effectiveResetSettings.dailyTime} / Weekly ${dayName(group.effectiveResetSettings.weeklyDay)} ${group.effectiveResetSettings.weeklyTime}`
+          : "Uses game reset";
     const groupCountdown = renderGroupCountdown(group.summary, group.tasks);
     const eventCount = group.isEventGroup ? group.tasks.length : group.tasks.filter((task) => task.type === "event").length;
     const eventLabel = group.isEventGroup
       ? '<span class="badge event-badge">Event Group</span>'
       : eventCount > 0
-      ? `<span class="badge event-badge">${eventCount} event${eventCount === 1 ? "" : "s"}</span>`
-      : "";
+        ? `<span class="badge event-badge">${eventCount} event${eventCount === 1 ? "" : "s"}</span>`
+        : "";
 
     return `
       <section class="group-section ${group.isExpired ? "expired" : ""} ${group.isEventGroup || eventCount ? "has-events" : ""} ${group.isDisabled ? "disabled-item" : ""}" style="${gameAccentStyle(group.gameId || group.gameName)}">
@@ -1386,16 +1420,16 @@
             <div class="task-meta">
               <div class="subtle">${escapeHtml(formatTiming(task))}</div>
               <div class="subtle">${task.type === "event"
-                ? `Event${task.expirationDate ? ` / Expires ${escapeHtml(formatDateTime(task.expirationDate))}` : ""}`
-                : `Reset: ${escapeHtml(task.inheritedFrom)}${task.nextResetAt ? ` / ${escapeHtml(formatDateTime(task.nextResetAt))}` : ""}${task.expirationDate ? ` / Expires ${escapeHtml(formatDateTime(task.expirationDate))}` : ""}`}</div>
+        ? `Event${task.expirationDate ? ` / Expires ${escapeHtml(formatDateTime(task.expirationDate))}` : ""}`
+        : `Reset: ${escapeHtml(task.inheritedFrom)}${task.nextResetAt ? ` / ${escapeHtml(formatDateTime(task.nextResetAt))}` : ""}${task.expirationDate ? ` / Expires ${escapeHtml(formatDateTime(task.expirationDate))}` : ""}`}</div>
               ${renderTaskCountdown(task)}
               ${task.notes ? `<div class="task-notes subtle">${escapeHtml(task.notes)}</div>` : ""}
             </div>
           </div>
           <div class="task-actions">
             ${task.status === "completed"
-              ? `<button class="task-action" type="button" data-undo-id="${escapeHtml(task.id)}">Undo</button>`
-              : `<button class="task-action ${task.canComplete ? "complete" : ""}" type="button" data-complete-id="${escapeHtml(task.id)}" ${task.canComplete ? "" : "disabled"}>Complete</button>`}
+        ? `<button class="task-action" type="button" data-undo-id="${escapeHtml(task.id)}">Undo</button>`
+        : `<button class="task-action ${task.canComplete ? "complete" : ""}" type="button" data-complete-id="${escapeHtml(task.id)}" ${task.canComplete ? "" : "disabled"}>Complete</button>`}
             <button class="task-action" type="button" data-toggle-task-disabled="${escapeHtml(task.id)}">${task.isDisabled ? "Enable" : "Disable"}</button>
             <button class="task-action" type="button" data-edit-task="${escapeHtml(task.id)}">Edit</button>
           </div>
@@ -1695,17 +1729,17 @@
             </div>
           </div>
           ${realGroups.length
-            ? `<div class="game-links-meta">
+          ? `<div class="game-links-meta">
                 <button class="ghost-button game-groups-toggle" type="button" data-toggle-game-groups="${escapeHtml(game.id)}" aria-expanded="${isExpanded ? "true" : "false"}">
                   ${isExpanded ? "Hide groups" : `Show groups (${realGroups.length})`}
                 </button>
               </div>
               ${isExpanded
-                ? `<div class="game-links-row">
+            ? `<div class="game-links-row">
                     ${realGroups.map((group) => `<button class="entity-link game-group-link ${state.view.groupKey === group.groupKey ? "active" : ""}" type="button" data-focus-group-card="${escapeHtml(group.groupKey)}" data-game-id="${escapeHtml(game.id)}">${escapeHtml(group.name)}</button>`).join("")}
                   </div>`
-                : ""}`
-            : ""}
+            : ""}`
+          : ""}
         </article>
       `;
     }).join("");
