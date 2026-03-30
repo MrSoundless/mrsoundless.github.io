@@ -271,7 +271,7 @@ function waitForGoogleIdentity(maxAttempts = 20, interval = 500) {
     });
   }
 
-  function initializeIntegrations() {
+  async function initializeIntegrations() {
     const googleLoaded = await waitForGoogleIdentity();
     initializeGoogleDriveIntegration(googleLoaded);
     initializeClarity();
