@@ -287,7 +287,7 @@ function waitForGoogleIdentity(maxAttempts = 20, interval = 500) {
     });
   }
 
-  function initializeGoogleDriveIntegration() {
+  function initializeGoogleDriveIntegration(googleLoaded = true) {
     if (!CONFIG.googleDrive || !CONFIG.googleDrive.clientId) {
       updateGoogleDriveStatus("Google Drive sync is unavailable until a Google client ID is configured.");
       setGoogleDriveButtonsDisabled(true);
