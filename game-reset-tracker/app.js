@@ -424,8 +424,7 @@ function waitForGoogleIdentity(maxAttempts = 20, interval = 500) {
 
       updateGoogleDriveStatus("Tracker backup saved to Google Drive.");
     } catch (error) {
-      console.error("Google Drive load failed:", error);
-      updateGoogleDriveStatus(`Google Drive load failed: ${error.message}`);
+      updateGoogleDriveStatus("Google Drive save failed. Check your client ID and Drive permissions.");
     }
   }
 
@@ -476,12 +475,14 @@ function waitForGoogleIdentity(maxAttempts = 20, interval = 500) {
             render();
             updateGoogleDriveStatus("Loaded tracker backup from Google Drive.");
           } catch (error) {
-            updateGoogleDriveStatus("Google Drive load failed. The stored backup could not be applied.");
+            console.error("Google Drive load failed (inner):", error);
+            updateGoogleDriveStatus(`Google Drive load failed while applying backup: ${error.message}`);
           }
         },
       });
     } catch (error) {
-      updateGoogleDriveStatus("Google Drive load failed. Check your client ID and Drive permissions.");
+      console.error("Google Drive load failed (outer):", error);
+      updateGoogleDriveStatus(`Google Drive load failed: ${error.message}`);
     }
   }
 
