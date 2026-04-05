@@ -170,6 +170,96 @@
 		padding: 18px;
 	}
 
+	.search-filter-bar {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 12px;
+		margin-top: 14px;
+	}
+
+	.search-filter-block {
+		display: flex;
+		flex-direction: column;
+		gap: 10px;
+		margin-top: 14px;
+	}
+
+	.search-filter {
+		display: inline-flex;
+		align-items: center;
+		gap: 10px;
+		padding: 8px 10px 8px 14px;
+		border: 1px solid rgba(126, 170, 214, 0.18);
+		border-radius: 999px;
+		background: rgba(255, 255, 255, 0.03);
+	}
+
+	.search-filter-label {
+		font-size: 0.82rem;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+		color: var(--muted);
+	}
+
+	.search-filter-toggle {
+		min-width: 82px;
+		height: 34px;
+		padding: 0 12px;
+		border: 1px solid rgba(126, 170, 214, 0.22);
+		border-radius: 999px;
+		background: rgba(255, 255, 255, 0.04);
+		color: var(--text);
+		font-size: 0.86rem;
+		font-weight: 600;
+		transition: border-color 0.18s ease, background 0.18s ease, color 0.18s ease;
+	}
+
+	.search-filter-toggle:hover {
+		border-color: rgba(92, 225, 230, 0.45);
+		color: white;
+	}
+
+	.search-filter-toggle.state-is {
+		border-color: rgba(118, 231, 161, 0.36);
+		background: rgba(118, 231, 161, 0.16);
+		color: #d4fbe1;
+	}
+
+	.search-filter-toggle.state-not {
+		border-color: rgba(255, 127, 127, 0.36);
+		background: rgba(255, 127, 127, 0.12);
+		color: #ffd4d4;
+	}
+
+	.relic-filter-row {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 8px;
+	}
+
+	.relic-filter-button {
+		height: 34px;
+		padding: 0 14px;
+		border: 1px solid rgba(126, 170, 214, 0.2);
+		border-radius: 999px;
+		background: rgba(255, 255, 255, 0.04);
+		color: var(--muted);
+		font-size: 0.86rem;
+		font-weight: 600;
+		transition: border-color 0.18s ease, background 0.18s ease, color 0.18s ease;
+	}
+
+	.relic-filter-button:hover {
+		border-color: rgba(92, 225, 230, 0.45);
+		color: var(--text);
+	}
+
+	.relic-filter-button.active {
+		border-color: rgba(92, 225, 230, 0.5);
+		background: rgba(92, 225, 230, 0.14);
+		color: white;
+	}
+
 	.control-label {
 		display: block;
 		margin-bottom: 10px;
@@ -781,7 +871,34 @@
 					</div>
 					<input type="text" id="search" class="form-control" autocomplete="off" placeholder="Search by name, category, or source keyword">
 				</div>
-				<p class="search-hint">Filters support <code>is:mastered</code>, <code>not:crafted</code>, <code>is:vaulted</code>, <code>notowned:void</code>, plus <code>,</code> for AND and <code>|</code> for OR.</p>
+				<div class="search-filter-block">
+					<div class="search-filter-bar" aria-label="Quick filters">
+						<div class="search-filter">
+							<span class="search-filter-label">Mastered</span>
+							<button class="search-filter-toggle" type="button" data-filter-key="mastered" data-filter-state="any" aria-pressed="false">Any</button>
+						</div>
+						<div class="search-filter">
+							<span class="search-filter-label">Crafted</span>
+							<button class="search-filter-toggle" type="button" data-filter-key="crafted" data-filter-state="any" aria-pressed="false">Any</button>
+						</div>
+						<div class="search-filter">
+							<span class="search-filter-label">Vaulted</span>
+							<button class="search-filter-toggle" type="button" data-filter-key="vaulted" data-filter-state="any" aria-pressed="false">Any</button>
+						</div>
+					</div>
+					<div>
+						<span class="search-filter-label">Relic Type</span>
+						<div class="relic-filter-row" role="group" aria-label="Relic type filter">
+							<button class="relic-filter-button active" type="button" data-relic-filter="any" aria-pressed="true">Any</button>
+							<button class="relic-filter-button" type="button" data-relic-filter="lith" aria-pressed="false">Lith</button>
+							<button class="relic-filter-button" type="button" data-relic-filter="meso" aria-pressed="false">Meso</button>
+							<button class="relic-filter-button" type="button" data-relic-filter="neo" aria-pressed="false">Neo</button>
+							<button class="relic-filter-button" type="button" data-relic-filter="axi" aria-pressed="false">Axi</button>
+							<button class="relic-filter-button" type="button" data-relic-filter="none" aria-pressed="false">None</button>
+						</div>
+					</div>
+				</div>
+				<p class="search-hint">Use the quick filters for Any, Is, or Not states, or type filters like <code>is:mastered</code>, <code>not:crafted</code>, <code>is:vaulted</code>, <code>notowned:void</code>. Combine terms with <code>,</code> for AND and <code>|</code> for OR.</p>
 			</div>
 		</div>
 

@@ -66,6 +66,13 @@ var GOOGLE_TOKEN_EXPIRY_KEY = GOOGLE_CONFIG.tokenExpiryKey;
 var GOOGLE_OAUTH_STATE_KEY = GOOGLE_CONFIG.oauthStateKey;
 var GOOGLE_DATA_FILE = GOOGLE_CONFIG.dataFile;
 var GOOGLE_SCOPE = GOOGLE_CONFIG.scope;
+var SEARCH_FILTER_STATES = ['any', 'is', 'not'];
+var SEARCH_FILTER_LABELS = {
+	any: 'Any',
+	is: 'Is',
+	not: 'Not'
+};
+var activeRelicFilter = 'any';
 
 loadSavedData();
 parseGoogleAuthRedirect();
@@ -74,6 +81,8 @@ initializeClarity();
 
 $(document).ready(function() {
 	$('#search').on('input', search);
+	initializeSearchFilters();
+	initializeRelicFilter();
 	$(document).on('change', 'input[type=checkbox]', handleCheckboxChanged);
 	$('#import-field').on('change', updateImportLabel);
 	$('#export-button').click(function() {
@@ -203,11 +212,11 @@ function loadItems(url) {
 }
 
 function search() {
-	var val = $(this).val().toLowerCase();
-	var searchStrings = val.split('|');
+	var searchClauses = buildSearchClauses($('#search').val());
 	$('.list-group-item').each(function() {
 		var item = getItem($(this).data('id'));
-		if (val == '' || isItemMatch(item, searchStrings))
+		var matchesText = searchClauses.length === 0 || isItemMatch(item, searchClauses);
+		if (matchesText && matchesRelicFilter(item))
 			$(this).show();
 		else
 			$(this).hide();
@@ -217,9 +226,130 @@ function search() {
 	$('.list-group-item:visible:first').trigger('click');
 }
 
+function initializeSearchFilters() {
+	$('.search-filter-toggle').on('click', function() {
+		var nextState = getNextSearchFilterState($(this).data('filter-state'));
+		setSearchFilterState($(this), nextState);
+		search();
+	});
+}
+
+function initializeRelicFilter() {
+	$('.relic-filter-button').on('click', function() {
+		activeRelicFilter = $(this).data('relic-filter');
+		$('.relic-filter-button')
+			.removeClass('active')
+			.attr('aria-pressed', 'false');
+		$(this)
+			.addClass('active')
+			.attr('aria-pressed', 'true');
+		search();
+	});
+}
+
+function getNextSearchFilterState(currentState) {
+	var currentIndex = SEARCH_FILTER_STATES.indexOf(currentState);
+	if (currentIndex === -1)
+		return SEARCH_FILTER_STATES[0];
+
+	return SEARCH_FILTER_STATES[(currentIndex + 1) % SEARCH_FILTER_STATES.length];
+}
+
+function setSearchFilterState(button, state) {
+	button
+		.data('filter-state', state)
+		.attr('data-filter-state', state)
+		.text(SEARCH_FILTER_LABELS[state] || SEARCH_FILTER_LABELS.any)
+		.attr('aria-pressed', state === 'any' ? 'false' : 'true')
+		.removeClass('state-is state-not');
+
+	if (state === 'is')
+		button.addClass('state-is');
+	else if (state === 'not')
+		button.addClass('state-not');
+}
+
+function buildSearchClauses(rawValue) {
+	var normalized = String(rawValue || '').toLowerCase().trim();
+	var uiKeywords = getActiveSearchFilterKeywords();
+	var groups = normalized ? normalized.split('|') : [''];
+	var clauses = [];
+
+	for (var i = 0; i < groups.length; ++i) {
+		var terms = [];
+		var groupTerms = groups[i].split(',');
+		for (var t = 0; t < groupTerms.length; ++t) {
+			var term = groupTerms[t].trim();
+			if (term)
+				terms.push(term);
+		}
+
+		terms = terms.concat(uiKeywords);
+		if (terms.length)
+			clauses.push(terms);
+	}
+
+	return clauses;
+}
+
+function getActiveSearchFilterKeywords() {
+	var keywords = [];
+	$('.search-filter-toggle').each(function() {
+		var state = $(this).data('filter-state');
+		var key = $(this).data('filter-key');
+		if (state === 'is' || state === 'not')
+			keywords.push(state + ':' + key);
+	});
+	return keywords;
+}
+
+function matchesRelicFilter(item) {
+	if (activeRelicFilter === 'any')
+		return true;
+
+	var relicTypes = getItemRelicTypes(item);
+	if (activeRelicFilter === 'none')
+		return relicTypes.length === 0;
+
+	return relicTypes.includes(activeRelicFilter);
+}
+
+function getItemRelicTypes(item) {
+	var relicTypes = [];
+	if (!item.components)
+		return relicTypes;
+
+	for (var i = 0; i < item.components.length; ++i) {
+		var component = item.components[i];
+		if (!component.drops)
+			continue;
+
+		for (var d = 0; d < component.drops.length; ++d) {
+			var relicType = getRelicTypeFromLocation(component.drops[d].location);
+			if (relicType && !relicTypes.includes(relicType))
+				relicTypes.push(relicType);
+		}
+	}
+
+	return relicTypes;
+}
+
+function getRelicTypeFromLocation(location) {
+	var normalized = String(location || '').toLowerCase();
+	if (normalized.indexOf('lith ') === 0)
+		return 'lith';
+	if (normalized.indexOf('meso ') === 0)
+		return 'meso';
+	if (normalized.indexOf('neo ') === 0)
+		return 'neo';
+	if (normalized.indexOf('axi ') === 0)
+		return 'axi';
+	return null;
+}
+
 function isItemMatch(item, searches) {
 	for (var i = 0; i < searches.length; ++i)
-		if (andMatch(item, searches[i].split(',')))
+		if (andMatch(item, searches[i]))
 			return true;
 	return false;
 }
@@ -439,6 +569,7 @@ function saveCurrentItem() {
 	}
 
 	updateSummary();
+	search();
 	scheduleGoogleAutoSync();
 }
 
