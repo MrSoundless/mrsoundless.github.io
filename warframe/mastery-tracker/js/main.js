@@ -308,9 +308,6 @@ function matchesRelicFilter(item) {
 		return true;
 
 	var relicTypes = getItemRelicTypes(item);
-	if (activeRelicFilter === 'none')
-		return relicTypes.length === 0;
-
 	return relicTypes.includes(activeRelicFilter);
 }
 
@@ -405,6 +402,9 @@ function matchKeyword(item, keyword) {
 			if (component.drops) {
 				for (var d = 0; d < component.drops.length; ++d) {
 					var drop = component.drops[d];
+					if (!isDropAllowedByActiveRelicFilter(drop))
+						continue;
+
 					var loc = drop.location.toLowerCase();
 					if (loc.includes(cleanKeyword))
 						return true;
@@ -414,6 +414,13 @@ function matchKeyword(item, keyword) {
 	}
 
 	return false;
+}
+
+function isDropAllowedByActiveRelicFilter(drop) {
+	if (activeRelicFilter === 'any')
+		return true;
+
+	return getRelicTypeFromLocation(drop.location) === activeRelicFilter;
 }
 
 function itemClick() {
