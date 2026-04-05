@@ -216,7 +216,7 @@ function search() {
 	$('.list-group-item').each(function() {
 		var item = getItem($(this).data('id'));
 		var matchesText = searchClauses.length === 0 || isItemMatch(item, searchClauses);
-		if (matchesText && matchesRelicFilter(item))
+		if (matchesText && matchesStateFilters(item) && matchesRelicFilter(item))
 			$(this).show();
 		else
 			$(this).hide();
@@ -271,7 +271,6 @@ function setSearchFilterState(button, state) {
 
 function buildSearchClauses(rawValue) {
 	var normalized = String(rawValue || '').toLowerCase().trim();
-	var uiKeywords = getActiveSearchFilterKeywords();
 	var groups = normalized ? normalized.split('|') : [''];
 	var clauses = [];
 
@@ -284,7 +283,6 @@ function buildSearchClauses(rawValue) {
 				terms.push(term);
 		}
 
-		terms = terms.concat(uiKeywords);
 		if (terms.length)
 			clauses.push(terms);
 	}
@@ -292,15 +290,29 @@ function buildSearchClauses(rawValue) {
 	return clauses;
 }
 
-function getActiveSearchFilterKeywords() {
-	var keywords = [];
+function matchesStateFilters(item) {
+	var savedItem = getDataById(saveData, item.uniqueName);
+	var isMastered = !!(savedItem && savedItem.mastered);
+	var isCrafted = !!(savedItem && savedItem.crafted);
+	var isVaulted = item.vaulted === true;
+
+	return matchesTriStateFilter('mastered', isMastered)
+		&& matchesTriStateFilter('crafted', isCrafted)
+		&& matchesTriStateFilter('vaulted', isVaulted);
+}
+
+function matchesTriStateFilter(key, value) {
+	var state = 'any';
 	$('.search-filter-toggle').each(function() {
-		var state = $(this).data('filter-state');
-		var key = $(this).data('filter-key');
-		if (state === 'is' || state === 'not')
-			keywords.push(state + ':' + key);
+		if ($(this).data('filter-key') === key)
+			state = $(this).data('filter-state') || 'any';
 	});
-	return keywords;
+
+	if (state === 'is')
+		return value === true;
+	if (state === 'not')
+		return value !== true;
+	return true;
 }
 
 function matchesRelicFilter(item) {
