@@ -709,6 +709,7 @@ function waitForGoogleIdentity(maxAttempts = 20, interval = 500) {
     groupSections.forEach((section) => {
       section.summary = summarizeTasks(section.tasks);
     });
+    groupSections.sort((a, b) => compareGroupSections(a, b, state.filters.sortBy));
 
     return {
       games,
@@ -995,6 +996,49 @@ function waitForGoogleIdentity(maxAttempts = 20, interval = 500) {
     return compareOptionalDates(a.nextRelevantAt, b.nextRelevantAt) || compareByPriority(a, b) || compareByAvailability(a, b) || compareByName(a, b);
   }
 
+  function compareGroupSections(a, b, sortBy) {
+    const anchorA = getGroupSortAnchor(a, sortBy);
+    const anchorB = getGroupSortAnchor(b, sortBy);
+
+    if (anchorA && anchorB) {
+      if (sortBy === "time") {
+        return compareOptionalDates(anchorA.nextRelevantAt, anchorB.nextRelevantAt)
+          || compareByPriority(a, b)
+          || compareByPriority(anchorA, anchorB)
+          || compareByAvailability(anchorA, anchorB)
+          || compareByName(a, b);
+      }
+      if (sortBy === "priority") {
+        return compareByPriority(a, b)
+          || compareByPriority(anchorA, anchorB)
+          || compareByAvailability(anchorA, anchorB)
+          || compareOptionalDates(anchorA.nextRelevantAt, anchorB.nextRelevantAt)
+          || compareByName(a, b);
+      }
+      if (sortBy === "alphabetical") {
+        return compareByName(a, b)
+          || compareByPriority(a, b)
+          || compareByPriority(anchorA, anchorB)
+          || compareByAvailability(anchorA, anchorB);
+      }
+      const taskComparison = compareTasks(anchorA, anchorB, sortBy);
+      if (taskComparison) {
+        return taskComparison;
+      }
+    } else if (anchorA || anchorB) {
+      return anchorA ? -1 : 1;
+    }
+
+    return compareByPriority(a, b) || compareByName(a, b);
+  }
+
+  function getGroupSortAnchor(group, sortBy) {
+    if (!group || !Array.isArray(group.tasks) || !group.tasks.length) {
+      return null;
+    }
+    return [...group.tasks].sort((a, b) => compareTasks(a, b, sortBy))[0] || null;
+  }
+
   function compareByPriority(a, b) {
     return (b.priority || 0) - (a.priority || 0);
   }
@@ -1014,7 +1058,11 @@ function waitForGoogleIdentity(maxAttempts = 20, interval = 500) {
     if (!b) {
       return -1;
     }
-    return a.getTime() - b.getTime();
+    return normalizeComparisonTime(a) - normalizeComparisonTime(b);
+  }
+
+  function normalizeComparisonTime(value) {
+    return Math.floor(value.getTime() / 1000);
   }
 
   function compareByName(a, b) {
@@ -1307,7 +1355,7 @@ function waitForGoogleIdentity(maxAttempts = 20, interval = 500) {
         if (a.isUrgent !== b.isUrgent) {
           return a.isUrgent ? -1 : 1;
         }
-        return compareOptionalDates(a.nextRelevantAt, b.nextRelevantAt);
+        return compareOptionalDates(a.nextRelevantAt, b.nextRelevantAt) || compareByPriority(a, b) || compareByName(a, b);
       })[0];
 
     if (!priorityTask) {
