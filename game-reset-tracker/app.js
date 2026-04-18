@@ -800,7 +800,7 @@ function waitForGoogleIdentity(maxAttempts = 20, interval = 500) {
       : task.type;
     const completedAt = task.completedAt ? new Date(task.completedAt) : null;
     const effectiveExpiresAt = group && group.isEventGroup
-      ? group.expiresAt || null
+      ? task.expiresAt || group.expiresAt || null
       : task.expiresAt || (group && group.expiresAt) || game.expiresAt || null;
     const expirationDate = effectiveExpiresAt ? new Date(effectiveExpiresAt) : null;
     const isExpired = isExpiredAt(effectiveExpiresAt, now);
@@ -1970,7 +1970,7 @@ function waitForGoogleIdentity(maxAttempts = 20, interval = 500) {
 
     sections.taskFieldsSection.hidden = !sections.isTask || Boolean(taskInEventGroup);
     sections.groupFieldsSection.hidden = !sections.isGroup;
-    sections.expirationFieldsSection.hidden = !(groupIsEvent || taskIsEvent);
+    sections.expirationFieldsSection.hidden = !(groupIsEvent || taskIsEvent || taskInEventGroup);
     sections.resetFieldsSection.hidden = groupIsEvent;
 
     syncResetFieldState(form, sections.resetFieldsSection, sections.isGame || groupIsEvent);
@@ -2022,7 +2022,12 @@ function waitForGoogleIdentity(maxAttempts = 20, interval = 500) {
     const isEventTask = entityType === "task" && formData.get("taskType") === "event";
     const resetOverrideEnabled = entityType === "game" ? true : isEventGroup ? false : formData.get("resetEnabled") === "on";
     const existing = formData.get("id") ? findEntityById(entityType, String(formData.get("id"))) : null;
-    const expiresAt = ((entityType === "group" && isEventGroup) || (entityType === "task" && isEventTask)) && formData.get("expiresAt")
+    const selectedGroup = entityType === "task" && formData.get("targetGroupId")
+      ? getAvailableGroupsForGame(String(formData.get("targetGameId") || "")).find((group) => group.id === String(formData.get("targetGroupId") || ""))
+      : null;
+    const taskInEventGroup = entityType === "task" && selectedGroup && selectedGroup.isEventGroup;
+    const allowsExpiration = (entityType === "group" && isEventGroup) || (entityType === "task" && (isEventTask || taskInEventGroup));
+    const expiresAt = allowsExpiration && formData.get("expiresAt")
       ? new Date(String(formData.get("expiresAt"))).toISOString()
       : null;
 
