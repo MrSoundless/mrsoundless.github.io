@@ -623,7 +623,6 @@ function waitForGoogleIdentity(maxAttempts = 20, interval = 500) {
     renderContextActions(model);
     renderTaskList(model);
     renderGamesList(model.games);
-    renderEditor();
   }
 
   function syncFilterControls(games) {
@@ -709,6 +708,32 @@ function waitForGoogleIdentity(maxAttempts = 20, interval = 500) {
     groupSections.forEach((section) => {
       section.summary = summarizeTasks(section.tasks);
     });
+
+    games
+      .flatMap((game) => game.groups)
+      .filter((group) => {
+        if (scopeId && group.gameId !== scopeId) {
+          return false;
+        }
+        if (scopedGroupKey && group.groupKey !== scopedGroupKey) {
+          return false;
+        }
+        if (state.filters.gameId !== "all" && group.gameId !== state.filters.gameId) {
+          return false;
+        }
+        return true;
+      })
+      .forEach((group) => {
+        if (sectionMap.has(group.groupKey)) {
+          return;
+        }
+        groupSections.push({
+          ...group,
+          tasks: [],
+          summary: summarizeTasks([]),
+        });
+      });
+
     groupSections.sort((a, b) => compareGroupSections(a, b, state.filters.sortBy));
 
     return {
@@ -1796,7 +1821,10 @@ function waitForGoogleIdentity(maxAttempts = 20, interval = 500) {
               </div>
               ${isExpanded
             ? `<div class="game-links-row">
-                    ${realGroups.map((group) => `<button class="entity-link game-group-link ${state.view.groupKey === group.groupKey ? "active" : ""}" type="button" data-focus-group-card="${escapeHtml(group.groupKey)}" data-game-id="${escapeHtml(game.id)}">${escapeHtml(group.name)}</button>`).join("")}
+                    ${realGroups.map((group) => `
+                      <button class="entity-link game-group-link ${state.view.groupKey === group.groupKey ? "active" : ""}" type="button" data-focus-group-card="${escapeHtml(group.groupKey)}" data-game-id="${escapeHtml(game.id)}">${escapeHtml(group.name)}</button>
+                      <button class="entity-link game-group-link" type="button" data-edit-group="${escapeHtml(group.id)}">Edit</button>
+                    `).join("")}
                   </div>`
             : ""}`
           : ""}
@@ -1815,6 +1843,9 @@ function waitForGoogleIdentity(maxAttempts = 20, interval = 500) {
     });
     elements.gamesList.querySelectorAll("[data-export-game]").forEach((button) => {
       button.addEventListener("click", () => exportGameJson(button.dataset.exportGame));
+    });
+    elements.gamesList.querySelectorAll("[data-edit-group]").forEach((button) => {
+      button.addEventListener("click", () => openEditor({ mode: "edit", entityType: "group", id: button.dataset.editGroup }));
     });
     elements.gamesList.querySelectorAll("[data-toggle-game-groups]").forEach((button) => {
       button.addEventListener("click", () => {
