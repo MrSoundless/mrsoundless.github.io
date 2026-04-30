@@ -626,11 +626,12 @@ function waitForGoogleIdentity(maxAttempts = 20, interval = 500) {
   }
 
   function syncFilterControls(games) {
+    const sortedGames = [...games].sort(compareByName);
     elements.filterGame.innerHTML = ['<option value="all">All games</option>']
-      .concat(games.map((game) => `<option value="${escapeHtml(game.id)}">${escapeHtml(game.name)}</option>`))
+      .concat(sortedGames.map((game) => `<option value="${escapeHtml(game.id)}">${escapeHtml(game.name)}</option>`))
       .join("");
 
-    elements.filterGame.value = games.some((game) => game.id === state.filters.gameId) || state.filters.gameId === "all"
+    elements.filterGame.value = sortedGames.some((game) => game.id === state.filters.gameId) || state.filters.gameId === "all"
       ? state.filters.gameId
       : "all";
     if (elements.filterGame.value !== state.filters.gameId) {
@@ -1091,7 +1092,7 @@ function waitForGoogleIdentity(maxAttempts = 20, interval = 500) {
   }
 
   function compareByName(a, b) {
-    return a.name.localeCompare(b.name);
+    return String(a.name || "").localeCompare(String(b.name || ""), undefined, { sensitivity: "base" });
   }
 
   function hashString(value) {
@@ -2401,7 +2402,9 @@ function waitForGoogleIdentity(maxAttempts = 20, interval = 500) {
   }
 
   function getAvailableGamesForEditor() {
-    return state.data.games.map((game) => ({ id: game.id, name: game.name }));
+    return state.data.games
+      .map((game) => ({ id: game.id, name: game.name }))
+      .sort(compareByName);
   }
 
   function getAvailableGroupsForEditor() {
@@ -2413,14 +2416,16 @@ function waitForGoogleIdentity(maxAttempts = 20, interval = 500) {
     if (!game) {
       return [];
     }
-    return (game.groups || []).map((group) => ({
-      id: group.id,
-      name: group.name,
-      groupKey: group.id,
-      gameId: game.id,
-      gameName: game.name,
-      isEventGroup: Boolean(group.isEventGroup),
-    }));
+    return (game.groups || [])
+      .map((group) => ({
+        id: group.id,
+        name: group.name,
+        groupKey: group.id,
+        gameId: game.id,
+        gameName: game.name,
+        isEventGroup: Boolean(group.isEventGroup),
+      }))
+      .sort(compareByName);
   }
 
   function resolveGroupIdFromKey(groupKey) {
