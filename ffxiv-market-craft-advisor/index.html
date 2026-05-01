@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FFXIV Market Craft Advisor</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="page-shell">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">FFXIV Marketboard Helper</p>
+        <h1>FFXIV Market Craft Advisor</h1>
+      </div>
+      <p class="topbar-copy">Compare raw sales, deep craft chains, and market velocity without digging through the board by hand.</p>
+    </header>
+
+    <section class="workspace">
+      <aside class="controls-column">
+        <section class="card form-card">
+          <div class="section-heading">
+            <p class="section-kicker">Inputs</p>
+            <h2>Choose your market</h2>
+          </div>
+          <form id="advisor-form" class="advisor-form">
+            <div class="form-grid">
+              <div class="field">
+                <label for="datacenter">Datacenter</label>
+                <select id="datacenter" required>
+                  <option value="Aether">Aether</option>
+                  <option value="Chaos">Chaos</option>
+                  <option value="Crystal">Crystal</option>
+                  <option value="Light">Light</option>
+                  <option value="Primal">Primal</option>
+                </select>
+              </div>
+
+              <div class="field">
+                <label for="server">Server</label>
+                <select id="server">
+                  <option value="">All worlds in datacenter</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="ingredient">Ingredient</label>
+              <input id="ingredient" list="ingredient-list" type="text" placeholder="Type at least 2 letters, e.g. Honey" required />
+              <datalist id="ingredient-list"></datalist>
+              <p class="field-hint">Suggestions are limited to craft-relevant ingredients and are cached locally.</p>
+            </div>
+
+            <div class="field">
+              <label for="quantity">Quantity Owned</label>
+              <input id="quantity" type="number" min="1" value="1" required />
+            </div>
+
+            <button type="submit">Calculate Best Option</button>
+          </form>
+        </section>
+      </aside>
+
+      <section class="results-column">
+        <section id="results" class="card results-card hidden">
+          <div class="section-heading">
+            <p class="section-kicker">Recommendation</p>
+            <h2>Best move right now</h2>
+          </div>
+          <div id="result-output"></div>
+        </section>
+      </section>
+    </section>
+
+    <details class="help-panel">
+      <summary>How this works</summary>
+      <div class="help-panel__body">
+        <p>It compares raw selling against direct and multi-step craft paths, then ranks outputs using pricing and recent sale activity.</p>
+        <p>Your last datacenter and world are saved on this device. World selection is optional.</p>
+      </div>
+    </details>
+  </main>
+  <script src="script.js"></script>
+</body>
+</html>

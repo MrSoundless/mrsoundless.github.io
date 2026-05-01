@@ -1798,7 +1798,9 @@ function waitForGoogleIdentity(maxAttempts = 20, interval = 500) {
     `;
 
     elements.gamesList.innerHTML = globalCard + sortedGames.map((game) => {
-      const realGroups = game.groups.filter((group) => !group.isVirtual);
+      const realGroups = game.groups
+        .filter((group) => !group.isVirtual)
+        .sort(compareByName);
       const isExpanded = Boolean(state.expandedGameGroups[game.id]);
 
       return `
