@@ -17,7 +17,7 @@ A static GitHub Pages site for comparing whether it is better to sell an ingredi
 
 ## Live pricing
 
-This site resolves item IDs through XIVAPI and fetches live market prices from Universalis. No manual price file is required.
+This site resolves item IDs through XIVAPI and fetches live market prices from Universalis. It prefers current listings when they look reasonable, falls back to recent sale prices when an item is sold out, and ignores obviously inflated listings when recent sale data suggests the listing is an outlier. No manual price file is required.
 
 ## Supported ingredients
 

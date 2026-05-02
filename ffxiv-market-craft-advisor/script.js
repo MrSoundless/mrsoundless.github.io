@@ -893,18 +893,46 @@ async function fetchMarketPrices(scope, itemIdsByName) {
 
 function getAggregatedPrice(result) {
   return (
-    result?.nq?.minListing?.world?.price ??
-    result?.nq?.minListing?.dc?.price ??
-    result?.nq?.averageSalePrice?.world?.price ??
-    result?.nq?.averageSalePrice?.dc?.price ??
-    result?.nq?.medianListing?.world?.price ??
-    result?.nq?.medianListing?.dc?.price ??
-    result?.hq?.minListing?.world?.price ??
-    result?.hq?.minListing?.dc?.price ??
-    result?.hq?.averageSalePrice?.world?.price ??
-    result?.hq?.averageSalePrice?.dc?.price ??
-    result?.hq?.medianListing?.world?.price ??
-    result?.hq?.medianListing?.dc?.price ??
+    selectTrustedMarketPrice(result?.nq) ??
+    selectTrustedMarketPrice(result?.hq) ??
     null
   );
+}
+
+function selectTrustedMarketPrice(qualityData) {
+  if (!qualityData) {
+    return null;
+  }
+
+  const listingPrice = qualityData?.minListing?.world?.price ?? qualityData?.minListing?.dc?.price ?? null;
+  const salePrice = qualityData?.averageSalePrice?.world?.price ?? qualityData?.averageSalePrice?.dc?.price ?? null;
+  const medianListingPrice = qualityData?.medianListing?.world?.price ?? qualityData?.medianListing?.dc?.price ?? null;
+
+  if (listingPrice == null) {
+    return salePrice ?? medianListingPrice ?? null;
+  }
+
+  if (salePrice == null) {
+    return listingPrice;
+  }
+
+  const safeAnchorPrice = medianListingPrice != null
+    ? Math.min(salePrice, medianListingPrice)
+    : salePrice;
+  const suspiciousListingMultiplier = medianListingPrice != null ? 2.5 : 3;
+
+  if (safeAnchorPrice > 0 && listingPrice > (safeAnchorPrice * suspiciousListingMultiplier)) {
+    return safeAnchorPrice;
+  }
+
+  if (
+    medianListingPrice != null
+    && salePrice > 0
+    && listingPrice > (salePrice * 2)
+    && medianListingPrice > (salePrice * 1.5)
+  ) {
+    return salePrice;
+  }
+
+  return listingPrice;
 }
