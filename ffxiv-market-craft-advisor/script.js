@@ -14,11 +14,14 @@ const LOCAL_STORAGE_IDS_CACHE_KEY = "ffxivCraftAdvisorItemCache";
 const LOCAL_STORAGE_PREFERENCES_KEY = "ffxivCraftAdvisorPreferences";
 const LOCAL_STORAGE_INGREDIENT_CACHE_KEY = "ffxivCraftAdvisorIngredientNames";
 const RECENT_HISTORY_SAMPLE_SIZE = 20;
+const RECENT_PRICE_SAMPLE_SIZE = 20;
+const MAX_LISTING_SAMPLE_SIZE = 20;
 const MAX_CRAFT_CHAIN_DEPTH = 5;
 const MAX_SALES_ACTIVITY_CANDIDATES = 6;
 const MAX_ALTERNATIVE_SUGGESTIONS = 3;
 const MAX_INGREDIENT_SUGGESTIONS = 16;
 const MIN_INGREDIENT_SEARCH_LENGTH = 2;
+const SUSPICIOUS_PRICE_MULTIPLIER = 3;
 
 let teamcraftItems = null;
 let teamcraftRecipes = null;
@@ -795,6 +798,16 @@ async function fetchCraftSalesActivity(scope, candidateRecipes, itemIdsByName) {
   return Object.fromEntries(activityEntries);
 }
 
+async function fetchDetailedMarketSnapshot(scope, itemId) {
+  const response = await fetch(
+    `${UNIVERSALIS_BASE_URL}/${encodeURIComponent(scope)}/${itemId}?entries=${RECENT_PRICE_SAMPLE_SIZE}&listings=${MAX_LISTING_SAMPLE_SIZE}`
+  );
+  if (!response.ok) {
+    throw new Error(`Universalis market request failed for item ${itemId}.`);
+  }
+  return response.json();
+}
+
 function summarizeSalesActivity(marketData) {
   const sales = Array.isArray(marketData?.recentHistory) ? marketData.recentHistory : [];
   const listingCount = Array.isArray(marketData?.listings)
@@ -866,73 +879,89 @@ function formatRelativeTimeFromUnix(unixSeconds) {
 }
 
 async function fetchMarketPrices(scope, itemIdsByName) {
-  const itemIds = Object.values(itemIdsByName);
-  const url = `${UNIVERSALIS_BASE_URL}/aggregated/${encodeURIComponent(scope)}/${itemIds.join(",")}`;
-  const response = await fetch(url);
-  if (!response.ok) {
-    throw new Error(`Unable to fetch market prices from Universalis for ${scope}.`);
-  }
-
-  const json = await response.json();
-  const results = json.results || [];
-  const priceById = {};
-
-  for (const result of results) {
-    const price = getAggregatedPrice(result);
-    if (price != null) {
-      priceById[result.itemId] = price;
+  const pricesByNameEntries = await Promise.all(Object.entries(itemIdsByName).map(async ([name, itemId]) => {
+    try {
+      const marketSnapshot = await fetchDetailedMarketSnapshot(scope, itemId);
+      return [name, getTrustedMarketPrice(marketSnapshot)];
+    } catch (error) {
+      console.warn("Could not load detailed market pricing:", name, error);
+      return [name, null];
     }
-  }
+  }));
 
-  const pricesByName = {};
-  for (const [name, itemId] of Object.entries(itemIdsByName)) {
-    pricesByName[name] = priceById[itemId] ?? null;
-  }
-  return pricesByName;
+  return Object.fromEntries(pricesByNameEntries);
 }
 
-function getAggregatedPrice(result) {
-  return (
-    selectTrustedMarketPrice(result?.nq) ??
-    selectTrustedMarketPrice(result?.hq) ??
-    null
-  );
+function getTrustedMarketPrice(marketData) {
+  const salePrices = extractRecentSalePrices(marketData);
+  const listingPrices = extractListingPrices(marketData);
+  const recentSaleMedian = computeMedian(salePrices);
+  const recentSaleAverage = computeAverage(salePrices);
+
+  if (listingPrices.length === 0) {
+    return recentSaleMedian ?? recentSaleAverage ?? null;
+  }
+
+  if (recentSaleMedian == null) {
+    return listingPrices[0] ?? null;
+  }
+
+  const reasonableListings = listingPrices.filter((price) => price <= (recentSaleMedian * SUSPICIOUS_PRICE_MULTIPLIER));
+  if (reasonableListings.length > 0) {
+    return reasonableListings[0];
+  }
+
+  return recentSaleMedian ?? recentSaleAverage ?? listingPrices[0] ?? null;
 }
 
-function selectTrustedMarketPrice(qualityData) {
-  if (!qualityData) {
+function extractRecentSalePrices(marketData) {
+  const sales = Array.isArray(marketData?.recentHistory) ? marketData.recentHistory : [];
+  return sales
+    .map((sale) => extractUnitPrice(sale))
+    .filter((price) => Number.isFinite(price) && price > 0)
+    .sort((left, right) => left - right);
+}
+
+function extractListingPrices(marketData) {
+  const listings = Array.isArray(marketData?.listings) ? marketData.listings : [];
+  return listings
+    .map((listing) => extractUnitPrice(listing))
+    .filter((price) => Number.isFinite(price) && price > 0)
+    .sort((left, right) => left - right);
+}
+
+function extractUnitPrice(entry) {
+  const directUnitPrice = Number(entry?.pricePerUnit);
+  if (Number.isFinite(directUnitPrice) && directUnitPrice > 0) {
+    return directUnitPrice;
+  }
+
+  const totalPrice = Number(entry?.price);
+  const quantity = Number(entry?.quantity);
+  if (Number.isFinite(totalPrice) && totalPrice > 0 && Number.isFinite(quantity) && quantity > 0) {
+    return totalPrice / quantity;
+  }
+
+  return null;
+}
+
+function computeMedian(values) {
+  if (!Array.isArray(values) || values.length === 0) {
     return null;
   }
 
-  const listingPrice = qualityData?.minListing?.world?.price ?? qualityData?.minListing?.dc?.price ?? null;
-  const salePrice = qualityData?.averageSalePrice?.world?.price ?? qualityData?.averageSalePrice?.dc?.price ?? null;
-  const medianListingPrice = qualityData?.medianListing?.world?.price ?? qualityData?.medianListing?.dc?.price ?? null;
-
-  if (listingPrice == null) {
-    return salePrice ?? medianListingPrice ?? null;
+  const middle = Math.floor(values.length / 2);
+  if (values.length % 2 === 0) {
+    return (values[middle - 1] + values[middle]) / 2;
   }
 
-  if (salePrice == null) {
-    return listingPrice;
+  return values[middle];
+}
+
+function computeAverage(values) {
+  if (!Array.isArray(values) || values.length === 0) {
+    return null;
   }
 
-  const safeAnchorPrice = medianListingPrice != null
-    ? Math.min(salePrice, medianListingPrice)
-    : salePrice;
-  const suspiciousListingMultiplier = medianListingPrice != null ? 2.5 : 3;
-
-  if (safeAnchorPrice > 0 && listingPrice > (safeAnchorPrice * suspiciousListingMultiplier)) {
-    return safeAnchorPrice;
-  }
-
-  if (
-    medianListingPrice != null
-    && salePrice > 0
-    && listingPrice > (salePrice * 2)
-    && medianListingPrice > (salePrice * 1.5)
-  ) {
-    return salePrice;
-  }
-
-  return listingPrice;
+  return values.reduce((sum, value) => sum + value, 0) / values.length;
 }
