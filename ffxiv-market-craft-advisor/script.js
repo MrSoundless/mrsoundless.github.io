@@ -22,12 +22,18 @@ const MAX_ALTERNATIVE_SUGGESTIONS = 3;
 const MAX_INGREDIENT_SUGGESTIONS = 16;
 const MIN_INGREDIENT_SEARCH_LENGTH = 2;
 const SUSPICIOUS_PRICE_MULTIPLIER = 3;
+const UNIVERSALIS_BATCH_SIZE = 100;
+const UNIVERSALIS_MAX_RETRIES = 3;
+const UNIVERSALIS_RETRY_BASE_DELAY_MS = 1000;
+const MARKET_CACHE_TTL_MS = 60 * 1000;
 
 let teamcraftItems = null;
 let teamcraftRecipes = null;
 let ingredientNames = null;
 let ingredientSearchIndex = null;
 const itemIdLookupCache = loadItemIdCache();
+const marketSnapshotCache = new Map();
+let isAdvisorRunning = false;
 
 const datacenterSelect = document.getElementById("datacenter");
 const serverSelect = document.getElementById("server");
@@ -37,6 +43,7 @@ const form = document.getElementById("advisor-form");
 const resultSection = document.getElementById("results");
 const resultOutput = document.getElementById("result-output");
 const ingredientList = document.getElementById("ingredient-list");
+const submitButton = form.querySelector('button[type="submit"]');
 const savedPreferences = loadPreferences();
 
 initializeDropdowns();
@@ -125,6 +132,9 @@ function initializeIngredientAutocomplete() {
 
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
+  if (isAdvisorRunning) {
+    return;
+  }
   const datacenter = datacenterSelect.value;
   const server = serverSelect.value.trim();
   const rawIngredient = ingredientInput.value.trim();
@@ -140,14 +150,16 @@ form.addEventListener("submit", async (event) => {
     return;
   }
 
-  const canonicalIngredient = await normalizeItemName(rawIngredient);
-  const allRecipes = await loadTeamcraftRecipes();
-  const candidateRecipes = collectCandidateRecipes(canonicalIngredient, allRecipes);
-
-  resultSection.classList.remove("hidden");
-  resultOutput.innerHTML = `<div class="result-block"><p>Checking deep craft paths and recent market activity for ${canonicalIngredient}...</p></div>`;
+  isAdvisorRunning = true;
+  submitButton.disabled = true;
+  submitButton.textContent = "Calculating...";
 
   try {
+    showProgress("Loading recipe data...", 5);
+    const canonicalIngredient = await normalizeItemName(rawIngredient);
+    const allRecipes = await loadTeamcraftRecipes();
+    const candidateRecipes = collectCandidateRecipes(canonicalIngredient, allRecipes);
+
     const plans = buildCraftPlans(canonicalIngredient, candidateRecipes, allRecipes);
     const itemNames = new Set([canonicalIngredient]);
     plans.forEach((plan) => {
@@ -155,17 +167,28 @@ form.addEventListener("submit", async (event) => {
       Object.keys(plan.requirements).forEach((name) => itemNames.add(name));
     });
 
+    updateProgress("Resolving market items...", 15);
     const itemIdsByName = {};
-    for (const name of itemNames) {
+    const namesToResolve = [...itemNames];
+    for (const [index, name] of namesToResolve.entries()) {
       const itemId = await getItemId(name);
       if (!itemId) {
         throw new Error(`Unable to resolve the item ID for ${name}. Please try a more exact item name.`);
       }
       itemIdsByName[name] = itemId;
+      updateProgress(
+        `Resolving market items (${index + 1} of ${namesToResolve.length})...`,
+        15 + Math.round(((index + 1) / namesToResolve.length) * 25)
+      );
     }
 
     const marketScope = server || datacenter;
-    const pricesByName = await fetchMarketPrices(marketScope, itemIdsByName);
+    const pricesByName = await fetchMarketPrices(marketScope, itemIdsByName, (completed, total) => {
+      updateProgress(
+        `Loading market prices (${completed} of ${total})...`,
+        40 + Math.round((completed / total) * 35)
+      );
+    });
     const rawPrice = pricesByName[canonicalIngredient];
 
     if (rawPrice == null) {
@@ -215,7 +238,13 @@ form.addEventListener("submit", async (event) => {
       .sort((left, right) => (right.profitPerInput ?? -Infinity) - (left.profitPerInput ?? -Infinity))
       .slice(0, MAX_SALES_ACTIVITY_CANDIDATES);
 
-    const craftSalesByName = await fetchCraftSalesActivity(marketScope, prioritizedCrafts, itemIdsByName);
+    updateProgress("Checking recent sales activity...", 80);
+    const craftSalesByName = await fetchCraftSalesActivity(marketScope, prioritizedCrafts, itemIdsByName, (completed, total) => {
+      updateProgress(
+        `Checking recent sales (${completed} of ${total})...`,
+        80 + Math.round((completed / Math.max(total, 1)) * 15)
+      );
+    });
     prioritizedCrafts.forEach((option) => {
       option.salesActivity = craftSalesByName[option.name] || createEmptySalesActivity();
       option.salesScore = scoreSalesActivity(option.salesActivity);
@@ -231,11 +260,47 @@ form.addEventListener("submit", async (event) => {
       .slice(1, 1 + MAX_ALTERNATIVE_SUGGESTIONS)
       .filter((option) => option.name !== bestCraft?.name);
 
+    updateProgress("Building recommendation...", 98);
     displayBestOption({ rawSellValue, bestCraft, alternativeCrafts, ingredient: canonicalIngredient, quantity, pricesByName });
   } catch (error) {
     displayError(error.message || "Unable to fetch market data. Try again later.");
+  } finally {
+    isAdvisorRunning = false;
+    submitButton.disabled = false;
+    submitButton.textContent = "Calculate Best Option";
   }
 });
+
+function showProgress(label, percent) {
+  resultSection.classList.remove("hidden");
+  resultOutput.innerHTML = `
+    <div class="progress-panel" aria-live="polite">
+      <div class="progress-panel__header">
+        <strong id="progress-label"></strong>
+        <span id="progress-percent"></span>
+      </div>
+      <div class="progress-track" role="progressbar" aria-labelledby="progress-label" aria-valuemin="0" aria-valuemax="100">
+        <div class="progress-track__fill"></div>
+      </div>
+    </div>
+  `;
+  updateProgress(label, percent);
+}
+
+function updateProgress(label, percent) {
+  const safePercent = Math.max(0, Math.min(100, Math.round(percent)));
+  const labelElement = document.getElementById("progress-label");
+  const percentElement = document.getElementById("progress-percent");
+  const trackElement = resultOutput.querySelector(".progress-track");
+  const fillElement = resultOutput.querySelector(".progress-track__fill");
+  if (!labelElement || !percentElement || !trackElement || !fillElement) {
+    return;
+  }
+  labelElement.textContent = label;
+  percentElement.textContent = `${safePercent}%`;
+  trackElement.setAttribute("aria-valuenow", String(safePercent));
+  fillElement.style.width = `${safePercent}%`;
+}
 
 function displayError(message) {
   resultSection.classList.remove("hidden");
@@ -773,11 +838,14 @@ function scoreCraftOption(option, rawSellValue) {
   return profitScore + (option.salesScore * 500);
 }
 
-async function fetchCraftSalesActivity(scope, candidateRecipes, itemIdsByName) {
+async function fetchCraftSalesActivity(scope, candidateRecipes, itemIdsByName, onProgress = () => {}) {
   const uniqueOutputNames = [...new Set(candidateRecipes.map((recipe) => recipe.name))];
+  let completed = 0;
   const activityEntries = await Promise.all(uniqueOutputNames.map(async (name) => {
     const itemId = itemIdsByName[name];
     if (!itemId) {
+      completed += 1;
+      onProgress(completed, uniqueOutputNames.length);
       return [name, createEmptySalesActivity()];
     }
 
@@ -792,6 +860,9 @@ async function fetchCraftSalesActivity(scope, candidateRecipes, itemIdsByName) {
     } catch (error) {
       console.warn("Could not load craft sales activity:", name, error);
       return [name, createEmptySalesActivity()];
+    } finally {
+      completed += 1;
+      onProgress(completed, uniqueOutputNames.length);
     }
   }));
 
@@ -799,13 +870,72 @@ async function fetchCraftSalesActivity(scope, candidateRecipes, itemIdsByName) {
 }
 
 async function fetchDetailedMarketSnapshot(scope, itemId) {
-  const response = await fetch(
-    `${UNIVERSALIS_BASE_URL}/${encodeURIComponent(scope)}/${itemId}?entries=${RECENT_PRICE_SAMPLE_SIZE}&listings=${MAX_LISTING_SAMPLE_SIZE}`
-  );
-  if (!response.ok) {
-    throw new Error(`Universalis market request failed for item ${itemId}.`);
+  const snapshots = await fetchMarketSnapshots(scope, [itemId]);
+  const snapshot = snapshots.get(String(itemId));
+  if (!snapshot) {
+    throw new Error(`Universalis returned no market data for item ${itemId}.`);
   }
-  return response.json();
+  return snapshot;
+}
+
+async function fetchMarketSnapshots(scope, itemIds, onProgress = () => {}) {
+  const snapshots = new Map();
+  const missingIds = [];
+  const now = Date.now();
+
+  [...new Set(itemIds.map(String))].forEach((itemId) => {
+    const cacheKey = `${scope}:${itemId}`;
+    const cached = marketSnapshotCache.get(cacheKey);
+    if (cached && (now - cached.savedAt) < MARKET_CACHE_TTL_MS) {
+      snapshots.set(itemId, cached.data);
+    } else {
+      missingIds.push(itemId);
+    }
+  });
+
+  const total = snapshots.size + missingIds.length;
+  onProgress(snapshots.size, total);
+
+  for (let index = 0; index < missingIds.length; index += UNIVERSALIS_BATCH_SIZE) {
+    const batch = missingIds.slice(index, index + UNIVERSALIS_BATCH_SIZE);
+    const url = `${UNIVERSALIS_BASE_URL}/${encodeURIComponent(scope)}/${batch.join(",")}?entries=${RECENT_PRICE_SAMPLE_SIZE}&listings=${MAX_LISTING_SAMPLE_SIZE}`;
+    const response = await fetchUniversalisWithRetry(url);
+    const json = await response.json();
+    const items = batch.length === 1 ? { [batch[0]]: json } : (json.items || {});
+
+    batch.forEach((itemId) => {
+      const data = items[itemId];
+      if (data) {
+        snapshots.set(itemId, data);
+        marketSnapshotCache.set(`${scope}:${itemId}`, { data, savedAt: Date.now() });
+      }
+    });
+    onProgress(snapshots.size, total);
+  }
+
+  return snapshots;
+}
+
+async function fetchUniversalisWithRetry(url) {
+  for (let attempt = 0; attempt <= UNIVERSALIS_MAX_RETRIES; attempt += 1) {
+    const response = await fetch(url);
+    if (response.ok) {
+      return response;
+    }
+
+    const canRetry = response.status === 429 || response.status >= 500;
+    if (!canRetry || attempt === UNIVERSALIS_MAX_RETRIES) {
+      throw new Error(`Universalis request failed (${response.status}).`);
+    }
+
+    const retryAfterSeconds = Number(response.headers.get("Retry-After"));
+    const delayMs = Number.isFinite(retryAfterSeconds) && retryAfterSeconds >= 0
+      ? retryAfterSeconds * 1000
+      : UNIVERSALIS_RETRY_BASE_DELAY_MS * (2 ** attempt);
+    await new Promise((resolve) => setTimeout(resolve, delayMs));
+  }
+
+  throw new Error("Universalis request failed.");
 }
 
 function summarizeSalesActivity(marketData) {
@@ -878,16 +1008,12 @@ function formatRelativeTimeFromUnix(unixSeconds) {
   return `${months} month${months === 1 ? "" : "s"} ago`;
 }
 
-async function fetchMarketPrices(scope, itemIdsByName) {
-  const pricesByNameEntries = await Promise.all(Object.entries(itemIdsByName).map(async ([name, itemId]) => {
-    try {
-      const marketSnapshot = await fetchDetailedMarketSnapshot(scope, itemId);
-      return [name, getTrustedMarketPrice(marketSnapshot)];
-    } catch (error) {
-      console.warn("Could not load detailed market pricing:", name, error);
-      return [name, null];
-    }
-  }));
+async function fetchMarketPrices(scope, itemIdsByName, onProgress = () => {}) {
+  const snapshots = await fetchMarketSnapshots(scope, Object.values(itemIdsByName), onProgress);
+  const pricesByNameEntries = Object.entries(itemIdsByName).map(([name, itemId]) => {
+    const marketSnapshot = snapshots.get(String(itemId));
+    return [name, marketSnapshot ? getTrustedMarketPrice(marketSnapshot) : null];
+  });
 
   return Object.fromEntries(pricesByNameEntries);
 }

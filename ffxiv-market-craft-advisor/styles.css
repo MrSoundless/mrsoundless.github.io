@@ -188,6 +188,50 @@ button:hover {
   filter: brightness(1.03);
 }
 
+button:disabled {
+  cursor: wait;
+  filter: saturate(0.65);
+  opacity: 0.78;
+  transform: none;
+}
+
+.progress-panel {
+  display: grid;
+  gap: 12px;
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: linear-gradient(180deg, rgba(36, 45, 51, 0.96), rgba(27, 34, 39, 0.98));
+}
+
+.progress-panel__header {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.progress-panel__header span {
+  color: var(--accent-strong);
+  font-variant-numeric: tabular-nums;
+}
+
+.progress-track {
+  height: 12px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: #11171a;
+}
+
+.progress-track__fill {
+  width: 0;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--accent), var(--accent-strong));
+  box-shadow: 0 0 16px rgba(242, 209, 138, 0.28);
+  transition: width 0.22s ease;
+}
+
 .results-card {
   min-height: 220px;
 }
