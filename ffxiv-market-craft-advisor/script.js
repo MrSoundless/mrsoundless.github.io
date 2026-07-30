@@ -16,7 +16,7 @@ const LOCAL_STORAGE_INGREDIENT_CACHE_KEY = "ffxivCraftAdvisorIngredientNames";
 const RECENT_PRICE_SAMPLE_SIZE = 20;
 const MAX_LISTING_SAMPLE_SIZE = 20;
 const MAX_CRAFT_CHAIN_DEPTH = 5;
-const MAX_MOST_SOLD_ITEMS = 10;
+const MAX_TABLE_ITEMS = 10;
 const MAX_INGREDIENT_SUGGESTIONS = 16;
 const MIN_INGREDIENT_SEARCH_LENGTH = 2;
 const SUSPICIOUS_PRICE_MULTIPLIER = 3;
@@ -37,6 +37,7 @@ const datacenterSelect = document.getElementById("datacenter");
 const serverSelect = document.getElementById("server");
 const ingredientInput = document.getElementById("ingredient");
 const quantityInput = document.getElementById("quantity");
+const directOnlyInput = document.getElementById("direct-only");
 const form = document.getElementById("advisor-form");
 const resultSection = document.getElementById("results");
 const resultOutput = document.getElementById("result-output");
@@ -137,6 +138,7 @@ form.addEventListener("submit", async (event) => {
   const server = serverSelect.value.trim();
   const rawIngredient = ingredientInput.value.trim();
   const quantity = Number(quantityInput.value);
+  const directOnly = directOnlyInput.checked;
 
   if (!SUPPORTED_DATACENTERS.includes(datacenter)) {
     displayError(`Unknown datacenter: ${datacenter}`);
@@ -156,7 +158,7 @@ form.addEventListener("submit", async (event) => {
     showProgress("Loading recipe data...", 5);
     const canonicalIngredient = await normalizeItemName(rawIngredient);
     const allRecipes = await loadTeamcraftRecipes();
-    const candidateRecipes = collectCandidateRecipes(canonicalIngredient, allRecipes);
+    const candidateRecipes = collectCandidateRecipes(canonicalIngredient, allRecipes, directOnly);
 
     const plans = buildCraftPlans(canonicalIngredient, candidateRecipes, allRecipes);
     const itemNames = new Set([canonicalIngredient]);
@@ -250,17 +252,27 @@ form.addEventListener("submit", async (event) => {
       .sort((left, right) => right.overallScore - left.overallScore);
 
     const bestCraft = viableCrafts[0] || null;
-    const mostSoldCrafts = pricedCrafts
+    const rankedCrafts = pricedCrafts
       .filter((option) => option.salesActivity.hasRecentSales)
       .sort((left, right) => (
-        right.salesActivity.unitsSold - left.salesActivity.unitsSold
-        || right.salesActivity.salesCount - left.salesActivity.salesCount
+        getDemandRank(right.salesActivity.label) - getDemandRank(left.salesActivity.label)
+        || (right.totalProfit ?? -Infinity) - (left.totalProfit ?? -Infinity)
         || (right.profitPerCraft ?? -Infinity) - (left.profitPerCraft ?? -Infinity)
+        || right.salesActivity.unitsSold - left.salesActivity.unitsSold
+        || right.salesActivity.salesCount - left.salesActivity.salesCount
       ))
-      .slice(0, MAX_MOST_SOLD_ITEMS);
+      .slice(0, MAX_TABLE_ITEMS);
 
     updateProgress("Building recommendation...", 98);
-    displayBestOption({ rawSellValue, bestCraft, mostSoldCrafts, ingredient: canonicalIngredient, quantity, pricesByName });
+    displayBestOption({
+      rawSellValue,
+      bestCraft,
+      rankedCrafts,
+      ingredient: canonicalIngredient,
+      quantity,
+      pricesByName,
+      directOnly,
+    });
   } catch (error) {
     displayError(error.message || "Unable to fetch market data. Try again later.");
   } finally {
@@ -306,10 +318,10 @@ function displayError(message) {
   resultOutput.innerHTML = `<div class="result-block"><p><strong>Error:</strong> ${message}</p></div>`;
 }
 
-function displayBestOption({ rawSellValue, bestCraft, mostSoldCrafts, ingredient, quantity, pricesByName }) {
+function displayBestOption({ rawSellValue, bestCraft, rankedCrafts, ingredient, quantity, pricesByName, directOnly }) {
   const rawUnitPrice = pricesByName[ingredient];
   const rawStatement = `Selling ${quantity} ${ingredient}${quantity === 1 ? "" : "s"} raw at ${formatPrice(rawUnitPrice)} each yields ${formatPrice(rawSellValue)}.`;
-  const mostSoldTable = renderMostSoldTable(mostSoldCrafts, bestCraft);
+  const craftTable = renderCraftTable(rankedCrafts, bestCraft, directOnly);
 
   if (!bestCraft) {
     resultOutput.innerHTML = `
@@ -317,7 +329,7 @@ function displayBestOption({ rawSellValue, bestCraft, mostSoldCrafts, ingredient
         <div class="result-head">
           <span class="result-badge">Best Option</span>
           <h3>Sell the raw ingredient</h3>
-          <p>No crafted item with both reliable pricing and recent sales activity was found for ${ingredient}.</p>
+          <p>No ${directOnly ? "directly " : ""}crafted item with both reliable pricing and recent sales activity was found for ${ingredient}.</p>
         </div>
         <div class="result-stats">
           ${renderStatCard("Raw Unit Price", formatPrice(rawUnitPrice))}
@@ -329,7 +341,7 @@ function displayBestOption({ rawSellValue, bestCraft, mostSoldCrafts, ingredient
             <h4>Why</h4>
             <p>${rawStatement}</p>
           </div>
-          ${mostSoldTable}
+          ${craftTable}
         </div>
       </div>
     `;
@@ -390,21 +402,21 @@ function displayBestOption({ rawSellValue, bestCraft, mostSoldCrafts, ingredient
           <h4>Craft Chain</h4>
           <p>${bestCraft.chainSummary}</p>
         </div>
-        ${mostSoldTable}
+        ${craftTable}
       </div>
     </div>
   `;
 }
 
-function renderMostSoldTable(crafts, bestCraft) {
+function renderCraftTable(crafts, bestCraft, directOnly) {
   if (crafts.length === 0) {
     return "";
   }
 
   return `
     <div class="result-note result-note--wide">
-      <h4>Most Sold Craftable Items</h4>
-      <p class="sales-table-intro">Ranked by units sold in the recent Universalis history sample.</p>
+      <h4>${directOnly ? "Direct " : ""}Craftable Items by Demand and Total Profit</h4>
+      <p class="sales-table-intro">Ranked by demand tier first, then by estimated total profit from the quantity you own.</p>
       <div class="sales-table-wrap">
         <table class="sales-table">
           <thead>
@@ -415,6 +427,7 @@ function renderMostSoldTable(crafts, bestCraft) {
               <th scope="col">Units sold</th>
               <th scope="col">Sales</th>
               <th scope="col">Last sold</th>
+              <th scope="col">Total profit</th>
               <th scope="col">Profit / craft</th>
               <th scope="col">You can craft</th>
             </tr>
@@ -431,8 +444,11 @@ function renderMostSoldTable(crafts, bestCraft) {
                 <td data-label="Units sold">${option.salesActivity.unitsSold.toLocaleString()}</td>
                 <td data-label="Sales">${option.salesActivity.salesCount.toLocaleString()}</td>
                 <td data-label="Last sold">${option.salesActivity.lastSoldRelative || "Unknown"}</td>
+                <td data-label="Total profit" class="${option.totalProfit >= 0 ? "sales-table__profit" : "sales-table__loss"}">
+                  ${option.totalProfit >= 0 ? "+" : "-"}${formatPrice(Math.abs(option.totalProfit))}
+                </td>
                 <td data-label="Profit / craft" class="${option.profitPerCraft >= 0 ? "sales-table__profit" : "sales-table__loss"}">
-                  ${option.profitPerCraft >= 0 ? "+" : "−"}${formatPrice(Math.abs(option.profitPerCraft))}
+                  ${option.profitPerCraft >= 0 ? "+" : "-"}${formatPrice(Math.abs(option.profitPerCraft))}
                 </td>
                 <td data-label="You can craft">${option.maxCraftCount.toLocaleString()}</td>
               </tr>
@@ -587,7 +603,7 @@ async function loadTeamcraftRecipes() {
   return teamcraftRecipes;
 }
 
-function collectCandidateRecipes(rootIngredient, allRecipes) {
+function collectCandidateRecipes(rootIngredient, allRecipes, directOnly = false) {
   const recipesByIngredient = buildRecipesByIngredientMap(allRecipes);
   const candidates = [];
   const seenOutputs = new Set();
@@ -605,7 +621,7 @@ function collectCandidateRecipes(rootIngredient, allRecipes) {
         seenOutputs.add(outputKey);
       }
 
-      if (!path.has(recipe.name)) {
+      if (!directOnly && !path.has(recipe.name)) {
         const nextPath = new Set(path);
         nextPath.add(recipe.name);
         visit(recipe.name, depth + 1, nextPath);
@@ -794,6 +810,11 @@ function initializeDropdowns() {
     savePreferences();
   });
 
+  directOnlyInput.checked = savedPreferences.directOnly;
+  directOnlyInput.addEventListener("change", () => {
+    savePreferences();
+  });
+
   populateServerOptions(datacenterSelect.value, savedPreferences.server);
 }
 
@@ -826,9 +847,10 @@ function loadPreferences() {
     return {
       datacenter: typeof parsed.datacenter === "string" ? parsed.datacenter : "",
       server: typeof parsed.server === "string" ? parsed.server : "",
+      directOnly: parsed.directOnly === true,
     };
   } catch {
-    return { datacenter: "", server: "" };
+    return { datacenter: "", server: "", directOnly: false };
   }
 }
 
@@ -837,6 +859,7 @@ function savePreferences() {
     localStorage.setItem(LOCAL_STORAGE_PREFERENCES_KEY, JSON.stringify({
       datacenter: datacenterSelect.value,
       server: serverSelect.value,
+      directOnly: directOnlyInput.checked,
     }));
   } catch {
     // Ignore storage failures.
@@ -1002,6 +1025,17 @@ function getSalesActivityLabel({ salesCount, unitsSold, lastSoldAt, listingCount
   }
 
   return "Slow seller";
+}
+
+function getDemandRank(label) {
+  const demandRanks = {
+    "Sells very well": 5,
+    "Sells well": 4,
+    "Moderate demand": 3,
+    "Moderate demand, more competition": 2,
+    "Slow seller": 1,
+  };
+  return demandRanks[label] || 0;
 }
 
 function formatRelativeTimeFromUnix(unixSeconds) {

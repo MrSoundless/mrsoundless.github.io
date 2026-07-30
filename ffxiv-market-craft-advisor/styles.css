@@ -172,6 +172,40 @@ select:focus {
   line-height: 1.45;
 }
 
+.toggle-field {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 11px 12px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: #12181c;
+  cursor: pointer;
+}
+
+.toggle-field input {
+  width: 18px;
+  height: 18px;
+  margin: 2px 0 0;
+  accent-color: var(--accent);
+}
+
+.toggle-field span {
+  display: grid;
+  gap: 2px;
+}
+
+.toggle-field small {
+  color: var(--muted);
+  font-weight: 400;
+  line-height: 1.4;
+}
+
+.toggle-field:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(215, 180, 106, 0.18);
+}
+
 button {
   border: none;
   border-radius: 14px;
@@ -374,7 +408,7 @@ button:disabled {
 
 .sales-table {
   width: 100%;
-  min-width: 820px;
+  min-width: 940px;
   border-collapse: collapse;
   background: var(--panel-strong);
   font-size: 0.9rem;
