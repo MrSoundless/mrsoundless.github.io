@@ -13,12 +13,10 @@ const UNIVERSALIS_BASE_URL = "https://universalis.app/api/v2";
 const LOCAL_STORAGE_IDS_CACHE_KEY = "ffxivCraftAdvisorItemCache";
 const LOCAL_STORAGE_PREFERENCES_KEY = "ffxivCraftAdvisorPreferences";
 const LOCAL_STORAGE_INGREDIENT_CACHE_KEY = "ffxivCraftAdvisorIngredientNames";
-const RECENT_HISTORY_SAMPLE_SIZE = 20;
 const RECENT_PRICE_SAMPLE_SIZE = 20;
 const MAX_LISTING_SAMPLE_SIZE = 20;
 const MAX_CRAFT_CHAIN_DEPTH = 5;
-const MAX_SALES_ACTIVITY_CANDIDATES = 6;
-const MAX_ALTERNATIVE_SUGGESTIONS = 3;
+const MAX_MOST_SOLD_ITEMS = 10;
 const MAX_INGREDIENT_SUGGESTIONS = 16;
 const MIN_INGREDIENT_SEARCH_LENGTH = 2;
 const SUSPICIOUS_PRICE_MULTIPLIER = 3;
@@ -234,34 +232,35 @@ form.addEventListener("submit", async (event) => {
         && !option.recipeMissingPrice
     );
 
-    const prioritizedCrafts = pricedCrafts
-      .sort((left, right) => (right.profitPerInput ?? -Infinity) - (left.profitPerInput ?? -Infinity))
-      .slice(0, MAX_SALES_ACTIVITY_CANDIDATES);
-
     updateProgress("Checking recent sales activity...", 80);
-    const craftSalesByName = await fetchCraftSalesActivity(marketScope, prioritizedCrafts, itemIdsByName, (completed, total) => {
+    const craftSalesByName = await fetchCraftSalesActivity(marketScope, pricedCrafts, itemIdsByName, (completed, total) => {
       updateProgress(
         `Checking recent sales (${completed} of ${total})...`,
         80 + Math.round((completed / Math.max(total, 1)) * 15)
       );
     });
-    prioritizedCrafts.forEach((option) => {
+    pricedCrafts.forEach((option) => {
       option.salesActivity = craftSalesByName[option.name] || createEmptySalesActivity();
       option.salesScore = scoreSalesActivity(option.salesActivity);
       option.overallScore = scoreCraftOption(option, rawSellValue);
     });
 
-    const viableCrafts = prioritizedCrafts
+    const viableCrafts = pricedCrafts
       .filter((option) => option.salesScore > 0 && option.salesActivity.label !== "Slow seller")
       .sort((left, right) => right.overallScore - left.overallScore);
 
     const bestCraft = viableCrafts[0] || null;
-    const alternativeCrafts = viableCrafts
-      .slice(1, 1 + MAX_ALTERNATIVE_SUGGESTIONS)
-      .filter((option) => option.name !== bestCraft?.name);
+    const mostSoldCrafts = pricedCrafts
+      .filter((option) => option.salesActivity.hasRecentSales)
+      .sort((left, right) => (
+        right.salesActivity.unitsSold - left.salesActivity.unitsSold
+        || right.salesActivity.salesCount - left.salesActivity.salesCount
+        || (right.profitPerCraft ?? -Infinity) - (left.profitPerCraft ?? -Infinity)
+      ))
+      .slice(0, MAX_MOST_SOLD_ITEMS);
 
     updateProgress("Building recommendation...", 98);
-    displayBestOption({ rawSellValue, bestCraft, alternativeCrafts, ingredient: canonicalIngredient, quantity, pricesByName });
+    displayBestOption({ rawSellValue, bestCraft, mostSoldCrafts, ingredient: canonicalIngredient, quantity, pricesByName });
   } catch (error) {
     displayError(error.message || "Unable to fetch market data. Try again later.");
   } finally {
@@ -307,9 +306,10 @@ function displayError(message) {
   resultOutput.innerHTML = `<div class="result-block"><p><strong>Error:</strong> ${message}</p></div>`;
 }
 
-function displayBestOption({ rawSellValue, bestCraft, alternativeCrafts, ingredient, quantity, pricesByName }) {
+function displayBestOption({ rawSellValue, bestCraft, mostSoldCrafts, ingredient, quantity, pricesByName }) {
   const rawUnitPrice = pricesByName[ingredient];
   const rawStatement = `Selling ${quantity} ${ingredient}${quantity === 1 ? "" : "s"} raw at ${formatPrice(rawUnitPrice)} each yields ${formatPrice(rawSellValue)}.`;
+  const mostSoldTable = renderMostSoldTable(mostSoldCrafts, bestCraft);
 
   if (!bestCraft) {
     resultOutput.innerHTML = `
@@ -329,6 +329,7 @@ function displayBestOption({ rawSellValue, bestCraft, alternativeCrafts, ingredi
             <h4>Why</h4>
             <p>${rawStatement}</p>
           </div>
+          ${mostSoldTable}
         </div>
       </div>
     `;
@@ -389,20 +390,55 @@ function displayBestOption({ rawSellValue, bestCraft, alternativeCrafts, ingredi
           <h4>Craft Chain</h4>
           <p>${bestCraft.chainSummary}</p>
         </div>
-        ${alternativeCrafts.length > 0 ? `
-          <div class="result-note">
-            <h4>Other Good Options</h4>
-            <div class="alternative-list">
-              ${alternativeCrafts.map((option) => `
-                <article class="alternative-card">
-                  <strong>${option.name}</strong>
-                  <span>${option.salesActivity.label}</span>
-                  <p>${option.profitPerCraft > 0 ? `${formatPrice(option.profitPerCraft)} profit per craft` : `${formatPrice(Math.abs(option.profitPerCraft))} loss per craft`}. ${option.maxCraftCount} craft${option.maxCraftCount === 1 ? "" : "s"} possible.</p>
-                </article>
-              `).join("")}
-            </div>
-          </div>
-        ` : ""}
+        ${mostSoldTable}
+      </div>
+    </div>
+  `;
+}
+
+function renderMostSoldTable(crafts, bestCraft) {
+  if (crafts.length === 0) {
+    return "";
+  }
+
+  return `
+    <div class="result-note result-note--wide">
+      <h4>Most Sold Craftable Items</h4>
+      <p class="sales-table-intro">Ranked by units sold in the recent Universalis history sample.</p>
+      <div class="sales-table-wrap">
+        <table class="sales-table">
+          <thead>
+            <tr>
+              <th scope="col">#</th>
+              <th scope="col">Item</th>
+              <th scope="col">Demand</th>
+              <th scope="col">Units sold</th>
+              <th scope="col">Sales</th>
+              <th scope="col">Last sold</th>
+              <th scope="col">Profit / craft</th>
+              <th scope="col">You can craft</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${crafts.map((option, index) => `
+              <tr${option.name === bestCraft?.name ? ' class="sales-table__recommended"' : ""}>
+                <td data-label="Rank">${index + 1}</td>
+                <th scope="row" data-label="Item">
+                  ${option.name}
+                  ${option.name === bestCraft?.name ? '<span class="sales-table__badge">Recommended</span>' : ""}
+                </th>
+                <td data-label="Demand">${option.salesActivity.label}</td>
+                <td data-label="Units sold">${option.salesActivity.unitsSold.toLocaleString()}</td>
+                <td data-label="Sales">${option.salesActivity.salesCount.toLocaleString()}</td>
+                <td data-label="Last sold">${option.salesActivity.lastSoldRelative || "Unknown"}</td>
+                <td data-label="Profit / craft" class="${option.profitPerCraft >= 0 ? "sales-table__profit" : "sales-table__loss"}">
+                  ${option.profitPerCraft >= 0 ? "+" : "−"}${formatPrice(Math.abs(option.profitPerCraft))}
+                </td>
+                <td data-label="You can craft">${option.maxCraftCount.toLocaleString()}</td>
+              </tr>
+            `).join("")}
+          </tbody>
+        </table>
       </div>
     </div>
   `;
@@ -840,31 +876,14 @@ function scoreCraftOption(option, rawSellValue) {
 
 async function fetchCraftSalesActivity(scope, candidateRecipes, itemIdsByName, onProgress = () => {}) {
   const uniqueOutputNames = [...new Set(candidateRecipes.map((recipe) => recipe.name))];
-  let completed = 0;
-  const activityEntries = await Promise.all(uniqueOutputNames.map(async (name) => {
-    const itemId = itemIdsByName[name];
-    if (!itemId) {
-      completed += 1;
-      onProgress(completed, uniqueOutputNames.length);
-      return [name, createEmptySalesActivity()];
-    }
-
-    try {
-      const response = await fetch(`${UNIVERSALIS_BASE_URL}/${encodeURIComponent(scope)}/${itemId}?entries=${RECENT_HISTORY_SAMPLE_SIZE}`);
-      if (!response.ok) {
-        throw new Error(`Universalis activity request failed for ${name}`);
-      }
-
-      const json = await response.json();
-      return [name, summarizeSalesActivity(json)];
-    } catch (error) {
-      console.warn("Could not load craft sales activity:", name, error);
-      return [name, createEmptySalesActivity()];
-    } finally {
-      completed += 1;
-      onProgress(completed, uniqueOutputNames.length);
-    }
-  }));
+  const itemIds = uniqueOutputNames
+    .map((name) => itemIdsByName[name])
+    .filter(Boolean);
+  const snapshots = await fetchMarketSnapshots(scope, itemIds, onProgress);
+  const activityEntries = uniqueOutputNames.map((name) => {
+    const snapshot = snapshots.get(String(itemIdsByName[name]));
+    return [name, snapshot ? summarizeSalesActivity(snapshot) : createEmptySalesActivity()];
+  });
 
   return Object.fromEntries(activityEntries);
 }

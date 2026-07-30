@@ -357,32 +357,79 @@ button:disabled {
   line-height: 1.6;
 }
 
-.alternative-list {
-  display: grid;
-  gap: 10px;
+.result-note--wide {
+  grid-column: 1 / -1;
 }
 
-.alternative-card {
-  display: grid;
-  gap: 4px;
-  padding: 12px;
+.result-note .sales-table-intro {
+  margin-bottom: 10px;
+  font-size: 0.9rem;
+}
+
+.sales-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--border);
   border-radius: 14px;
-  background: var(--panel-accent);
-  border: 1px solid rgba(215, 180, 106, 0.14);
 }
 
-.alternative-card strong {
-  font-size: 0.98rem;
+.sales-table {
+  width: 100%;
+  min-width: 820px;
+  border-collapse: collapse;
+  background: var(--panel-strong);
+  font-size: 0.9rem;
 }
 
-.alternative-card span,
-.alternative-card p {
+.sales-table th,
+.sales-table td {
+  padding: 11px 12px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  vertical-align: middle;
+}
+
+.sales-table thead th {
   color: var(--muted);
+  background: #182025;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
 }
 
-.alternative-card p {
-  margin: 0;
-  line-height: 1.5;
+.sales-table tbody tr:last-child > * {
+  border-bottom: 0;
+}
+
+.sales-table tbody tr:hover {
+  background: var(--panel-accent);
+}
+
+.sales-table__recommended {
+  background: rgba(215, 180, 106, 0.09);
+}
+
+.sales-table__badge {
+  display: block;
+  width: fit-content;
+  margin-top: 4px;
+  padding: 2px 6px;
+  border-radius: 999px;
+  color: var(--accent-strong);
+  background: rgba(215, 180, 106, 0.15);
+  font-size: 0.65rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.sales-table__profit {
+  color: var(--success);
+  white-space: nowrap;
+}
+
+.sales-table__loss {
+  color: var(--danger);
+  white-space: nowrap;
 }
 
 .help-panel {
