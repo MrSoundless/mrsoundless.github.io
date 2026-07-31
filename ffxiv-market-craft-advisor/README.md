@@ -1,6 +1,6 @@
 # FFXIV Market Craft Advisor
 
-A static GitHub Pages site for comparing whether it is better to sell an ingredient raw, or craft it into a higher-value item and sell that instead.
+A static GitHub Pages site for comparing whether it is better to sell an ingredient raw, craft it into a higher-value item, or exchange Crafters'/Gatherers' Scrip for a marketable reward.
 
 ## Files
 
@@ -15,10 +15,12 @@ A static GitHub Pages site for comparing whether it is better to sell an ingredi
 3. Enter the ingredient you own and the quantity.
 4. View the recommended option.
 
+For scrip, choose Crafters' or Gatherers' Scrip, select Orange or Purple, choose a specific world, and enter the amount you own. The advisor ranks marketable exchange rewards by the estimated return available from that amount and by gil per scrip.
+
 ## Live pricing
 
 This site resolves item IDs through XIVAPI and fetches live market prices from Universalis. It compares current listings against recent sale history for every item, falls back to recent sale prices when an item is sold out, and ignores obviously inflated listings when they are far above what players have actually been paying. No manual price file is required.
 
-## Supported ingredients
+## Scrip exchange data
 
-The current recipe set supports Honey, White Pepper, Raw Culinary Fish, and Egg. You can extend the recipe list in `script.js` to add more ingredients and crafts.
+Marketable Crafters' and Gatherers' Scrip rewards and exchange costs are discovered from XIVAPI's live `SpecialShop` game data. Live prices and recent sales are loaded from Universalis. Both Orange and Purple Scrip are supported, with no hardcoded reward catalog.

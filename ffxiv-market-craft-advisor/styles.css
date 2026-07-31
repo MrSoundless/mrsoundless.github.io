@@ -229,6 +229,15 @@ button:disabled {
   transform: none;
 }
 
+.market-link {
+  color: var(--accent-strong);
+  text-underline-offset: 0.18em;
+}
+
+.market-link:hover {
+  color: var(--text);
+}
+
 .progress-panel {
   display: grid;
   gap: 12px;

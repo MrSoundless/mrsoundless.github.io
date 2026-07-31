@@ -9,7 +9,15 @@ const SUPPORTED_DATACENTERS = Object.keys(DATACENTER_WORLDS).sort(compareNames);
 const TEAMCRAFT_ITEMS_URL = "https://raw.githubusercontent.com/ffxiv-teamcraft/ffxiv-teamcraft/master/libs/data/src/lib/json/items.json";
 const TEAMCRAFT_RECIPES_URL = "https://raw.githubusercontent.com/ffxiv-teamcraft/ffxiv-teamcraft/master/libs/data/src/lib/json/recipes.json";
 const XIVAPI_SEARCH_URL = "https://xivapi.com/search?indexes=item&string=";
+const XIVAPI_V2_BASE_URL = "https://v2.xivapi.com/api";
 const UNIVERSALIS_BASE_URL = "https://universalis.app/api/v2";
+// SpecialShop encodes alternate currencies with stable internal cost IDs.
+const SCRIP_COST_CODES = {
+  "Purple Crafters": 2,
+  "Purple Gatherers": 4,
+  "Orange Crafters": 6,
+  "Orange Gatherers": 7,
+};
 const LOCAL_STORAGE_IDS_CACHE_KEY = "ffxivCraftAdvisorItemCache";
 const LOCAL_STORAGE_PREFERENCES_KEY = "ffxivCraftAdvisorPreferences";
 const LOCAL_STORAGE_INGREDIENT_CACHE_KEY = "ffxivCraftAdvisorIngredientNames";
@@ -31,13 +39,20 @@ let ingredientNames = null;
 let ingredientSearchIndex = null;
 const itemIdLookupCache = loadItemIdCache();
 const marketSnapshotCache = new Map();
+const scripExchangeCache = new Map();
 let isAdvisorRunning = false;
 
 const datacenterSelect = document.getElementById("datacenter");
 const serverSelect = document.getElementById("server");
+const analysisModeSelect = document.getElementById("analysis-mode");
 const ingredientInput = document.getElementById("ingredient");
+const ingredientField = document.getElementById("ingredient-field");
+const scripColorField = document.getElementById("scrip-color-field");
+const scripColorSelect = document.getElementById("scrip-color");
 const quantityInput = document.getElementById("quantity");
+const quantityLabel = document.getElementById("quantity-label");
 const directOnlyInput = document.getElementById("direct-only");
+const directOnlyField = document.getElementById("direct-only-field");
 const form = document.getElementById("advisor-form");
 const resultSection = document.getElementById("results");
 const resultOutput = document.getElementById("result-output");
@@ -47,6 +62,22 @@ const savedPreferences = loadPreferences();
 
 initializeDropdowns();
 initializeIngredientAutocomplete();
+updateAnalysisMode();
+
+analysisModeSelect.addEventListener("change", () => {
+  updateAnalysisMode();
+  savePreferences();
+});
+
+function updateAnalysisMode() {
+  const isIngredientMode = analysisModeSelect.value === "ingredient";
+  ingredientField.classList.toggle("hidden", !isIngredientMode);
+  scripColorField.classList.toggle("hidden", isIngredientMode);
+  directOnlyField.classList.toggle("hidden", !isIngredientMode);
+  ingredientInput.required = isIngredientMode;
+  quantityLabel.textContent = isIngredientMode ? "Quantity Owned" : "Scrip Owned";
+  submitButton.textContent = isIngredientMode ? "Calculate Best Option" : "Find Best Scrip Exchange";
+}
 
 async function loadIngredientNames() {
   try {
@@ -139,14 +170,20 @@ form.addEventListener("submit", async (event) => {
   const rawIngredient = ingredientInput.value.trim();
   const quantity = Number(quantityInput.value);
   const directOnly = directOnlyInput.checked;
+  const analysisMode = analysisModeSelect.value;
 
   if (!SUPPORTED_DATACENTERS.includes(datacenter)) {
     displayError(`Unknown datacenter: ${datacenter}`);
     return;
   }
 
-  if (!rawIngredient || quantity <= 0) {
-    displayError("Please enter a valid ingredient and quantity.");
+  if (quantity <= 0 || (analysisMode === "ingredient" && !rawIngredient)) {
+    displayError(`Please enter a valid ${analysisMode === "ingredient" ? "ingredient and quantity" : "scrip amount"}.`);
+    return;
+  }
+
+  if (analysisMode !== "ingredient" && !server) {
+    displayError("Choose a specific world to compare scrip exchange rewards.");
     return;
   }
 
@@ -155,6 +192,16 @@ form.addEventListener("submit", async (event) => {
   submitButton.textContent = "Calculating...";
 
   try {
+    if (analysisMode !== "ingredient") {
+      await analyzeScripExchange({
+        server,
+        quantity,
+        discipline: analysisMode === "crafter-scrip" ? "Crafters" : "Gatherers",
+        color: scripColorSelect.value,
+      });
+      return;
+    }
+
     showProgress("Loading recipe data...", 5);
     const canonicalIngredient = await normalizeItemName(rawIngredient);
     const allRecipes = await loadTeamcraftRecipes();
@@ -278,9 +325,259 @@ form.addEventListener("submit", async (event) => {
   } finally {
     isAdvisorRunning = false;
     submitButton.disabled = false;
-    submitButton.textContent = "Calculate Best Option";
+    updateAnalysisMode();
   }
 });
+
+async function analyzeScripExchange({ server, quantity, discipline, color }) {
+  const category = `${color} ${discipline}`;
+  showProgress(`Loading ${category} exchange rewards...`, 15);
+  const catalog = await loadScripExchangeOptions(category);
+  const affordableCatalog = catalog.filter(({ cost }) => cost <= quantity);
+
+  if (affordableCatalog.length === 0) {
+    throw new Error(`No marketable ${category} reward fits within ${quantity.toLocaleString()} scrip.`);
+  }
+
+  const items = await fetchTeamcraftItems();
+  const snapshots = await fetchMarketSnapshots(
+    server,
+    affordableCatalog.map(({ itemId }) => itemId),
+    (completed, total) => {
+      updateProgress(
+        `Loading market prices (${completed} of ${total})...`,
+        20 + Math.round((completed / Math.max(total, 1)) * 60)
+      );
+    }
+  );
+
+  updateProgress("Comparing exchange values and sales...", 85);
+  const options = affordableCatalog
+    .map(({ itemId, cost, rewardQty }) => {
+      const snapshot = snapshots.get(String(itemId));
+      const unitPrice = snapshot ? getTrustedMarketPrice(snapshot) : null;
+      const exchangeCount = cost > 0 ? Math.floor(quantity / cost) : 0;
+      const purchaseCount = exchangeCount * rewardQty;
+      const salesActivity = snapshot ? summarizeSalesActivity(snapshot) : createEmptySalesActivity();
+      return {
+        itemId,
+        name: items[itemId]?.en || `Item ${itemId}`,
+        cost,
+        unitPrice,
+        rewardQty,
+        gilPerScrip: cost > 0 ? (unitPrice * rewardQty) / cost : 0,
+        exchangeCount,
+        purchaseCount,
+        totalValue: purchaseCount * unitPrice,
+        salesCount: salesActivity.salesCount,
+        unitsSold: salesActivity.unitsSold,
+        universalisUrl: `https://universalis.app/market/${itemId}`,
+      };
+    })
+    .filter((option) => (
+      Number.isFinite(option.cost)
+      && option.cost > 0
+      && Number.isFinite(option.unitPrice)
+      && option.unitPrice > 0
+      && option.purchaseCount > 0
+    ))
+    .sort((left, right) => (
+      right.totalValue - left.totalValue
+      || right.gilPerScrip - left.gilPerScrip
+      || right.unitsSold - left.unitsSold
+    ));
+
+  if (options.length === 0) {
+    throw new Error(`No priced ${category} rewards were found on ${server}.`);
+  }
+
+  updateProgress("Building recommendation...", 98);
+  displayScripResults({
+    server,
+    quantity,
+    category,
+    options: options.slice(0, MAX_TABLE_ITEMS),
+  });
+}
+
+async function loadScripExchangeOptions(category) {
+  if (scripExchangeCache.has(category)) {
+    return scripExchangeCache.get(category);
+  }
+
+  const currencyName = `${category}' Scrip`;
+  const currencyCode = SCRIP_COST_CODES[category];
+  if (!currencyCode) {
+    throw new Error(`Unsupported scrip category: ${category}.`);
+  }
+
+  const color = category.split(" ")[0];
+  const shopSearch = await fetchXivapiV2(
+    `/search?sheets=SpecialShop&fields=Name&limit=100&query=${encodeURIComponent(`Name~"${color} Scrip Exchange"`)}`
+  );
+  const shopResults = [...(shopSearch.results || [])];
+  let nextCursor = shopSearch.next;
+  while (nextCursor) {
+    const nextPage = await fetchXivapiV2(
+      `/search?fields=Name&limit=100&cursor=${encodeURIComponent(nextCursor)}`
+    );
+    shopResults.push(...(nextPage.results || []));
+    nextCursor = nextPage.next;
+  }
+  const shopIds = shopResults.map((result) => result.row_id).filter(Boolean);
+
+  if (shopIds.length === 0) {
+    throw new Error(`No ${color} Scrip exchange shops were found in XIVAPI.`);
+  }
+
+  const fields = [
+    "Item[].Item@as(raw)",
+    "Item[].Item[].IsUntradable",
+    "Item[].ReceiveCount",
+    "Item[].ItemCost@as(raw)",
+    "Item[].CurrencyCost",
+    "Item[].CostType",
+  ].join(",");
+  const shops = await fetchXivapiV2(
+    `/sheet/SpecialShop?rows=${shopIds.join(",")}&fields=${encodeURIComponent(fields)}`
+  );
+  const bestOptionByItem = new Map();
+
+  (shops.rows || []).forEach((shop) => {
+    (shop.fields?.Item || []).forEach((listing) => {
+      const rewardIds = listing["Item@as(raw)"] || [];
+      const rewardItems = listing.Item || [];
+      const rewardCounts = listing.ReceiveCount || [];
+      const costIds = listing["ItemCost@as(raw)"] || [];
+      const costs = listing.CurrencyCost || [];
+      const costTypes = listing.CostType || [];
+      const costIndex = costIds.findIndex(
+        (costId, index) => Number(costId) === currencyCode && Number(costTypes[index]) === 3
+      );
+      const itemId = Number(rewardIds[0]);
+      const rewardQty = Number(rewardCounts[0]) || 1;
+      const cost = Number(costs[costIndex]);
+
+      if (
+        costIndex < 0
+        || !itemId
+        || rewardItems[0]?.fields?.IsUntradable === true
+        || !Number.isFinite(cost)
+        || cost <= 0
+      ) {
+        return;
+      }
+
+      const option = { itemId, cost, rewardQty };
+      const existing = bestOptionByItem.get(itemId);
+      if (!existing || (cost / rewardQty) < (existing.cost / existing.rewardQty)) {
+        bestOptionByItem.set(itemId, option);
+      }
+    });
+  });
+
+  const options = [...bestOptionByItem.values()];
+  if (options.length === 0) {
+    throw new Error(`No rewards paid with ${currencyName} were found in XIVAPI.`);
+  }
+
+  scripExchangeCache.set(category, options);
+  return options;
+}
+
+async function fetchXivapiV2(path) {
+  const response = await fetch(`${XIVAPI_V2_BASE_URL}${path}`);
+  if (!response.ok) {
+    throw new Error(`XIVAPI game-data request failed (${response.status}).`);
+  }
+  return response.json();
+}
+
+function displayScripResults({ server, quantity, category, options }) {
+  const best = options[0];
+  const spent = best.exchangeCount * best.cost;
+  const scripRemaining = quantity - spent;
+
+  resultOutput.innerHTML = `
+    <div class="result-summary result-summary--craft">
+      <div class="result-head">
+        <span class="result-badge">Best Scrip Exchange</span>
+        <h3>Exchange for ${escapeHtml(best.name)}</h3>
+        <p>On ${escapeHtml(server)}, this gives the highest estimated market value that can be purchased with your ${quantity.toLocaleString()} ${escapeHtml(category)} Scrip.</p>
+      </div>
+      <div class="result-stats">
+        ${renderStatCard("Buy", best.purchaseCount.toLocaleString(), `${best.exchangeCount.toLocaleString()} exchange${best.exchangeCount === 1 ? "" : "s"} at ${best.cost.toLocaleString()} scrip`, "primary")}
+        ${renderStatCard("Estimated Return", formatPrice(best.totalValue), `${formatPrice(best.unitPrice)} each`, "primary")}
+        ${renderStatCard("Value / Scrip", formatGilPerScrip(best.gilPerScrip), `${spent.toLocaleString()} scrip spent`)}
+        ${renderStatCard("Scrip Remaining", scripRemaining.toLocaleString())}
+      </div>
+      <div class="result-notes">
+        <div class="result-note">
+          <h4>Recommended Action</h4>
+          <p>Exchange ${spent.toLocaleString()} scrip for ${best.purchaseCount.toLocaleString()} ${escapeHtml(best.name)}, then check the live listings before posting. Estimated returns are gross market value and do not deduct market tax.</p>
+        </div>
+        ${renderScripTable(options)}
+      </div>
+    </div>
+  `;
+}
+
+function renderScripTable(options) {
+  return `
+    <div class="result-note result-note--wide">
+      <h4>Marketable Exchange Rewards</h4>
+      <p class="sales-table-intro">Ranked by estimated total return from the scrip you own, then by gil per scrip.</p>
+      <div class="sales-table-wrap">
+        <table class="sales-table">
+          <thead>
+            <tr>
+              <th scope="col">#</th>
+              <th scope="col">Item</th>
+              <th scope="col">Scrip cost</th>
+              <th scope="col">Market price</th>
+              <th scope="col">Gil / scrip</th>
+              <th scope="col">You can buy</th>
+              <th scope="col">Total return</th>
+              <th scope="col">Units sold</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${options.map((option, index) => `
+              <tr${index === 0 ? ' class="sales-table__recommended"' : ""}>
+                <td data-label="Rank">${index + 1}</td>
+                <th scope="row" data-label="Item">
+                  ${option.universalisUrl
+                    ? `<a class="market-link" href="${escapeHtml(option.universalisUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(option.name)}</a>`
+                    : escapeHtml(option.name)}
+                  ${index === 0 ? '<span class="sales-table__badge">Recommended</span>' : ""}
+                </th>
+                <td data-label="Scrip cost">${option.cost.toLocaleString()}${option.rewardQty > 1 ? ` / ${option.rewardQty.toLocaleString()} items` : ""}</td>
+                <td data-label="Market price">${formatPrice(option.unitPrice)}</td>
+                <td data-label="Gil / scrip">${formatGilPerScrip(option.gilPerScrip)}</td>
+                <td data-label="You can buy">${option.purchaseCount.toLocaleString()}</td>
+                <td data-label="Total return" class="sales-table__profit">${formatPrice(option.totalValue)}</td>
+                <td data-label="Units sold">${option.unitsSold.toLocaleString()}</td>
+              </tr>
+            `).join("")}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+}
+
+function formatGilPerScrip(value) {
+  return `${(Math.round(value * 100) / 100).toLocaleString()} gil`;
+}
+
+function escapeHtml(value) {
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
 
 function showProgress(label, percent) {
   resultSection.classList.remove("hidden");
@@ -815,6 +1112,14 @@ function initializeDropdowns() {
     savePreferences();
   });
 
+  analysisModeSelect.value = ["ingredient", "crafter-scrip", "gatherer-scrip"].includes(savedPreferences.analysisMode)
+    ? savedPreferences.analysisMode
+    : "ingredient";
+  scripColorSelect.value = savedPreferences.scripColor === "Purple" ? "Purple" : "Orange";
+  scripColorSelect.addEventListener("change", () => {
+    savePreferences();
+  });
+
   populateServerOptions(datacenterSelect.value, savedPreferences.server);
 }
 
@@ -848,9 +1153,11 @@ function loadPreferences() {
       datacenter: typeof parsed.datacenter === "string" ? parsed.datacenter : "",
       server: typeof parsed.server === "string" ? parsed.server : "",
       directOnly: parsed.directOnly === true,
+      analysisMode: typeof parsed.analysisMode === "string" ? parsed.analysisMode : "ingredient",
+      scripColor: parsed.scripColor === "Purple" ? "Purple" : "Orange",
     };
   } catch {
-    return { datacenter: "", server: "", directOnly: false };
+    return { datacenter: "", server: "", directOnly: false, analysisMode: "ingredient", scripColor: "Orange" };
   }
 }
 
@@ -860,6 +1167,8 @@ function savePreferences() {
       datacenter: datacenterSelect.value,
       server: serverSelect.value,
       directOnly: directOnlyInput.checked,
+      analysisMode: analysisModeSelect.value,
+      scripColor: scripColorSelect.value,
     }));
   } catch {
     // Ignore storage failures.
