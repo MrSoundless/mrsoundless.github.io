@@ -30,6 +30,7 @@
                 <option value="ingredient">Marketable ingredient</option>
                 <option value="crafter-scrip">Crafters' Scrip</option>
                 <option value="gatherer-scrip">Gatherers' Scrip</option>
+                <option value="tomestone">Allagan Tomestones</option>
               </select>
             </div>
 
@@ -69,13 +70,23 @@
               <p class="field-hint">A specific world is required so exchange rewards can be valued against its market.</p>
             </div>
 
+            <div id="tomestone-type-field" class="field hidden">
+              <label for="tomestone-type">Tomestone type</label>
+              <select id="tomestone-type">
+                <option value="Poetics">Poetics</option>
+                <option value="Mathematics">Mathematics</option>
+                <option value="Mnemonics">Mnemonics</option>
+              </select>
+              <p class="field-hint">Includes every Allagan tomestone that can currently be spent in an item shop.</p>
+            </div>
+
             <div id="scrip-strategy-field" class="field hidden">
-              <label for="scrip-strategy">Scrip strategy</label>
+              <label for="scrip-strategy">Currency strategy</label>
               <select id="scrip-strategy">
                 <option value="sell-rewards">Sell exchange rewards</option>
                 <option value="craft-rewards">Craft with exchange rewards</option>
               </select>
-              <p class="field-hint">Compare selling the materials directly or using them in marketable crafts.</p>
+              <p class="field-hint">Compare selling exchange rewards directly or using them in marketable crafts.</p>
             </div>
 
             <div class="field">
@@ -111,8 +122,9 @@
       <summary>How this works</summary>
       <div class="help-panel__body">
         <p>It compares raw selling against direct and multi-step craft paths, then ranks outputs using pricing and recent sale activity.</p>
-        <p>For Crafters' and Gatherers' Scrip, compare selling marketable rewards directly or crafting items that use those rewards.</p>
-        <p>Your last datacenter and world are saved on this device. World selection is optional for ingredients and required for scrip.</p>
+        <p>For Crafters' and Gatherers' Scrip or Allagan Tomestones, compare selling marketable rewards directly or crafting items that use those rewards.</p>
+        <p>Poetics, Mathematics, and Mnemonics are supported from live game data. Retired tomestones that can only be converted are not included.</p>
+        <p>Your last datacenter and world are saved on this device. World selection is optional for ingredients and required for currency analysis.</p>
       </div>
     </details>
   </main>

@@ -1,6 +1,6 @@
 # FFXIV Market Craft Advisor
 
-A static GitHub Pages site for comparing whether it is better to sell an ingredient raw, craft it into a higher-value item, or exchange Crafters'/Gatherers' Scrip for a marketable reward.
+A static GitHub Pages site for comparing whether it is better to sell an ingredient raw, craft it into a higher-value item, or exchange Crafters'/Gatherers' Scrip or Allagan Tomestones for a marketable reward.
 
 ## Files
 
@@ -17,10 +17,12 @@ A static GitHub Pages site for comparing whether it is better to sell an ingredi
 
 For scrip, choose Crafters' or Gatherers' Scrip, select Orange or Purple, choose a specific world, and enter the amount you own. You can rank exchange rewards for direct sale or rank craftable items that use those rewards after paying for their other ingredients.
 
+For tomestones, choose Allagan Tomestones and select Poetics, Mathematics, or Mnemonics. Exchange rewards and their costs are discovered from current game data; retired tomestones that can only be converted are excluded.
+
 ## Live pricing
 
 This site resolves item IDs through XIVAPI and fetches live market prices from Universalis. It compares current listings against recent sale history for every item, falls back to recent sale prices when an item is sold out, and ignores obviously inflated listings when they are far above what players have actually been paying. No manual price file is required.
 
-## Scrip exchange data
+## Currency exchange data
 
-Marketable Crafters' and Gatherers' Scrip rewards and exchange costs are discovered from XIVAPI's live `SpecialShop` game data. Live prices and recent sales are loaded from Universalis. Both Orange and Purple Scrip are supported, with no hardcoded reward catalog.
+Marketable Crafters' and Gatherers' Scrip and Allagan Tomestone rewards and exchange costs are discovered from XIVAPI's live `SpecialShop` game data. Live prices and recent sales are loaded from Universalis. Orange and Purple Scrip plus Poetics, Mathematics, and Mnemonics are supported, with no hardcoded reward catalog.

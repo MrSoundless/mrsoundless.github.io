@@ -18,6 +18,11 @@ const SCRIP_COST_CODES = {
   "Orange Crafters": 6,
   "Orange Gatherers": 7,
 };
+const TOMESTONE_COST_CODES = {
+  Poetics: 1,
+  Mathematics: 2,
+  Mnemonics: 3,
+};
 const LOCAL_STORAGE_IDS_CACHE_KEY = "ffxivCraftAdvisorItemCache";
 const LOCAL_STORAGE_PREFERENCES_KEY = "ffxivCraftAdvisorPreferences";
 const LOCAL_STORAGE_INGREDIENT_CACHE_KEY = "ffxivCraftAdvisorIngredientNames";
@@ -25,7 +30,7 @@ const RECENT_PRICE_SAMPLE_SIZE = 20;
 const MAX_LISTING_SAMPLE_SIZE = 20;
 const MAX_CRAFT_CHAIN_DEPTH = 5;
 const MAX_TABLE_ITEMS = 10;
-const MAX_SCRIP_CRAFT_CANDIDATES = 60;
+const MAX_CURRENCY_CRAFT_CANDIDATES = 60;
 const MAX_INGREDIENT_SUGGESTIONS = 16;
 const MIN_INGREDIENT_SEARCH_LENGTH = 2;
 const SUSPICIOUS_PRICE_MULTIPLIER = 3;
@@ -40,7 +45,7 @@ let ingredientNames = null;
 let ingredientSearchIndex = null;
 const itemIdLookupCache = loadItemIdCache();
 const marketSnapshotCache = new Map();
-const scripExchangeCache = new Map();
+const currencyExchangeCache = new Map();
 let isAdvisorRunning = false;
 
 const datacenterSelect = document.getElementById("datacenter");
@@ -50,6 +55,8 @@ const ingredientInput = document.getElementById("ingredient");
 const ingredientField = document.getElementById("ingredient-field");
 const scripColorField = document.getElementById("scrip-color-field");
 const scripColorSelect = document.getElementById("scrip-color");
+const tomestoneTypeField = document.getElementById("tomestone-type-field");
+const tomestoneTypeSelect = document.getElementById("tomestone-type");
 const scripStrategyField = document.getElementById("scrip-strategy-field");
 const scripStrategySelect = document.getElementById("scrip-strategy");
 const quantityInput = document.getElementById("quantity");
@@ -74,17 +81,62 @@ analysisModeSelect.addEventListener("change", () => {
 
 function updateAnalysisMode() {
   const isIngredientMode = analysisModeSelect.value === "ingredient";
+  const isScripMode = analysisModeSelect.value === "crafter-scrip"
+    || analysisModeSelect.value === "gatherer-scrip";
+  const isTomestoneMode = analysisModeSelect.value === "tomestone";
   ingredientField.classList.toggle("hidden", !isIngredientMode);
-  scripColorField.classList.toggle("hidden", isIngredientMode);
-  scripStrategyField.classList.toggle("hidden", isIngredientMode);
+  scripColorField.classList.toggle("hidden", !isScripMode);
+  tomestoneTypeField.classList.toggle("hidden", !isTomestoneMode);
+  scripStrategyField.classList.toggle("hidden", !(isScripMode || isTomestoneMode));
   directOnlyField.classList.toggle("hidden", !isIngredientMode);
   ingredientInput.required = isIngredientMode;
-  quantityLabel.textContent = isIngredientMode ? "Quantity Owned" : "Scrip Owned";
+  quantityLabel.textContent = isIngredientMode
+    ? "Quantity Owned"
+    : isTomestoneMode ? "Tomestones Owned" : "Scrip Owned";
+  const currencyLabel = isTomestoneMode ? "Tomestone" : "Scrip";
   submitButton.textContent = isIngredientMode
     ? "Calculate Best Option"
     : scripStrategySelect.value === "craft-rewards"
-      ? "Find Best Scrip Craft"
-      : "Find Best Scrip Exchange";
+      ? `Find Best ${currencyLabel} Craft`
+      : `Find Best ${currencyLabel} Exchange`;
+}
+
+function getSelectedCurrency() {
+  if (analysisModeSelect.value === "tomestone") {
+    const type = tomestoneTypeSelect.value;
+    const costCode = TOMESTONE_COST_CODES[type];
+    if (!costCode) {
+      throw new Error(`Unsupported tomestone type: ${type}.`);
+    }
+    return {
+      key: `tomestone:${type}`,
+      name: `Allagan Tomestones of ${type}`,
+      unitSingular: "tomestone",
+      unitPlural: "tomestones",
+      costCode,
+      costType: 2,
+      shopSearchTerm: `Allagan Tomestones of ${type}`,
+      noMarketableMessage: type === "Mnemonics"
+        ? "Mnemonics currently buy only market-prohibited gear, so there is no marketable reward to value."
+        : "",
+    };
+  }
+
+  const discipline = analysisModeSelect.value === "crafter-scrip" ? "Crafters" : "Gatherers";
+  const category = `${scripColorSelect.value} ${discipline}`;
+  const costCode = SCRIP_COST_CODES[category];
+  if (!costCode) {
+    throw new Error(`Unsupported scrip category: ${category}.`);
+  }
+  return {
+    key: `scrip:${category}`,
+    name: `${category}' Scrip`,
+    unitSingular: "scrip",
+    unitPlural: "scrip",
+    costCode,
+    costType: 3,
+    shopSearchTerm: `${scripColorSelect.value} Scrip Exchange`,
+  };
 }
 
 async function loadIngredientNames() {
@@ -186,12 +238,12 @@ form.addEventListener("submit", async (event) => {
   }
 
   if (quantity <= 0 || (analysisMode === "ingredient" && !rawIngredient)) {
-    displayError(`Please enter a valid ${analysisMode === "ingredient" ? "ingredient and quantity" : "scrip amount"}.`);
+    displayError(`Please enter a valid ${analysisMode === "ingredient" ? "ingredient and quantity" : "currency amount"}.`);
     return;
   }
 
   if (analysisMode !== "ingredient" && !server) {
-    displayError("Choose a specific world to compare scrip exchange rewards.");
+    displayError("Choose a specific world to compare currency exchange rewards.");
     return;
   }
 
@@ -201,11 +253,10 @@ form.addEventListener("submit", async (event) => {
 
   try {
     if (analysisMode !== "ingredient") {
-      await analyzeScripExchange({
+      await analyzeCurrencyExchange({
         server,
         quantity,
-        discipline: analysisMode === "crafter-scrip" ? "Crafters" : "Gatherers",
-        color: scripColorSelect.value,
+        currency: getSelectedCurrency(),
         strategy: scripStrategySelect.value,
       });
       return;
@@ -338,21 +389,20 @@ form.addEventListener("submit", async (event) => {
   }
 });
 
-async function analyzeScripExchange({ server, quantity, discipline, color, strategy }) {
-  const category = `${color} ${discipline}`;
-  showProgress(`Loading ${category} exchange rewards...`, 15);
-  const catalog = await loadScripExchangeOptions(category);
+async function analyzeCurrencyExchange({ server, quantity, currency, strategy }) {
+  showProgress(`Loading ${currency.name} exchange rewards...`, 15);
+  const catalog = await loadCurrencyExchangeOptions(currency);
   const affordableCatalog = catalog.filter(({ cost }) => cost <= quantity);
 
   if (affordableCatalog.length === 0) {
-    throw new Error(`No marketable ${category} reward fits within ${quantity.toLocaleString()} scrip.`);
+    throw new Error(`No marketable ${currency.name} reward fits within ${quantity.toLocaleString()} ${currency.unitPlural}.`);
   }
 
   if (strategy === "craft-rewards") {
-    await analyzeScripCraftables({
+    await analyzeCurrencyCraftables({
       server,
       quantity,
-      category,
+      currency,
       catalog: affordableCatalog,
     });
     return;
@@ -384,7 +434,7 @@ async function analyzeScripExchange({ server, quantity, discipline, color, strat
         cost,
         unitPrice,
         rewardQty,
-        gilPerScrip: cost > 0 ? (unitPrice * rewardQty) / cost : 0,
+        gilPerCurrency: cost > 0 ? (unitPrice * rewardQty) / cost : 0,
         exchangeCount,
         purchaseCount,
         totalValue: purchaseCount * unitPrice,
@@ -402,25 +452,25 @@ async function analyzeScripExchange({ server, quantity, discipline, color, strat
     ))
     .sort((left, right) => (
       right.totalValue - left.totalValue
-      || right.gilPerScrip - left.gilPerScrip
+      || right.gilPerCurrency - left.gilPerCurrency
       || right.unitsSold - left.unitsSold
     ));
 
   if (options.length === 0) {
-    throw new Error(`No priced ${category} rewards were found on ${server}.`);
+    throw new Error(`No priced ${currency.name} rewards were found on ${server}.`);
   }
 
   updateProgress("Building recommendation...", 98);
-  displayScripResults({
+  displayCurrencyResults({
     server,
     quantity,
-    category,
+    currency,
     options: options.slice(0, MAX_TABLE_ITEMS),
   });
 }
 
-async function analyzeScripCraftables({ server, quantity, category, catalog }) {
-  updateProgress("Finding recipes that use scrip rewards...", 25);
+async function analyzeCurrencyCraftables({ server, quantity, currency, catalog }) {
+  updateProgress("Finding recipes that use currency rewards...", 25);
   const recipes = await loadTeamcraftRecipes();
   const exchangeByItemId = new Map(catalog.map((option) => [Number(option.itemId), option]));
   const candidates = [];
@@ -442,13 +492,13 @@ async function analyzeScripCraftables({ server, quantity, category, catalog }) {
           sourceName: ingredient.name,
           sourceQtyPerCraft: ingredient.qty,
           maxCraftCount,
-          scripSpent: exchangesUsed * exchange.cost,
+          currencySpent: exchangesUsed * exchange.cost,
         };
       })
       .filter((choice) => choice?.maxCraftCount > 0)
       .sort((left, right) => (
         right.maxCraftCount - left.maxCraftCount
-        || left.scripSpent - right.scripSpent
+        || left.currencySpent - right.currencySpent
       ));
 
     if (sourceChoices.length > 0) {
@@ -460,7 +510,7 @@ async function analyzeScripCraftables({ server, quantity, category, catalog }) {
   });
 
   if (candidates.length === 0) {
-    throw new Error(`No craftable recipes using affordable ${category} rewards were found.`);
+    throw new Error(`No craftable recipes using affordable ${currency.name} rewards were found.`);
   }
 
   const outputSnapshots = await fetchMarketSnapshots(
@@ -492,10 +542,10 @@ async function analyzeScripCraftables({ server, quantity, category, catalog }) {
 
   const shortlist = [...bestCandidateByOutput.values()]
     .sort((left, right) => right.grossTotal - left.grossTotal)
-    .slice(0, MAX_SCRIP_CRAFT_CANDIDATES);
+    .slice(0, MAX_CURRENCY_CRAFT_CANDIDATES);
 
   if (shortlist.length === 0) {
-    throw new Error(`No priced craftable outputs using ${category} rewards were found on ${server}.`);
+    throw new Error(`No priced craftable outputs using ${currency.name} rewards were found on ${server}.`);
   }
 
   const marketItemIds = new Set(shortlist.map((candidate) => candidate.outputId));
@@ -566,51 +616,52 @@ async function analyzeScripCraftables({ server, quantity, category, catalog }) {
     .slice(0, MAX_TABLE_ITEMS);
 
   if (rankedOptions.length === 0) {
-    throw new Error(`No profitable, fully priced crafts using ${category} rewards were found on ${server}.`);
+    throw new Error(`No profitable, fully priced crafts using ${currency.name} rewards were found on ${server}.`);
   }
 
   updateProgress("Building craftable recommendation...", 98);
-  displayScripCraftableResults({
+  displayCurrencyCraftableResults({
     server,
     quantity,
-    category,
+    currency,
     options: rankedOptions,
   });
 }
 
-function displayScripCraftableResults({ server, quantity, category, options }) {
+function displayCurrencyCraftableResults({ server, quantity, currency, options }) {
   const best = options[0];
-  const scripRemaining = quantity - best.scripSpent;
+  const currencyRemaining = quantity - best.currencySpent;
+  const unitTitle = capitalize(currency.unitSingular);
 
   resultOutput.innerHTML = `
     <div class="result-summary result-summary--craft">
       <div class="result-head">
-        <span class="result-badge">Best Scrip Craft</span>
+        <span class="result-badge">Best ${escapeHtml(unitTitle)} Craft</span>
         <h3>Craft ${escapeHtml(best.name)}</h3>
-        <p>Exchange ${escapeHtml(category)} Scrip for ${escapeHtml(best.sourceName)}, then use it to craft a higher-value market item on ${escapeHtml(server)}.</p>
+        <p>Exchange ${escapeHtml(currency.name)} for ${escapeHtml(best.sourceName)}, then use it to craft a higher-value market item on ${escapeHtml(server)}.</p>
       </div>
       <div class="result-stats">
         ${renderStatCard("Craft", best.maxCraftCount.toLocaleString(), `${best.outputCount.toLocaleString()} output item${best.outputCount === 1 ? "" : "s"}`, "primary")}
         ${renderStatCard("Estimated Net Return", formatPrice(best.totalNetReturn), `${formatPrice(best.netReturnPerCraft)} per craft`, "primary")}
-        ${renderStatCard("Other Materials", formatPrice(best.totalOtherCost), "Scrip material excluded")}
-        ${renderStatCard("Scrip Spent", best.scripSpent.toLocaleString(), `${scripRemaining.toLocaleString()} remaining`)}
+        ${renderStatCard("Other Materials", formatPrice(best.totalOtherCost), "Exchange material excluded")}
+        ${renderStatCard(`${unitTitle} Spent`, best.currencySpent.toLocaleString(), `${currencyRemaining.toLocaleString()} remaining`)}
         ${renderStatCard("Sell-Through", best.salesActivity.label, `${best.salesActivity.unitsSold.toLocaleString()} recent units sold`)}
       </div>
       <div class="result-notes">
         <div class="result-note">
           <h4>Recommended Action</h4>
-          <p>Buy ${escapeHtml(best.sourceName)} with scrip and use ${formatQuantity(best.sourceQtyPerCraft)} per craft. The net estimate subtracts all other market-priced recipe ingredients, but treats the exchanged scrip material as the currency investment and does not deduct market tax.</p>
+          <p>Buy ${escapeHtml(best.sourceName)} with ${escapeHtml(currency.unitPlural)} and use ${formatQuantity(best.sourceQtyPerCraft)} per craft. The net estimate subtracts all other market-priced recipe ingredients, but treats the exchanged material as the currency investment and does not deduct market tax.</p>
         </div>
-        ${renderScripCraftableTable(options)}
+        ${renderCurrencyCraftableTable(options, currency)}
       </div>
     </div>
   `;
 }
 
-function renderScripCraftableTable(options) {
+function renderCurrencyCraftableTable(options, currency) {
   return `
     <div class="result-note result-note--wide">
-      <h4>Craftables Using Scrip Rewards</h4>
+      <h4>Craftables Using ${escapeHtml(capitalize(currency.unitSingular))} Rewards</h4>
       <p class="sales-table-intro">Ranked by recent demand, then estimated net return after buying the other recipe materials.</p>
       <div class="sales-table-wrap">
         <table class="sales-table">
@@ -618,7 +669,7 @@ function renderScripCraftableTable(options) {
             <tr>
               <th scope="col">#</th>
               <th scope="col">Craftable</th>
-              <th scope="col">Scrip material</th>
+              <th scope="col">Currency material</th>
               <th scope="col">Demand</th>
               <th scope="col">You can craft</th>
               <th scope="col">Net / craft</th>
@@ -634,7 +685,7 @@ function renderScripCraftableTable(options) {
                   <a class="market-link" href="${escapeHtml(option.universalisUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(option.name)}</a>
                   ${index === 0 ? '<span class="sales-table__badge">Recommended</span>' : ""}
                 </th>
-                <td data-label="Scrip material">${escapeHtml(option.sourceName)}</td>
+                <td data-label="Currency material">${escapeHtml(option.sourceName)}</td>
                 <td data-label="Demand">${escapeHtml(option.salesActivity.label)}</td>
                 <td data-label="You can craft">${option.maxCraftCount.toLocaleString()}</td>
                 <td data-label="Net / craft" class="sales-table__profit">${formatPrice(option.netReturnPerCraft)}</td>
@@ -649,20 +700,13 @@ function renderScripCraftableTable(options) {
   `;
 }
 
-async function loadScripExchangeOptions(category) {
-  if (scripExchangeCache.has(category)) {
-    return scripExchangeCache.get(category);
+async function loadCurrencyExchangeOptions(currency) {
+  if (currencyExchangeCache.has(currency.key)) {
+    return currencyExchangeCache.get(currency.key);
   }
 
-  const currencyName = `${category}' Scrip`;
-  const currencyCode = SCRIP_COST_CODES[category];
-  if (!currencyCode) {
-    throw new Error(`Unsupported scrip category: ${category}.`);
-  }
-
-  const color = category.split(" ")[0];
   const shopSearch = await fetchXivapiV2(
-    `/search?sheets=SpecialShop&fields=Name&limit=100&query=${encodeURIComponent(`Name~"${color} Scrip Exchange"`)}`
+    `/search?sheets=SpecialShop&fields=Name&limit=100&query=${encodeURIComponent(`Name~"${currency.shopSearchTerm}"`)}`
   );
   const shopResults = [...(shopSearch.results || [])];
   let nextCursor = shopSearch.next;
@@ -676,7 +720,7 @@ async function loadScripExchangeOptions(category) {
   const shopIds = shopResults.map((result) => result.row_id).filter(Boolean);
 
   if (shopIds.length === 0) {
-    throw new Error(`No ${color} Scrip exchange shops were found in XIVAPI.`);
+    throw new Error(`No ${currency.name} exchange shops were found in XIVAPI.`);
   }
 
   const fields = [
@@ -701,7 +745,10 @@ async function loadScripExchangeOptions(category) {
       const costs = listing.CurrencyCost || [];
       const costTypes = listing.CostType || [];
       const costIndex = costIds.findIndex(
-        (costId, index) => Number(costId) === currencyCode && Number(costTypes[index]) === 3
+        (costId, index) => (
+          Number(costId) === currency.costCode
+          && Number(costTypes[index]) === currency.costType
+        )
       );
       const itemId = Number(rewardIds[0]);
       const rewardQty = Number(rewardCounts[0]) || 1;
@@ -727,10 +774,13 @@ async function loadScripExchangeOptions(category) {
 
   const options = [...bestOptionByItem.values()];
   if (options.length === 0) {
-    throw new Error(`No rewards paid with ${currencyName} were found in XIVAPI.`);
+    throw new Error(
+      currency.noMarketableMessage
+      || `No marketable rewards paid with ${currency.name} were found in XIVAPI.`
+    );
   }
 
-  scripExchangeCache.set(category, options);
+  currencyExchangeCache.set(currency.key, options);
   return options;
 }
 
@@ -742,49 +792,51 @@ async function fetchXivapiV2(path) {
   return response.json();
 }
 
-function displayScripResults({ server, quantity, category, options }) {
+function displayCurrencyResults({ server, quantity, currency, options }) {
   const best = options[0];
   const spent = best.exchangeCount * best.cost;
-  const scripRemaining = quantity - spent;
+  const currencyRemaining = quantity - spent;
+  const unitTitle = capitalize(currency.unitSingular);
 
   resultOutput.innerHTML = `
     <div class="result-summary result-summary--craft">
       <div class="result-head">
-        <span class="result-badge">Best Scrip Exchange</span>
+        <span class="result-badge">Best ${escapeHtml(unitTitle)} Exchange</span>
         <h3>Exchange for ${escapeHtml(best.name)}</h3>
-        <p>On ${escapeHtml(server)}, this gives the highest estimated market value that can be purchased with your ${quantity.toLocaleString()} ${escapeHtml(category)} Scrip.</p>
+        <p>On ${escapeHtml(server)}, this gives the highest estimated market value that can be purchased with your ${quantity.toLocaleString()} ${escapeHtml(currency.name)}.</p>
       </div>
       <div class="result-stats">
-        ${renderStatCard("Buy", best.purchaseCount.toLocaleString(), `${best.exchangeCount.toLocaleString()} exchange${best.exchangeCount === 1 ? "" : "s"} at ${best.cost.toLocaleString()} scrip`, "primary")}
+        ${renderStatCard("Buy", best.purchaseCount.toLocaleString(), `${best.exchangeCount.toLocaleString()} exchange${best.exchangeCount === 1 ? "" : "s"} at ${best.cost.toLocaleString()} ${currency.unitPlural}`, "primary")}
         ${renderStatCard("Estimated Return", formatPrice(best.totalValue), `${formatPrice(best.unitPrice)} each`, "primary")}
-        ${renderStatCard("Value / Scrip", formatGilPerScrip(best.gilPerScrip), `${spent.toLocaleString()} scrip spent`)}
-        ${renderStatCard("Scrip Remaining", scripRemaining.toLocaleString())}
+        ${renderStatCard(`Value / ${unitTitle}`, formatGilPerCurrency(best.gilPerCurrency), `${spent.toLocaleString()} ${currency.unitPlural} spent`)}
+        ${renderStatCard(`${unitTitle} Remaining`, currencyRemaining.toLocaleString())}
       </div>
       <div class="result-notes">
         <div class="result-note">
           <h4>Recommended Action</h4>
-          <p>Exchange ${spent.toLocaleString()} scrip for ${best.purchaseCount.toLocaleString()} ${escapeHtml(best.name)}, then check the live listings before posting. Estimated returns are gross market value and do not deduct market tax.</p>
+          <p>Exchange ${spent.toLocaleString()} ${escapeHtml(currency.unitPlural)} for ${best.purchaseCount.toLocaleString()} ${escapeHtml(best.name)}, then check the live listings before posting. Estimated returns are gross market value and do not deduct market tax.</p>
         </div>
-        ${renderScripTable(options)}
+        ${renderCurrencyTable(options, currency)}
       </div>
     </div>
   `;
 }
 
-function renderScripTable(options) {
+function renderCurrencyTable(options, currency) {
+  const unitTitle = capitalize(currency.unitSingular);
   return `
     <div class="result-note result-note--wide">
       <h4>Marketable Exchange Rewards</h4>
-      <p class="sales-table-intro">Ranked by estimated total return from the scrip you own, then by gil per scrip.</p>
+      <p class="sales-table-intro">Ranked by estimated total return from the ${escapeHtml(currency.unitPlural)} you own, then by gil per ${escapeHtml(currency.unitSingular)}.</p>
       <div class="sales-table-wrap">
         <table class="sales-table">
           <thead>
             <tr>
               <th scope="col">#</th>
               <th scope="col">Item</th>
-              <th scope="col">Scrip cost</th>
+              <th scope="col">${escapeHtml(unitTitle)} cost</th>
               <th scope="col">Market price</th>
-              <th scope="col">Gil / scrip</th>
+              <th scope="col">Gil / ${escapeHtml(currency.unitSingular)}</th>
               <th scope="col">You can buy</th>
               <th scope="col">Total return</th>
               <th scope="col">Units sold</th>
@@ -800,9 +852,9 @@ function renderScripTable(options) {
                     : escapeHtml(option.name)}
                   ${index === 0 ? '<span class="sales-table__badge">Recommended</span>' : ""}
                 </th>
-                <td data-label="Scrip cost">${option.cost.toLocaleString()}${option.rewardQty > 1 ? ` / ${option.rewardQty.toLocaleString()} items` : ""}</td>
+                <td data-label="Currency cost">${option.cost.toLocaleString()}${option.rewardQty > 1 ? ` / ${option.rewardQty.toLocaleString()} items` : ""}</td>
                 <td data-label="Market price">${formatPrice(option.unitPrice)}</td>
-                <td data-label="Gil / scrip">${formatGilPerScrip(option.gilPerScrip)}</td>
+                <td data-label="Gil per currency">${formatGilPerCurrency(option.gilPerCurrency)}</td>
                 <td data-label="You can buy">${option.purchaseCount.toLocaleString()}</td>
                 <td data-label="Total return" class="sales-table__profit">${formatPrice(option.totalValue)}</td>
                 <td data-label="Units sold">${option.unitsSold.toLocaleString()}</td>
@@ -815,8 +867,12 @@ function renderScripTable(options) {
   `;
 }
 
-function formatGilPerScrip(value) {
+function formatGilPerCurrency(value) {
   return `${(Math.round(value * 100) / 100).toLocaleString()} gil`;
+}
+
+function capitalize(value) {
+  return `${value.charAt(0).toUpperCase()}${value.slice(1)}`;
 }
 
 function escapeHtml(value) {
@@ -1361,11 +1417,17 @@ function initializeDropdowns() {
     savePreferences();
   });
 
-  analysisModeSelect.value = ["ingredient", "crafter-scrip", "gatherer-scrip"].includes(savedPreferences.analysisMode)
+  analysisModeSelect.value = ["ingredient", "crafter-scrip", "gatherer-scrip", "tomestone"].includes(savedPreferences.analysisMode)
     ? savedPreferences.analysisMode
     : "ingredient";
   scripColorSelect.value = savedPreferences.scripColor === "Purple" ? "Purple" : "Orange";
   scripColorSelect.addEventListener("change", () => {
+    savePreferences();
+  });
+  tomestoneTypeSelect.value = Object.hasOwn(TOMESTONE_COST_CODES, savedPreferences.tomestoneType)
+    ? savedPreferences.tomestoneType
+    : "Poetics";
+  tomestoneTypeSelect.addEventListener("change", () => {
     savePreferences();
   });
   scripStrategySelect.value = savedPreferences.scripStrategy === "craft-rewards"
@@ -1411,6 +1473,9 @@ function loadPreferences() {
       directOnly: parsed.directOnly === true,
       analysisMode: typeof parsed.analysisMode === "string" ? parsed.analysisMode : "ingredient",
       scripColor: parsed.scripColor === "Purple" ? "Purple" : "Orange",
+      tomestoneType: Object.hasOwn(TOMESTONE_COST_CODES, parsed.tomestoneType)
+        ? parsed.tomestoneType
+        : "Poetics",
       scripStrategy: parsed.scripStrategy === "craft-rewards" ? "craft-rewards" : "sell-rewards",
     };
   } catch {
@@ -1420,6 +1485,7 @@ function loadPreferences() {
       directOnly: false,
       analysisMode: "ingredient",
       scripColor: "Orange",
+      tomestoneType: "Poetics",
       scripStrategy: "sell-rewards",
     };
   }
@@ -1433,6 +1499,7 @@ function savePreferences() {
       directOnly: directOnlyInput.checked,
       analysisMode: analysisModeSelect.value,
       scripColor: scripColorSelect.value,
+      tomestoneType: tomestoneTypeSelect.value,
       scripStrategy: scripStrategySelect.value,
     }));
   } catch {
