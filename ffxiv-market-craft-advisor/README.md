@@ -15,7 +15,7 @@ A static GitHub Pages site for comparing whether it is better to sell an ingredi
 3. Enter the ingredient you own and the quantity.
 4. View the recommended option.
 
-For scrip, choose Crafters' or Gatherers' Scrip, select Orange or Purple, choose a specific world, and enter the amount you own. The advisor ranks marketable exchange rewards by the estimated return available from that amount and by gil per scrip.
+For scrip, choose Crafters' or Gatherers' Scrip, select Orange or Purple, choose a specific world, and enter the amount you own. You can rank exchange rewards for direct sale or rank craftable items that use those rewards after paying for their other ingredients.
 
 ## Live pricing
 

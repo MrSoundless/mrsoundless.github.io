@@ -25,6 +25,7 @@ const RECENT_PRICE_SAMPLE_SIZE = 20;
 const MAX_LISTING_SAMPLE_SIZE = 20;
 const MAX_CRAFT_CHAIN_DEPTH = 5;
 const MAX_TABLE_ITEMS = 10;
+const MAX_SCRIP_CRAFT_CANDIDATES = 60;
 const MAX_INGREDIENT_SUGGESTIONS = 16;
 const MIN_INGREDIENT_SEARCH_LENGTH = 2;
 const SUSPICIOUS_PRICE_MULTIPLIER = 3;
@@ -49,6 +50,8 @@ const ingredientInput = document.getElementById("ingredient");
 const ingredientField = document.getElementById("ingredient-field");
 const scripColorField = document.getElementById("scrip-color-field");
 const scripColorSelect = document.getElementById("scrip-color");
+const scripStrategyField = document.getElementById("scrip-strategy-field");
+const scripStrategySelect = document.getElementById("scrip-strategy");
 const quantityInput = document.getElementById("quantity");
 const quantityLabel = document.getElementById("quantity-label");
 const directOnlyInput = document.getElementById("direct-only");
@@ -73,10 +76,15 @@ function updateAnalysisMode() {
   const isIngredientMode = analysisModeSelect.value === "ingredient";
   ingredientField.classList.toggle("hidden", !isIngredientMode);
   scripColorField.classList.toggle("hidden", isIngredientMode);
+  scripStrategyField.classList.toggle("hidden", isIngredientMode);
   directOnlyField.classList.toggle("hidden", !isIngredientMode);
   ingredientInput.required = isIngredientMode;
   quantityLabel.textContent = isIngredientMode ? "Quantity Owned" : "Scrip Owned";
-  submitButton.textContent = isIngredientMode ? "Calculate Best Option" : "Find Best Scrip Exchange";
+  submitButton.textContent = isIngredientMode
+    ? "Calculate Best Option"
+    : scripStrategySelect.value === "craft-rewards"
+      ? "Find Best Scrip Craft"
+      : "Find Best Scrip Exchange";
 }
 
 async function loadIngredientNames() {
@@ -198,6 +206,7 @@ form.addEventListener("submit", async (event) => {
         quantity,
         discipline: analysisMode === "crafter-scrip" ? "Crafters" : "Gatherers",
         color: scripColorSelect.value,
+        strategy: scripStrategySelect.value,
       });
       return;
     }
@@ -329,7 +338,7 @@ form.addEventListener("submit", async (event) => {
   }
 });
 
-async function analyzeScripExchange({ server, quantity, discipline, color }) {
+async function analyzeScripExchange({ server, quantity, discipline, color, strategy }) {
   const category = `${color} ${discipline}`;
   showProgress(`Loading ${category} exchange rewards...`, 15);
   const catalog = await loadScripExchangeOptions(category);
@@ -337,6 +346,16 @@ async function analyzeScripExchange({ server, quantity, discipline, color }) {
 
   if (affordableCatalog.length === 0) {
     throw new Error(`No marketable ${category} reward fits within ${quantity.toLocaleString()} scrip.`);
+  }
+
+  if (strategy === "craft-rewards") {
+    await analyzeScripCraftables({
+      server,
+      quantity,
+      category,
+      catalog: affordableCatalog,
+    });
+    return;
   }
 
   const items = await fetchTeamcraftItems();
@@ -398,6 +417,236 @@ async function analyzeScripExchange({ server, quantity, discipline, color }) {
     category,
     options: options.slice(0, MAX_TABLE_ITEMS),
   });
+}
+
+async function analyzeScripCraftables({ server, quantity, category, catalog }) {
+  updateProgress("Finding recipes that use scrip rewards...", 25);
+  const recipes = await loadTeamcraftRecipes();
+  const exchangeByItemId = new Map(catalog.map((option) => [Number(option.itemId), option]));
+  const candidates = [];
+
+  recipes.forEach((recipe) => {
+    const sourceChoices = recipe.ingredients
+      .map((ingredient) => {
+        const exchange = exchangeByItemId.get(Number(ingredient.id));
+        if (!exchange) {
+          return null;
+        }
+
+        const exchangeCount = Math.floor(quantity / exchange.cost);
+        const availableUnits = exchangeCount * exchange.rewardQty;
+        const maxCraftCount = Math.floor(availableUnits / ingredient.qty);
+        const exchangesUsed = Math.ceil((maxCraftCount * ingredient.qty) / exchange.rewardQty);
+        return {
+          sourceItemId: Number(ingredient.id),
+          sourceName: ingredient.name,
+          sourceQtyPerCraft: ingredient.qty,
+          maxCraftCount,
+          scripSpent: exchangesUsed * exchange.cost,
+        };
+      })
+      .filter((choice) => choice?.maxCraftCount > 0)
+      .sort((left, right) => (
+        right.maxCraftCount - left.maxCraftCount
+        || left.scripSpent - right.scripSpent
+      ));
+
+    if (sourceChoices.length > 0) {
+      candidates.push({
+        ...recipe,
+        ...sourceChoices[0],
+      });
+    }
+  });
+
+  if (candidates.length === 0) {
+    throw new Error(`No craftable recipes using affordable ${category} rewards were found.`);
+  }
+
+  const outputSnapshots = await fetchMarketSnapshots(
+    server,
+    candidates.map((candidate) => candidate.outputId),
+    (completed, total) => {
+      updateProgress(
+        `Pricing craftable outputs (${completed} of ${total})...`,
+        30 + Math.round((completed / Math.max(total, 1)) * 25)
+      );
+    }
+  );
+  const bestCandidateByOutput = new Map();
+
+  candidates.forEach((candidate) => {
+    const snapshot = outputSnapshots.get(String(candidate.outputId));
+    const outputPrice = snapshot ? getTrustedMarketPrice(snapshot) : null;
+    if (!Number.isFinite(outputPrice) || outputPrice <= 0) {
+      return;
+    }
+
+    const grossTotal = outputPrice * candidate.outputQty * candidate.maxCraftCount;
+    const pricedCandidate = { ...candidate, outputPrice, grossTotal };
+    const existing = bestCandidateByOutput.get(candidate.outputId);
+    if (!existing || pricedCandidate.grossTotal > existing.grossTotal) {
+      bestCandidateByOutput.set(candidate.outputId, pricedCandidate);
+    }
+  });
+
+  const shortlist = [...bestCandidateByOutput.values()]
+    .sort((left, right) => right.grossTotal - left.grossTotal)
+    .slice(0, MAX_SCRIP_CRAFT_CANDIDATES);
+
+  if (shortlist.length === 0) {
+    throw new Error(`No priced craftable outputs using ${category} rewards were found on ${server}.`);
+  }
+
+  const marketItemIds = new Set(shortlist.map((candidate) => candidate.outputId));
+  shortlist.forEach((candidate) => {
+    candidate.ingredients.forEach((ingredient) => {
+      if (Number(ingredient.id) !== candidate.sourceItemId) {
+        marketItemIds.add(Number(ingredient.id));
+      }
+    });
+  });
+  const snapshots = await fetchMarketSnapshots(
+    server,
+    [...marketItemIds],
+    (completed, total) => {
+      updateProgress(
+        `Pricing other recipe materials (${completed} of ${total})...`,
+        60 + Math.round((completed / Math.max(total, 1)) * 25)
+      );
+    }
+  );
+
+  const craftOptions = shortlist
+    .map((candidate) => {
+      let missingPrice = false;
+      const otherCostPerCraft = candidate.ingredients.reduce((sum, ingredient) => {
+        if (Number(ingredient.id) === candidate.sourceItemId) {
+          return sum;
+        }
+        const snapshot = snapshots.get(String(ingredient.id));
+        const price = snapshot ? getTrustedMarketPrice(snapshot) : null;
+        if (!Number.isFinite(price) || price <= 0) {
+          missingPrice = true;
+          return sum;
+        }
+        return sum + (price * ingredient.qty);
+      }, 0);
+      const outputSnapshot = snapshots.get(String(candidate.outputId))
+        || outputSnapshots.get(String(candidate.outputId));
+      const salesActivity = outputSnapshot
+        ? summarizeSalesActivity(outputSnapshot)
+        : createEmptySalesActivity();
+      const grossRevenuePerCraft = candidate.outputPrice * candidate.outputQty;
+      const netReturnPerCraft = grossRevenuePerCraft - otherCostPerCraft;
+      const totalNetReturn = netReturnPerCraft * candidate.maxCraftCount;
+
+      return {
+        ...candidate,
+        otherCostPerCraft,
+        totalOtherCost: otherCostPerCraft * candidate.maxCraftCount,
+        grossRevenuePerCraft,
+        netReturnPerCraft,
+        totalNetReturn,
+        outputCount: candidate.outputQty * candidate.maxCraftCount,
+        salesActivity,
+        missingPrice,
+        universalisUrl: `https://universalis.app/market/${candidate.outputId}`,
+      };
+    })
+    .filter((option) => !option.missingPrice && option.netReturnPerCraft > 0)
+    .sort((left, right) => (
+      getDemandRank(right.salesActivity.label) - getDemandRank(left.salesActivity.label)
+      || right.totalNetReturn - left.totalNetReturn
+      || right.netReturnPerCraft - left.netReturnPerCraft
+    ));
+
+  const optionsWithSales = craftOptions.filter((option) => option.salesActivity.hasRecentSales);
+  const rankedOptions = (optionsWithSales.length > 0 ? optionsWithSales : craftOptions)
+    .slice(0, MAX_TABLE_ITEMS);
+
+  if (rankedOptions.length === 0) {
+    throw new Error(`No profitable, fully priced crafts using ${category} rewards were found on ${server}.`);
+  }
+
+  updateProgress("Building craftable recommendation...", 98);
+  displayScripCraftableResults({
+    server,
+    quantity,
+    category,
+    options: rankedOptions,
+  });
+}
+
+function displayScripCraftableResults({ server, quantity, category, options }) {
+  const best = options[0];
+  const scripRemaining = quantity - best.scripSpent;
+
+  resultOutput.innerHTML = `
+    <div class="result-summary result-summary--craft">
+      <div class="result-head">
+        <span class="result-badge">Best Scrip Craft</span>
+        <h3>Craft ${escapeHtml(best.name)}</h3>
+        <p>Exchange ${escapeHtml(category)} Scrip for ${escapeHtml(best.sourceName)}, then use it to craft a higher-value market item on ${escapeHtml(server)}.</p>
+      </div>
+      <div class="result-stats">
+        ${renderStatCard("Craft", best.maxCraftCount.toLocaleString(), `${best.outputCount.toLocaleString()} output item${best.outputCount === 1 ? "" : "s"}`, "primary")}
+        ${renderStatCard("Estimated Net Return", formatPrice(best.totalNetReturn), `${formatPrice(best.netReturnPerCraft)} per craft`, "primary")}
+        ${renderStatCard("Other Materials", formatPrice(best.totalOtherCost), "Scrip material excluded")}
+        ${renderStatCard("Scrip Spent", best.scripSpent.toLocaleString(), `${scripRemaining.toLocaleString()} remaining`)}
+        ${renderStatCard("Sell-Through", best.salesActivity.label, `${best.salesActivity.unitsSold.toLocaleString()} recent units sold`)}
+      </div>
+      <div class="result-notes">
+        <div class="result-note">
+          <h4>Recommended Action</h4>
+          <p>Buy ${escapeHtml(best.sourceName)} with scrip and use ${formatQuantity(best.sourceQtyPerCraft)} per craft. The net estimate subtracts all other market-priced recipe ingredients, but treats the exchanged scrip material as the currency investment and does not deduct market tax.</p>
+        </div>
+        ${renderScripCraftableTable(options)}
+      </div>
+    </div>
+  `;
+}
+
+function renderScripCraftableTable(options) {
+  return `
+    <div class="result-note result-note--wide">
+      <h4>Craftables Using Scrip Rewards</h4>
+      <p class="sales-table-intro">Ranked by recent demand, then estimated net return after buying the other recipe materials.</p>
+      <div class="sales-table-wrap">
+        <table class="sales-table">
+          <thead>
+            <tr>
+              <th scope="col">#</th>
+              <th scope="col">Craftable</th>
+              <th scope="col">Scrip material</th>
+              <th scope="col">Demand</th>
+              <th scope="col">You can craft</th>
+              <th scope="col">Net / craft</th>
+              <th scope="col">Total net</th>
+              <th scope="col">Other mats</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${options.map((option, index) => `
+              <tr${index === 0 ? ' class="sales-table__recommended"' : ""}>
+                <td data-label="Rank">${index + 1}</td>
+                <th scope="row" data-label="Craftable">
+                  <a class="market-link" href="${escapeHtml(option.universalisUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(option.name)}</a>
+                  ${index === 0 ? '<span class="sales-table__badge">Recommended</span>' : ""}
+                </th>
+                <td data-label="Scrip material">${escapeHtml(option.sourceName)}</td>
+                <td data-label="Demand">${escapeHtml(option.salesActivity.label)}</td>
+                <td data-label="You can craft">${option.maxCraftCount.toLocaleString()}</td>
+                <td data-label="Net / craft" class="sales-table__profit">${formatPrice(option.netReturnPerCraft)}</td>
+                <td data-label="Total net" class="sales-table__profit">${formatPrice(option.totalNetReturn)}</td>
+                <td data-label="Other mats">${formatPrice(option.totalOtherCost)}</td>
+              </tr>
+            `).join("")}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
 }
 
 async function loadScripExchangeOptions(category) {
@@ -1119,6 +1368,13 @@ function initializeDropdowns() {
   scripColorSelect.addEventListener("change", () => {
     savePreferences();
   });
+  scripStrategySelect.value = savedPreferences.scripStrategy === "craft-rewards"
+    ? "craft-rewards"
+    : "sell-rewards";
+  scripStrategySelect.addEventListener("change", () => {
+    updateAnalysisMode();
+    savePreferences();
+  });
 
   populateServerOptions(datacenterSelect.value, savedPreferences.server);
 }
@@ -1155,9 +1411,17 @@ function loadPreferences() {
       directOnly: parsed.directOnly === true,
       analysisMode: typeof parsed.analysisMode === "string" ? parsed.analysisMode : "ingredient",
       scripColor: parsed.scripColor === "Purple" ? "Purple" : "Orange",
+      scripStrategy: parsed.scripStrategy === "craft-rewards" ? "craft-rewards" : "sell-rewards",
     };
   } catch {
-    return { datacenter: "", server: "", directOnly: false, analysisMode: "ingredient", scripColor: "Orange" };
+    return {
+      datacenter: "",
+      server: "",
+      directOnly: false,
+      analysisMode: "ingredient",
+      scripColor: "Orange",
+      scripStrategy: "sell-rewards",
+    };
   }
 }
 
@@ -1169,6 +1433,7 @@ function savePreferences() {
       directOnly: directOnlyInput.checked,
       analysisMode: analysisModeSelect.value,
       scripColor: scripColorSelect.value,
+      scripStrategy: scripStrategySelect.value,
     }));
   } catch {
     // Ignore storage failures.

@@ -69,6 +69,15 @@
               <p class="field-hint">A specific world is required so exchange rewards can be valued against its market.</p>
             </div>
 
+            <div id="scrip-strategy-field" class="field hidden">
+              <label for="scrip-strategy">Scrip strategy</label>
+              <select id="scrip-strategy">
+                <option value="sell-rewards">Sell exchange rewards</option>
+                <option value="craft-rewards">Craft with exchange rewards</option>
+              </select>
+              <p class="field-hint">Compare selling the materials directly or using them in marketable crafts.</p>
+            </div>
+
             <div class="field">
               <label id="quantity-label" for="quantity">Quantity Owned</label>
               <input id="quantity" type="number" min="1" value="1" required />
@@ -102,7 +111,7 @@
       <summary>How this works</summary>
       <div class="help-panel__body">
         <p>It compares raw selling against direct and multi-step craft paths, then ranks outputs using pricing and recent sale activity.</p>
-        <p>For Crafters' and Gatherers' Scrip, it compares marketable exchange rewards by gil per scrip and sales activity on your selected world.</p>
+        <p>For Crafters' and Gatherers' Scrip, compare selling marketable rewards directly or crafting items that use those rewards.</p>
         <p>Your last datacenter and world are saved on this device. World selection is optional for ingredients and required for scrip.</p>
       </div>
     </details>
