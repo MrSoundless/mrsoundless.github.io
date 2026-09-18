@@ -1,1 +1,6 @@
 theme: jekyll-theme-slate
+exclude:
+  - calorie-tracker
+  - "**/node_modules"
+  - "**/test-results"
+  - "**/playwright-report"

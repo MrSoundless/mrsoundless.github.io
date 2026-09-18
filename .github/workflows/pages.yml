@@ -1,0 +1,62 @@
+name: Deploy website
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: pages
+  cancel-in-progress: true
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: calorie-tracker/package-lock.json
+      - run: npm ci
+        working-directory: calorie-tracker
+      - name: Apply optional Firebase configuration
+        env:
+          FIREBASE_WEB_CONFIG: ${{ vars.FIREBASE_WEB_CONFIG }}
+        run: |
+          node -e 'const fs = require("fs"); if (process.env.FIREBASE_WEB_CONFIG) fs.writeFileSync("calorie-tracker/public/firebase-config.json", JSON.stringify(JSON.parse(process.env.FIREBASE_WEB_CONFIG), null, 2));'
+      - run: npm test
+        working-directory: calorie-tracker
+      - run: npm run build
+        working-directory: calorie-tracker
+      - run: npx playwright install --with-deps chromium
+        working-directory: calorie-tracker
+      - run: npm run test:e2e
+        working-directory: calorie-tracker
+      - uses: actions/configure-pages@v5
+      - name: Build existing site
+        uses: actions/jekyll-build-pages@v1
+        with:
+          source: ./
+          destination: ./_site
+      - name: Add compiled Plateful app
+        run: |
+          mkdir -p _site/calorie-tracker
+          cp -R calorie-tracker/dist/. _site/calorie-tracker/
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: _site
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+

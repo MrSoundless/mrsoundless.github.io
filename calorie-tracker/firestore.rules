@@ -1,0 +1,12 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function owner(uid) { return request.auth != null && request.auth.uid == uid; }
+    match /users/{uid}/{bucket}/{recordId} {
+      allow read, delete: if owner(uid) && bucket in ['library', 'entries', 'targets', 'groceries'];
+      allow create, update: if owner(uid)
+        && bucket in ['library', 'entries', 'targets', 'groceries']
+        && request.resource.data.id == recordId;
+    }
+  }
+}

@@ -1,0 +1,99 @@
+{
+  "schemaVersion": 1,
+  "title": "Spinach and Red Onion Omelette with Brown Roll",
+  "description": "A simple three-egg omelette with spinach and red onion, served with a brown roll.",
+  "mealCategories": ["breakfast", "lunch"],
+  "servings": 1,
+  "totalCaloriesKcal": 473,
+  "prepTimeMinutes": 5,
+  "cookTimeMinutes": 11,
+  "ingredients": [
+    {
+      "name": "egg",
+      "quantity": 3,
+      "unit": "piece",
+      "preparation": "assume medium-large eggs of about 60 g each"
+    },
+    {
+      "name": "red onion",
+      "quantity": 60,
+      "unit": "g",
+      "preparation": "finely sliced"
+    },
+    {
+      "name": "spinach",
+      "quantity": 100,
+      "unit": "g",
+      "preparation": ""
+    },
+    {
+      "name": "olive oil",
+      "quantity": 1,
+      "unit": "tsp",
+      "preparation": ""
+    },
+    {
+      "name": "brown roll",
+      "quantity": 1,
+      "unit": "piece",
+      "preparation": "assume about 70 g and 170 kcal"
+    },
+    {
+      "name": "black pepper",
+      "quantity": 0.25,
+      "unit": "tsp",
+      "preparation": ""
+    },
+    {
+      "name": "salt",
+      "quantity": 0.125,
+      "unit": "tsp",
+      "preparation": ""
+    }
+  ],
+  "preparationSteps": [
+    {
+      "instruction": "Peel and finely slice the red onion.",
+      "timerSeconds": null
+    },
+    {
+      "instruction": "Rinse and drain the spinach, unless it is already washed and ready to eat.",
+      "timerSeconds": null
+    },
+    {
+      "instruction": "Crack the eggs into a bowl. Add the measured black pepper and salt, then beat until combined.",
+      "timerSeconds": null
+    },
+    {
+      "instruction": "Measure the olive oil and set out the frying pan, spatula, serving plate, and brown roll.",
+      "timerSeconds": null
+    }
+  ],
+  "steps": [
+    {
+      "instruction": "Heat the olive oil in a frying pan over medium heat.",
+      "timerSeconds": 60
+    },
+    {
+      "instruction": "Add the sliced red onion and cook until slightly softened.",
+      "timerSeconds": 180
+    },
+    {
+      "instruction": "Add the spinach and cook until wilted.",
+      "timerSeconds": 120
+    },
+    {
+      "instruction": "Pour the prepared egg mixture into the pan.",
+      "timerSeconds": null
+    },
+    {
+      "instruction": "Cook until the eggs are set, folding the omelette if preferred.",
+      "timerSeconds": 300
+    },
+    {
+      "instruction": "Serve with the brown roll.",
+      "timerSeconds": null
+    }
+  ],
+  "notes": "Calories are estimates. Assumes eggs at about 72 kcal each, 1 tsp olive oil at about 40 kcal, spinach at about 23 kcal per 100 g, red onion at about 40 kcal per 100 g, and a 70 g brown roll at about 170 kcal. The original 473 kcal estimate is retained. Cooking time is 11 minutes to match the listed timers."
+}
