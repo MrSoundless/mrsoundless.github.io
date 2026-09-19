@@ -41,6 +41,8 @@ jobs:
           destination: ./_site
       - name: Add compiled Plateful app
         run: |
+          # The Jekyll container creates output owned by root.
+          sudo chown -R "$(id -u):$(id -g)" _site
           mkdir -p _site/calorie-tracker
           cp -R calorie-tracker/dist/. _site/calorie-tracker/
       - uses: actions/upload-pages-artifact@v4
@@ -59,4 +61,3 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
-
