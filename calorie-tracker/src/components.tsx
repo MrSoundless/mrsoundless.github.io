@@ -60,9 +60,6 @@ export function Modal({
         onClose();
       }}
       aria-label={title}
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
     >
       <div className="modal-head">
         <h2>{title}</h2>
@@ -233,9 +230,11 @@ export function FoodEditor({
 export function RecipeEditor({
   recipe,
   onClose,
+  onPlan,
 }: {
   recipe?: Recipe;
   onClose: () => void;
+  onPlan: (recipe: Recipe) => void;
 }) {
   const { save, busy } = useStore();
   const [mealCategories, setCategories] = useState<Category[]>(
@@ -278,12 +277,18 @@ export function RecipeEditor({
           steps,
         }),
       );
-      await save("library", {
+      const savedRecipe: Recipe = {
         ...parsed,
         kind: "recipe",
         id: recipe?.id ?? id(),
-      });
-      onClose();
+      };
+      await save("library", savedRecipe);
+      if (
+        (e.nativeEvent as SubmitEvent).submitter?.getAttribute("value") ===
+        "plan"
+      )
+        onPlan(savedRecipe);
+      else onClose();
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     }
@@ -580,14 +585,30 @@ export function RecipeEditor({
           <textarea name="notes" defaultValue={recipe?.notes} />
         </label>
         <ErrorText error={error} />
-        <button className="primary" disabled={busy}>
-          Save recipe
-        </button>
+        <div className="actions">
+          <button className="secondary" disabled={busy}>
+            Save recipe
+          </button>
+          <button
+            className="primary"
+            type="submit"
+            value="plan"
+            disabled={busy}
+          >
+            Save &amp; plan
+          </button>
+        </div>
       </form>
     </Modal>
   );
 }
-export function ImportRecipe({ onClose }: { onClose: () => void }) {
+export function ImportRecipe({
+  onClose,
+  onPlan,
+}: {
+  onClose: () => void;
+  onPlan: (recipe: Recipe) => void;
+}) {
   const { save, busy } = useStore();
   const [raw, setRaw] = useState("");
   const [parsed, setParsed] = useState<Recipe | null>(null);
@@ -595,7 +616,7 @@ export function ImportRecipe({ onClose }: { onClose: () => void }) {
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
   if (editing && parsed)
-    return <RecipeEditor recipe={parsed} onClose={onClose} />;
+    return <RecipeEditor recipe={parsed} onClose={onClose} onPlan={onPlan} />;
   return (
     <Modal title="Import from ChatGPT" onClose={onClose}>
       <div className="form-stack">
@@ -717,6 +738,20 @@ export function ImportRecipe({ onClose }: { onClose: () => void }) {
                 }}
               >
                 Save recipe
+              </button>
+              <button
+                className="primary"
+                disabled={busy}
+                onClick={async () => {
+                  try {
+                    await save("library", parsed);
+                    onPlan(parsed);
+                  } catch (e) {
+                    setError(String(e));
+                  }
+                }}
+              >
+                Save &amp; plan
               </button>
             </div>
           </section>
@@ -963,12 +998,29 @@ export function Cooking({
       <div className="form-stack">
         <ol className="cooking-phases" aria-label="Recipe phases">
           {["Ingredients", "Preparation", "Cooking"].map((name) => (
-            <li
-              key={name}
-              aria-current={phase === name ? "step" : undefined}
-              className={phase === name ? "active" : ""}
-            >
-              {name}
+            <li key={name}>
+              <button
+                type="button"
+                aria-current={phase === name ? "step" : undefined}
+                className={phase === name ? "active" : ""}
+                disabled={name === "Preparation" && !preparation.length}
+                title={
+                  name === "Preparation" && !preparation.length
+                    ? "No preparation steps in this recipe"
+                    : undefined
+                }
+                onClick={() =>
+                  setStep(
+                    name === "Ingredients"
+                      ? -1
+                      : name === "Preparation"
+                        ? 0
+                        : preparation.length,
+                  )
+                }
+              >
+                {name}
+              </button>
             </li>
           ))}
         </ol>

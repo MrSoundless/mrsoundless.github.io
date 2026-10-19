@@ -2104,7 +2104,8 @@ progress::-moz-progress-bar {
   padding: 0;
   margin: 0;
 }
-.cooking-phases li {
+.cooking-phases button {
+  width: 100%;
   padding: 10px 5px;
   border-radius: 8px;
   background: #f2f4ed;
@@ -2112,7 +2113,7 @@ progress::-moz-progress-bar {
   text-align: center;
   font-size: 12px;
 }
-.cooking-phases li.active {
+.cooking-phases button.active {
   background: var(--green);
   color: white;
   font-weight: 600;

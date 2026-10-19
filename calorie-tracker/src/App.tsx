@@ -675,9 +675,34 @@ export default function App() {
         <FoodEditor item={dialog.item} onClose={close} />
       )}
       {dialog?.type === "recipe" && (
-        <RecipeEditor recipe={dialog.recipe} onClose={close} />
+        <RecipeEditor
+          recipe={dialog.recipe}
+          onClose={close}
+          onPlan={(recipe) =>
+            setDialog({
+              type: "entry",
+              item: recipe,
+              date,
+              category: recipe.mealCategories[0],
+              status: "planned",
+            })
+          }
+        />
       )}
-      {dialog?.type === "import" && <ImportRecipe onClose={close} />}
+      {dialog?.type === "import" && (
+        <ImportRecipe
+          onClose={close}
+          onPlan={(recipe) =>
+            setDialog({
+              type: "entry",
+              item: recipe,
+              date,
+              category: recipe.mealCategories[0],
+              status: "planned",
+            })
+          }
+        />
+      )}
       {dialog?.type === "entry" && (
         <EntryEditor
           entry={dialog.entry}

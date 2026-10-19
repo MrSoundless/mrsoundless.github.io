@@ -19,8 +19,100 @@ const recipe = {
   notes: "Calories are estimates.",
 };
 async function preview(page: Page) {
+  await page.route("**/firebase-config.json", (route) =>
+    route.fulfill({ json: {} }),
+  );
   await page.goto("./");
   await page.getByRole("button", { name: "Explore an empty preview" }).click();
+}
+
+test("backdrop clicks preserve recipe drafts", async ({ page }) => {
+  await preview(page);
+  await navigate(page, "Library");
+  await page.getByRole("button", { name: "Recipe", exact: true }).click();
+  await page.getByLabel("Recipe name").fill("Keep my draft");
+  await page.mouse.click(2, 2);
+  await expect(page.getByRole("dialog")).toBeVisible();
+  await expect(page.getByLabel("Recipe name")).toHaveValue("Keep my draft");
+  await page.getByRole("button", { name: "Close dialog" }).click();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+});
+
+test("phase navigation preserves ingredients and running timers", async ({
+  page,
+}) => {
+  await preview(page);
+  await navigate(page, "Library");
+  await page
+    .getByRole("button", { name: "Import recipe", exact: true })
+    .click();
+  await page
+    .getByLabel("Recipe JSON")
+    .fill(
+      JSON.stringify({
+        ...recipe,
+        preparationSteps: [
+          { instruction: "Chop tomatoes.", timerSeconds: 120 },
+        ],
+      }),
+    );
+  await page.getByRole("button", { name: "Review recipe" }).click();
+  await page.getByRole("button", { name: "Save recipe", exact: true }).click();
+  await page.getByRole("button", { name: "Cook Weekend tomato soup" }).click();
+  await page.getByRole("checkbox").first().check();
+  await page.getByLabel("Servings to prepare").fill("1");
+  await page.getByRole("button", { name: "Preparation", exact: true }).click();
+  await expect(page.getByText("Chop tomatoes.", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Start 2 min timer" }).click();
+  await page.getByRole("button", { name: "Cooking", exact: true }).click();
+  await expect(
+    page.getByText("Combine tomatoes and water.", { exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Pause", exact: true }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Ingredients", exact: true }).click();
+  await expect(page.getByRole("checkbox").first()).toBeChecked();
+  await expect(page.getByLabel("Servings to prepare")).toHaveValue("1");
+});
+
+for (const method of ["manual", "import", "edited import"]) {
+  test(`save and plan a ${method} recipe`, async ({ page }) => {
+    await preview(page);
+    await navigate(page, "Library");
+    if (method === "manual") {
+      await page.getByRole("button", { name: "Recipe", exact: true }).click();
+      await page.getByLabel("Recipe name").fill(recipe.title);
+      await page.getByLabel("Whole recipe kcal").fill("600");
+      await page.getByLabel("Ingredient 1 name").fill("Tomatoes");
+      await page.getByLabel("Step 1", { exact: true }).fill("Cook tomatoes.");
+    } else {
+      await page
+        .getByRole("button", { name: "Import recipe", exact: true })
+        .click();
+      await page.getByLabel("Recipe JSON").fill(JSON.stringify(recipe));
+      await page.getByRole("button", { name: "Review recipe" }).click();
+      if (method === "edited import")
+        await page.getByRole("button", { name: "Edit details" }).click();
+    }
+    await page
+      .getByRole("button", { name: "Save & plan", exact: true })
+      .click();
+    await expect(
+      page.getByRole("dialog", { name: "Add to your day" }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("combobox", { name: "Status", exact: true }),
+    ).toHaveValue("planned");
+    await page.getByLabel("Servings to eat").fill("0.5");
+    await page.getByRole("button", { name: "Plan meal", exact: true }).click();
+    await expect(
+      page.getByRole("heading", { name: recipe.title, exact: true }),
+    ).toHaveCount(1);
+    await navigate(page, "Today");
+    await expect(page.getByText("0.5 servings · 150 kcal")).toBeVisible();
+    await expect(page.getByText("planned", { exact: true })).toBeVisible();
+  });
 }
 async function navigate(page: Page, name: string) {
   await page
@@ -312,4 +404,3 @@ test("preparation precedes cooking, keeps phase timers separate and can be edite
     ),
   ).toBeTruthy();
 });
-
